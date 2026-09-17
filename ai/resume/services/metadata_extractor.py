@@ -9,7 +9,7 @@ from typing import Optional
 import spacy
 
 from config import settings
-from models.resume import ResumeMetadata
+from models.resume import MetadataItem, ResumeMetadata
 from utils.constants import EMAIL_REGEX, PHONE_REGEX, LINKEDIN_REGEX, GITHUB_REGEX, PORTFOLIO_REGEX
 from utils.logger import logger, log_execution_time
 

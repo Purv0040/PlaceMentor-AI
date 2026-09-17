@@ -25,7 +25,6 @@ import {
   Github,
   Code2,
   Terminal,
-  Linkedin,
   Tag,
   Info,
   Layers,
@@ -101,10 +100,6 @@ const fallbackReport: ReportData = {
     hackerrank: {
       badges: ['Problem Solving 5★', 'Python 5★', 'SQL 4★', 'Gold Developer'],
       topCategories: ['Data Structures', 'Algorithms', 'Databases'],
-    },
-    linkedin: {
-      provided: true,
-      summary: 'All-Star profile strength with 500+ tech connections and endorsements in React, TypeScript, and System Architecture.',
     },
   },
 };
@@ -419,18 +414,9 @@ export const Report: React.FC = () => {
     topCategories: pa?.hackerrank?.topCategories ?? ['Data Structures', 'Algorithms', 'Databases'],
   };
 
-  const linkedinData = pa?.linkedin;
-  const linkedinProvided = Boolean(
-    linkedinData?.provided !== false &&
-      (linkedinData?.provided === true ||
-        Boolean(profileLinks?.linkedinUrl?.trim()) ||
-        Boolean(linkedinData?.summary))
-  );
-
   const githubLink = profileLinks?.githubUrl?.trim() || 'https://github.com';
   const leetcodeLink = profileLinks?.leetcodeUrl?.trim() || 'https://leetcode.com';
   const hackerRankLink = profileLinks?.hackerRankUrl?.trim() || 'https://hackerrank.com';
-  const linkedinLink = profileLinks?.linkedinUrl?.trim() || 'https://linkedin.com';
 
   // Circular gauge calculations
   const radius = 46;
@@ -733,71 +719,6 @@ export const Report: React.FC = () => {
               </div>
             </div>
 
-            {/* LinkedIn Card */}
-            {linkedinProvided ? (
-              <div className="bg-slate-50/70 rounded-xl border border-slate-200/80 p-5 flex flex-col justify-between space-y-4 hover:border-slate-300 transition-colors">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-blue-600 text-white rounded-lg">
-                        <Linkedin className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900">LinkedIn Profile</h3>
-                        <p className="text-[11px] font-medium text-blue-700">
-                          {linkedinData?.connections || '500+'} Connections
-                        </p>
-                      </div>
-                    </div>
-                    <a
-                      href={linkedinLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
-                    >
-                      <span>View Profile</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed bg-white/70 p-3 rounded-lg border border-slate-100">
-                    {linkedinData?.summary ||
-                      'All-Star profile strength with verified tech network and skill endorsements.'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-5 flex flex-col justify-between space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-slate-200 text-slate-500 rounded-lg">
-                      <Linkedin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-700">LinkedIn Profile</h3>
-                      <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-200 text-slate-600">
-                        Not Submitted
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  LinkedIn profile wasn't submitted. Adding it would give a more complete analysis of your professional network, skill endorsements, and career trajectory.
-                </p>
-
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/onboarding/profiles')}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
-                  >
-                    <span>Submit LinkedIn Profile</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 

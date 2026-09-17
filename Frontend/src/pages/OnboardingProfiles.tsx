@@ -10,7 +10,6 @@ import {
   Github,
   Code2,
   Terminal,
-  Linkedin,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -47,15 +46,11 @@ export const OnboardingProfiles: React.FC = () => {
   const [hackerRankUrl, setHackerRankUrl] = useState<string>(
     profileLinks.hackerRankUrl || ''
   );
-  const [linkedinUrl, setLinkedinUrl] = useState<string>(
-    profileLinks.linkedinUrl || ''
-  );
 
   // Errors state
   const [githubError, setGithubError] = useState<string>('');
   const [leetcodeError, setLeetcodeError] = useState<string>('');
   const [hackerRankError, setHackerRankError] = useState<string>('');
-  const [linkedinError, setLinkedinError] = useState<string>('');
 
   // Analysis Animation state
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -78,9 +73,6 @@ export const OnboardingProfiles: React.FC = () => {
       return false;
     }
     if (platform === 'hackerrank' && !lower.includes('hackerrank.com')) {
-      return false;
-    }
-    if (platform === 'linkedin' && !lower.includes('linkedin.com')) {
       return false;
     }
     return true;
@@ -119,17 +111,6 @@ export const OnboardingProfiles: React.FC = () => {
     }
   };
 
-  const handleLinkedinChange = (val: string) => {
-    setLinkedinUrl(val);
-    if (!val.trim()) {
-      setLinkedinError('');
-    } else if (!validateUrl(val, 'linkedin')) {
-      setLinkedinError('Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username)');
-    } else {
-      setLinkedinError('');
-    }
-  };
-
   const handleFileUpload = (file: File) => {
     const validExtensions = ['.pdf', '.doc', '.docx'];
     const hasValidExt = validExtensions.some((ext) =>
@@ -159,9 +140,8 @@ export const OnboardingProfiles: React.FC = () => {
   const isGithubValid = Boolean(githubUrl.trim()) && !githubError && validateUrl(githubUrl, 'github');
   const isLeetcodeValid = Boolean(leetcodeUrl.trim()) && !leetcodeError && validateUrl(leetcodeUrl, 'leetcode');
   const isHackerRankValid = Boolean(hackerRankUrl.trim()) && !hackerRankError && validateUrl(hackerRankUrl, 'hackerrank');
-  const isLinkedinValid = !linkedinUrl.trim() || (!linkedinError && validateUrl(linkedinUrl, 'linkedin'));
 
-  const isFormValid = isResumeValid && isGithubValid && isLeetcodeValid && isHackerRankValid && isLinkedinValid;
+  const isFormValid = isResumeValid && isGithubValid && isLeetcodeValid && isHackerRankValid;
 
   const getAnalysisSteps = (): AnalysisStep[] => {
     const steps: AnalysisStep[] = [
@@ -169,10 +149,6 @@ export const OnboardingProfiles: React.FC = () => {
       { id: 'github', label: 'Evaluating GitHub' },
       { id: 'leetcode_hackerrank', label: 'Checking LeetCode & HackerRank' },
     ];
-
-    if (Boolean(linkedinUrl.trim())) {
-      steps.push({ id: 'linkedin', label: 'Checking LinkedIn' });
-    }
 
     steps.push(
       { id: 'comparing', label: 'Comparing with domain' },
@@ -395,15 +371,6 @@ export const OnboardingProfiles: React.FC = () => {
           stars: 5,
           primarySkills: ['Problem Solving', 'SQL', 'Python Core'],
         },
-        linkedin: {
-          provided: Boolean(linkedinUrl.trim()),
-          summary: linkedinUrl.trim()
-            ? 'All-Star profile strength with 500+ connections and endorsements in React, TypeScript, and System Architecture.'
-            : undefined,
-          connections: linkedinUrl.trim() ? '500+' : undefined,
-          profileStrength: linkedinUrl.trim() ? 'All-Star' : undefined,
-          endorsements: linkedinUrl.trim() ? ['React.js', 'System Architecture', 'TypeScript', 'Software Development'] : [],
-        },
         resume: {
           skillsDetected: matchedSkills.map((s) => s.skill),
           experienceSummary: `Verified academic projects and coursework in ${domain}`,
@@ -419,7 +386,6 @@ export const OnboardingProfiles: React.FC = () => {
       githubUrl: githubUrl.trim(),
       leetcodeUrl: leetcodeUrl.trim(),
       hackerRankUrl: hackerRankUrl.trim(),
-      linkedinUrl: linkedinUrl.trim(),
       resumeFileName: resumeMode === 'file' ? resumeFileName : '',
       resumeText: resumeMode === 'text' ? resumeText.trim() : '',
       resumeMode,
@@ -796,48 +762,6 @@ export const OnboardingProfiles: React.FC = () => {
                 )}
               </div>
 
-              {/* LinkedIn URL (Optional) */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="linkedin-url-input" className="block text-xs font-semibold text-slate-700">
-                    LinkedIn Profile URL
-                  </label>
-                  <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
-                    Optional
-                  </span>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-600">
-                    <Linkedin className="w-4 h-4" />
-                  </div>
-                  <input
-                    id="linkedin-url-input"
-                    type="url"
-                    value={linkedinUrl}
-                    onChange={(e) => handleLinkedinChange(e.target.value)}
-                    placeholder="https://linkedin.com/in/your-username (Optional)"
-                    className={`w-full pl-10 pr-9 py-2.5 text-sm bg-slate-50 border ${
-                      linkedinError
-                        ? 'border-red-400 bg-red-50/20'
-                        : linkedinUrl && !linkedinError
-                        ? 'border-emerald-300 bg-emerald-50/10'
-                        : 'border-slate-200'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-900 placeholder:text-slate-400`}
-                  />
-                  {linkedinUrl && !linkedinError && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-600">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-                {linkedinError && (
-                  <p className="flex items-center gap-1 text-xs text-red-500 mt-1 font-medium">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>{linkedinError}</span>
-                  </p>
-                )}
-              </div>
-
               {/* Sample Auto-Fill Button */}
               {(!githubUrl || !leetcodeUrl || !hackerRankUrl) && (
                 <button
@@ -846,7 +770,6 @@ export const OnboardingProfiles: React.FC = () => {
                     handleGithubChange('https://github.com/alexrivera-dev');
                     handleLeetcodeChange('https://leetcode.com/alexrivera');
                     handleHackerRankChange('https://hackerrank.com/alexrivera');
-                    handleLinkedinChange('https://linkedin.com/in/alexrivera');
                   }}
                   className="text-xs text-indigo-600 hover:underline inline-flex items-center gap-1 font-medium pt-1"
                 >
@@ -889,7 +812,6 @@ export const OnboardingProfiles: React.FC = () => {
                 {(!isGithubValid || !isLeetcodeValid || !isHackerRankValid) && (
                   <p>• Please provide valid required URLs for GitHub, LeetCode, and HackerRank.</p>
                 )}
-                {!isLinkedinValid && <p>• Please fix the invalid LinkedIn URL.</p>}
               </div>
             )}
           </div>
