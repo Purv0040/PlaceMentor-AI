@@ -1,0 +1,3729 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @layer base {
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior: none;
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-fixed": "#07006c",
+              "on-tertiary-fixed": "#002113",
+              "tertiary-container": "#00885d",
+              "on-surface-variant": "#c7c4d7",
+              "surface-container": "#1c1f2a",
+              "on-primary-fixed-variant": "#2f2ebe",
+              "surface-container-low": "#171b26",
+              background: "#0f131d",
+              "surface-tint": "#c0c1ff",
+              "on-secondary-fixed": "#2c0051",
+              secondary: "#ddb7ff",
+              "on-secondary-container": "#d6a9ff",
+              "on-primary-container": "#0d0096",
+              surface: "#0f131d",
+              "on-primary": "#1000a9",
+              "on-tertiary-fixed-variant": "#005236",
+              "surface-container-highest": "#313540",
+              "on-background": "#dfe2f1",
+              "surface-variant": "#313540",
+              "surface-container-high": "#262a35",
+              "on-error-container": "#ffdad6",
+              "secondary-fixed-dim": "#ddb7ff",
+              "tertiary-fixed": "#6ffbbe",
+              "inverse-primary": "#494bd6",
+              primary: "#c0c1ff",
+              outline: "#908fa0",
+              "on-tertiary-container": "#000703",
+              "primary-container": "#8083ff",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-error": "#690005",
+              "tertiary-fixed-dim": "#4edea3",
+              "surface-dim": "#0f131d",
+              "on-secondary-fixed-variant": "#6900b3",
+              "inverse-on-surface": "#2c303b",
+              "outline-variant": "#464554",
+              error: "#ffb4ab",
+              tertiary: "#4edea3",
+              "on-secondary": "#490080",
+              "secondary-fixed": "#f0dbff",
+              "primary-fixed": "#e1e0ff",
+              "surface-container-lowest": "#0a0e18",
+              "on-tertiary": "#003824",
+              "surface-bright": "#353944",
+              "error-container": "#93000a",
+              "on-surface": "#dfe2f1",
+              "secondary-container": "#6f00be",
+              "inverse-surface": "#dfe2f1",
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "0.75rem",
+            },
+            spacing: {
+              "margin-md": "1.5rem",
+              gutter: "1rem",
+              "space-xs": "0.25rem",
+              "margin-lg": "2rem",
+              margin: "1rem",
+              "space-xl": "1.75rem",
+              "space-md": "0.75rem",
+              "space-lg": "1.25rem",
+              "gutter-lg": "1.5rem",
+              "space-sm": "0.5rem",
+            },
+            fontFamily: {
+              "body-lg": ["Inter"],
+              "headline-md": ["Inter"],
+              "headline-sm": ["Inter"],
+              "headline-xl-mobile": ["Inter"],
+              "body-md": ["Inter"],
+              "headline-lg": ["Inter"],
+              "label-code-sm": ["JetBrains Mono"],
+              "headline-lg-mobile": ["Inter"],
+              "body-sm": ["Inter"],
+              "label-code-md": ["JetBrains Mono"],
+              "headline-xl": ["Inter"],
+              "label-code-lg": ["JetBrains Mono"],
+            },
+            fontSize: {
+              "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+              "headline-md": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "headline-sm": [
+                "18px",
+                { lineHeight: "26px", fontWeight: "600" },
+              ],
+              "headline-xl-mobile": [
+                "30px",
+                { lineHeight: "36px", fontWeight: "700" },
+              ],
+              "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+              "headline-lg": [
+                "32px",
+                { lineHeight: "40px", fontWeight: "600" },
+              ],
+              "label-code-sm": [
+                "11px",
+                { lineHeight: "14px", fontWeight: "600" },
+              ],
+              "headline-lg-mobile": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+              "label-code-md": [
+                "12px",
+                { lineHeight: "16px", fontWeight: "500" },
+              ],
+              "headline-xl": [
+                "40px",
+                { lineHeight: "48px", fontWeight: "700" },
+              ],
+              "label-code-lg": [
+                "14px",
+                { lineHeight: "20px", fontWeight: "500" },
+              ],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface min-h-screen"
+  >
+    <header
+      class="fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant flex items-center justify-between px-margin-md"
+    >
+      <div class="flex items-center gap-space-md">
+        <img
+          alt="AI Placement Copilot Logo"
+          class="h-8 w-auto object-contain"
+          src="https://lh3.googleusercontent.com/aida/AEtjO1VmFJwwZ3SYidlowARETMWcoSA3RdAJTsdHTW9PYrTMu4m-kMVY2OQeNqIaM7-y3IfdY_DsZRr3zVcrWAPGh_fBJn0unmisK_Hw7uNBx6WCTfWaAfXIzaWSeETc4iPIZ1i6eAyRU5_5dd-VaDsfMu2DSSmlGC4V6PqUdX3d5jz2k4noXU3g0Oy4gey2zxx9G1dJxtWM2Jru2fPvjuPa_7MLN8p5kdDHd2n9CFA_11YsPOffMoNikuTE14cU"
+        />
+        <div class="flex flex-col">
+          <span
+            class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none"
+            >AI Placement Copilot</span
+          ><span
+            class="font-label-code-sm text-label-code-sm text-secondary tracking-wide uppercase"
+            >Engineering Suite</span
+          >
+        </div>
+        <div
+          class="hidden xl:flex items-center gap-space-sm ml-space-md pl-space-md border-l border-outline-variant"
+        >
+          <div
+            class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-sm text-primary"
+              >track_changes</span
+            ><span class="font-body-sm text-body-sm text-on-surface-variant"
+              >Targeting:
+              <strong class="text-on-surface font-medium"
+                >SDE-1 @ Tier-1 Tech (Google / Uber / Atlassian)</strong
+              ></span
+            >
+          </div>
+          <div
+            class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-sm text-tertiary"
+              >timer</span
+            ><span class="font-body-sm text-body-sm text-on-surface-variant"
+              >Campus Drive:
+              <strong class="text-tertiary font-medium"
+                >Day 42 / 90</strong
+              ></span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <div
+          class="hidden md:flex items-center bg-surface-container px-space-md py-1 rounded border border-outline-variant text-on-surface-variant w-64 justify-between"
+        >
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-base">search</span
+            ><span class="font-body-sm text-body-sm">Quick Search...</span>
+          </div>
+          <span
+            class="font-label-code-sm text-label-code-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface"
+            >⌘K</span
+          >
+        </div>
+        <div
+          class="hidden sm:flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded border border-tertiary/30 shadow-[0_0_12px_rgba(78,222,163,0.15)]"
+        >
+          <span class="material-symbols-outlined text-base text-tertiary"
+            >verified</span
+          >
+          <div class="flex flex-col">
+            <span
+              class="font-label-code-sm text-label-code-sm uppercase text-on-surface-variant"
+              >Readiness</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-tertiary font-semibold"
+              >78/100</span
+            >
+          </div>
+        </div>
+        <button
+          class="flex items-center gap-space-xs px-space-sm py-1.5 bg-secondary-container text-on-secondary rounded border border-secondary/40 hover:bg-secondary hover:text-on-secondary transition-all shadow-[0_0_12px_rgba(168,85,247,0.25)]"
+        >
+          <span class="material-symbols-outlined text-base">auto_awesome</span
+          ><span class="hidden lg:inline font-body-sm text-body-sm font-medium"
+            >AI Copilot</span
+          >
+        </button>
+        <div class="relative flex items-center">
+          <button
+            aria-label="Notifications"
+            class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded transition-colors"
+          >
+            <span class="material-symbols-outlined text-xl"
+              >notifications</span
+            ></button
+          ><span
+            class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-surface-container-lowest"
+          ></span>
+        </div>
+        <div
+          class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant"
+        >
+          <img
+            alt="Profile"
+            class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe6qOWJykQrxJdHtXtgIxzmPTV46RVlCqBUSxQYgWicqEOReYIcd4bguLZ5uWcFsrgNsYDrQWLh5iwhY6kPWl2cDOlO3MPMyces7YY16tuQ1DHLO_xweRYj9-EoRTUg9VtwUJtSG_bA3pTGTgXAe-d1JhXRyiVSRZfMhFCDwumL01q_jvxsE9j0fTX1BaZOHrhAwh0qFYHnl2dCKD5WLpH3VAgVI7WsAdFrbMTHlUqol3UnXF8iQtV4Q"
+          />
+          <div class="hidden 2xl:flex flex-col text-left">
+            <span
+              class="font-body-sm text-body-sm text-on-surface font-medium leading-tight"
+              >Arjun Sharma</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+              >Final Year B.Tech CSE</span
+            >
+          </div>
+          <span
+            class="material-symbols-outlined text-base text-on-surface-variant"
+            >expand_more</span
+          >
+        </div>
+      </div>
+    </header>
+    <aside
+      class="fixed left-0 top-16 bottom-10 w-72 bg-surface-container-lowest border-r border-outline-variant z-40 overflow-y-auto flex flex-col justify-between p-space-sm"
+    >
+      <nav
+        class="flex flex-col gap-space-md w-full"
+        data-active-classes="bg-primary-container text-on-primary font-semibold rounded border border-primary"
+      >
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Main</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="dashboard"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">dashboard</span
+              ><span class="font-body-md text-body-md">Dashboard</span>
+            </div>
+            <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span
+          ></a>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Preparation</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="resume-intelligence"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">description</span
+              ><span class="font-body-sm text-body-sm"
+                >Resume Intelligence</span
+              >
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >84/100</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="github-intelligence"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">account_tree</span
+              ><span class="font-body-sm text-body-sm"
+                >GitHub Intelligence</span
+              >
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container px-1 rounded"
+              >Top 12%</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="leetcode-intelligence"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">terminal</span
+              ><span class="font-body-sm text-body-sm"
+                >LeetCode Intelligence</span
+              >
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1 rounded"
+              >385</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="project-analyzer"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">inventory_2</span
+              ><span class="font-body-sm text-body-sm">Project Analyzer</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1 rounded"
+              >4 eval</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Intelligence</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="placement-readiness"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg"
+                >verified_user</span
+              ><span class="font-body-sm text-body-sm"
+                >Placement Readiness</span
+              >
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >78%</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="skill-gap-analyzer"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">radar</span
+              ><span class="font-body-sm text-body-sm">Skill Gap Analyzer</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-error bg-surface-container px-1 rounded"
+              >3 Gaps</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Planning</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="90-day-roadmap"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">route</span
+              ><span class="font-body-sm text-body-sm">90-Day Roadmap</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-primary bg-surface-container px-1 rounded"
+              >Phase 2</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="todays-tasks"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">check_box</span
+              ><span class="font-body-sm text-body-sm">Today's Tasks</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >4/6</span
+            ></a
+          ><a
+            class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+            data-path="progress-tracking"
+            href="#"
+            ><span class="material-symbols-outlined text-lg">trending_up</span
+            ><span class="font-body-sm text-body-sm">Progress Tracking</span></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Practice</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="ai-mock-interview"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg">videocam</span
+              ><span class="font-body-sm text-body-sm">AI Mock Interview</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container px-1 rounded"
+              >Next</span
+            ></a
+          ><a
+            class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+            data-path="communication-coach"
+            href="#"
+            ><span class="material-symbols-outlined text-lg">mic</span
+            ><span class="font-body-sm text-body-sm"
+              >Communication Coach</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >AI</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="ai-mentor"
+            href="#"
+            ><div class="flex items-center gap-space-sm">
+              <span class="material-symbols-outlined text-lg text-secondary"
+                >auto_awesome</span
+              ><span class="font-body-sm text-body-sm">AI Mentor</span>
+            </div>
+            <span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-secondary-container/40 border border-secondary/30 px-1 rounded"
+              >24/7 Live</span
+            ></a
+          >
+        </div>
+      </nav>
+      <div
+        class="flex flex-col gap-1 pt-space-md border-t border-outline-variant mt-space-md"
+      >
+        <a
+          class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+          data-path="achievements"
+          href="#"
+          ><div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-lg text-primary"
+              >military_tech</span
+            ><span class="font-body-sm text-body-sm">Achievements</span>
+          </div>
+          <span
+            class="font-label-code-sm text-label-code-sm text-primary bg-surface-container px-1 rounded"
+            >14</span
+          ></a
+        ><a
+          class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+          data-path="profile"
+          href="#"
+          ><span class="material-symbols-outlined text-lg">person</span
+          ><span class="font-body-sm text-body-sm">Profile</span></a
+        ><a
+          class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+          data-path="settings"
+          href="#"
+          ><span class="material-symbols-outlined text-lg">settings</span
+          ><span class="font-body-sm text-body-sm">Settings</span></a
+        >
+      </div>
+    </aside>
+    <div class="pl-72">
+      <main
+        class="w-full pt-16 pb-14 px-gutter-lg bg-surface min-h-[calc(100vh-2.5rem)]"
+      >
+        <div class="flex flex-col w-full gap-space-lg pb-10">
+          <!-- 1. PAGE HEADER & TELEMETRY STRIP -->
+          <div class="flex flex-col gap-space-sm">
+            <div
+              class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md"
+            >
+              <div class="flex flex-col">
+                <div class="flex items-center gap-space-sm">
+                  <h1
+                    class="font-headline-lg text-headline-lg text-on-surface tracking-tight"
+                  >
+                    AI Skill Gap Analyzer
+                  </h1>
+                  <span
+                    class="px-2 py-0.5 rounded bg-secondary-container/30 text-secondary font-label-code-sm text-label-code-sm tracking-wider uppercase"
+                  >
+                    TELEMETRY V4.2 · ROLE BENCHMARK ENGINE
+                  </span>
+                </div>
+                <p
+                  class="font-body-md text-body-md text-on-surface-variant mt-0.5"
+                >
+                  Discover which skills you already have, which skills you need,
+                  and what to learn next for your target role.
+                </p>
+              </div>
+              <!-- Controls -->
+              <div class="flex items-center gap-space-sm flex-wrap">
+                <button
+                  class="flex items-center gap-space-xs px-space-md py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-body-sm text-body-sm"
+                  id="btn-refresh"
+                >
+                  <span class="material-symbols-outlined text-base text-primary"
+                    >sync</span
+                  >
+                  <span>Refresh Analysis</span>
+                </button>
+                <a
+                  class="flex items-center gap-space-xs px-space-md py-1.5 rounded bg-primary-container hover:bg-primary-container/90 text-on-primary font-body-sm text-body-sm font-medium transition-all shadow-sm"
+                  href="#"
+                >
+                  <span class="material-symbols-outlined text-base">route</span>
+                  <span>View 90-Day Roadmap</span>
+                </a>
+              </div>
+            </div>
+            <!-- Sub-header Telemetry Strip -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-3 gap-space-sm p-space-sm rounded bg-surface-container-low"
+            >
+              <div class="flex items-center gap-space-sm px-space-sm">
+                <span class="material-symbols-outlined text-base text-primary"
+                  >target</span
+                >
+                <div class="flex flex-col min-w-0">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                    >Target Profile</span
+                  >
+                  <span
+                    class="font-label-code-md text-label-code-md text-on-surface truncate font-semibold"
+                    >AI/ML Engineer (Tier-1 SDE-1 Parity)</span
+                  >
+                </div>
+              </div>
+              <div class="flex items-center gap-space-sm px-space-sm">
+                <span class="material-symbols-outlined text-base text-tertiary"
+                  >history</span
+                >
+                <div class="flex flex-col min-w-0">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                    >Last Calibrated</span
+                  >
+                  <span
+                    class="font-label-code-md text-label-code-md text-on-surface font-semibold"
+                    >Today, 11:05 PM (Automated)</span
+                  >
+                </div>
+              </div>
+              <div class="flex items-center gap-space-sm px-space-sm">
+                <span class="material-symbols-outlined text-base text-secondary"
+                  >verified_user</span
+                >
+                <div class="flex flex-col min-w-0">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                    >Confidence Index</span
+                  >
+                  <span
+                    class="font-label-code-md text-label-code-md text-tertiary font-semibold"
+                    >95.4%
+                    <span class="text-on-surface-variant font-normal text-xs"
+                      >(Resume · Git · LC · Projects)</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 2. TARGET ROLE SELECTOR & RECALCULATION BAR -->
+          <div
+            class="p-space-md rounded bg-surface-container flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md shadow-sm"
+          >
+            <div class="flex flex-col gap-1 min-w-0 flex-1">
+              <div class="flex items-center gap-space-sm flex-wrap">
+                <span
+                  class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+                  >Active Target Role:</span
+                >
+                <div class="relative inline-block">
+                  <select
+                    class="appearance-none bg-surface-container-lowest text-on-surface font-label-code-md text-label-code-md py-1.5 pl-3 pr-8 rounded focus:outline-none focus:bg-surface-container-high transition-colors cursor-pointer"
+                    id="role-selector"
+                  >
+                    <option selected="" value="aiml">
+                      AI / ML Engineer (Tier-1 Tech SDE Benchmark)
+                    </option>
+                    <option value="backend">
+                      Backend Developer (Distributed Systems Focus)
+                    </option>
+                    <option value="fullstack">
+                      Full Stack Developer (Next.js / Node.js / System Design)
+                    </option>
+                    <option value="generalist">
+                      Software Engineer - Generalist (Tier-1 Core SDE)
+                    </option>
+                    <option value="ds">
+                      Data Scientist (Inference &amp; Predictive Modeling)
+                    </option>
+                    <option value="da">
+                      Data Analyst (Analytics Engineering &amp; SQL)
+                    </option>
+                    <option value="de">
+                      Data Engineer (Data Pipelines, Spark, Kafka)
+                    </option>
+                  </select>
+                  <span
+                    class="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-base text-outline"
+                    >expand_more</span
+                  >
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-code-sm text-label-code-sm"
+                >
+                  9 Cutoff Rules Active
+                </span>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">
+                Your skill requirements, gap severity, and roadmap
+                recommendations are dynamically calibrated to this target role
+                profile.
+              </p>
+            </div>
+            <div class="flex items-center gap-space-sm flex-wrap">
+              <button
+                class="px-space-md py-1.5 rounded bg-surface-container-high hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors flex items-center gap-space-xs"
+              >
+                <span class="material-symbols-outlined text-base">tune</span>
+                <span>Customize Requirements</span>
+              </button>
+              <button
+                class="px-space-md py-1.5 rounded bg-secondary-container text-on-secondary font-body-sm text-body-sm font-medium hover:bg-secondary-container/90 transition-all flex items-center gap-space-xs shadow-sm"
+              >
+                <span class="material-symbols-outlined text-base">reorder</span>
+                <span>Recalculate Skill Gaps</span>
+              </button>
+            </div>
+          </div>
+          <!-- 3. TOP METRICS & SKILL COVERAGE HERO -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-md">
+            <!-- Left: Numerical Breakdown Cards (4 cols on xl) -->
+            <div
+              class="xl:col-span-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 gap-space-sm"
+            >
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <span
+                  class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                  >Skills Evaluated</span
+                >
+                <div class="flex items-baseline gap-space-xs mt-space-xs">
+                  <span
+                    class="font-headline-lg text-headline-lg text-on-surface font-bold"
+                    >24</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+                    >/ 8 categories</span
+                  >
+                </div>
+                <span
+                  class="font-body-sm text-body-sm text-tertiary flex items-center gap-1 mt-1"
+                >
+                  <span class="material-symbols-outlined text-sm"
+                    >check_circle</span
+                  >
+                  100% telemetry synced
+                </span>
+              </div>
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <span
+                  class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                  >Strong Skills</span
+                >
+                <div class="flex items-baseline gap-space-xs mt-space-xs">
+                  <span
+                    class="font-headline-lg text-headline-lg text-tertiary font-bold"
+                    >12</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-tertiary"
+                    >Verified</span
+                  >
+                </div>
+                <span
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >Proven in code &amp; resume</span
+                >
+              </div>
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <span
+                  class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                  >Needs Polish</span
+                >
+                <div class="flex items-baseline gap-space-xs mt-space-xs">
+                  <span
+                    class="font-headline-lg text-headline-lg text-primary font-bold"
+                    >8</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-primary"
+                    >Moderate</span
+                  >
+                </div>
+                <span
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >Partial repos &amp; practice</span
+                >
+              </div>
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <span
+                  class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                  >Zero Footprint</span
+                >
+                <div class="flex items-baseline gap-space-xs mt-space-xs">
+                  <span
+                    class="font-headline-lg text-headline-lg text-error font-bold"
+                    >4</span
+                  >
+                  <span class="font-label-code-sm text-label-code-sm text-error"
+                    >Missing</span
+                  >
+                </div>
+                <span
+                  class="font-body-sm text-body-sm text-error mt-1 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-sm">warning</span>
+                  0 project signals
+                </span>
+              </div>
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col justify-between col-span-2 sm:col-span-1 xl:col-span-2"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-error uppercase tracking-wider font-semibold"
+                    >High Priority Gaps</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                    >Cutoff Risk</span
+                  >
+                </div>
+                <div class="flex items-baseline gap-space-xs mt-space-xs">
+                  <span
+                    class="font-headline-lg text-headline-lg text-error font-bold"
+                    >5 Gaps</span
+                  >
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface-variant"
+                    >direct screening stoppers</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 mt-2 overflow-hidden"
+                >
+                  <div
+                    class="bg-error h-full rounded-full"
+                    style="width: 62%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <!-- Center: Radial Overall Skill Coverage Hero (4 cols on xl) -->
+            <div
+              class="xl:col-span-4 p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm relative overflow-hidden"
+            >
+              <div class="flex items-center justify-between">
+                <span
+                  class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+                  >Overall Match Score</span
+                >
+                <span
+                  class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                >
+                  Target: 85% Cutoff
+                </span>
+              </div>
+              <div
+                class="flex flex-col items-center justify-center my-space-sm relative"
+              >
+                <!-- SVG Gauge -->
+                <svg
+                  class="w-48 h-48 transform -rotate-90"
+                  viewbox="0 0 120 120"
+                >
+                  <circle
+                    class="text-surface-container-highest"
+                    cx="60"
+                    cy="60"
+                    fill="transparent"
+                    r="50"
+                    stroke="currentColor"
+                    stroke-width="9"
+                  ></circle>
+                  <!-- Benchmark line at 85% = 267 dashoffset (circumference ~ 314.15) -->
+                  <circle
+                    class="text-secondary/40"
+                    cx="60"
+                    cy="60"
+                    fill="transparent"
+                    r="50"
+                    stroke="currentColor"
+                    stroke-dasharray="314.15"
+                    stroke-dashoffset="47.1"
+                    stroke-linecap="round"
+                    stroke-width="9"
+                  ></circle>
+                  <!-- Active candidate at 68% = 314.15 * (1 - 0.68) = 100.5 -->
+                  <circle
+                    class="text-primary"
+                    cx="60"
+                    cy="60"
+                    fill="transparent"
+                    r="50"
+                    stroke="currentColor"
+                    stroke-dasharray="314.15"
+                    stroke-dashoffset="100.5"
+                    stroke-linecap="round"
+                    stroke-width="9"
+                  ></circle>
+                </svg>
+                <div
+                  class="absolute inset-0 flex flex-col items-center justify-center text-center"
+                >
+                  <span
+                    class="font-headline-xl text-headline-xl text-on-surface font-extrabold leading-none"
+                    >68%</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider mt-1"
+                    >Skill Coverage</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-error font-semibold mt-0.5"
+                    >-17% to Safe Cutoff</span
+                  >
+                </div>
+              </div>
+              <div
+                class="flex flex-col gap-space-xs pt-space-xs border-t border-outline-variant/30"
+              >
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-on-surface-variant flex items-center gap-1">
+                    <span
+                      class="w-2 h-2 rounded-full bg-primary inline-block"
+                    ></span>
+                    Current Verified
+                  </span>
+                  <span class="text-on-surface font-semibold">68%</span>
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-on-surface-variant flex items-center gap-1">
+                    <span
+                      class="w-2 h-2 rounded-full bg-secondary inline-block"
+                    ></span>
+                    Required Tier-1 Cutoff
+                  </span>
+                  <span class="text-secondary font-semibold">85%</span>
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-on-surface-variant flex items-center gap-1">
+                    <span
+                      class="w-2 h-2 rounded-full bg-surface-variant inline-block"
+                    ></span>
+                    Unverified Gap
+                  </span>
+                  <span class="text-error font-semibold">32%</span>
+                </div>
+                <!-- Trajectory pill -->
+                <div
+                  class="mt-2 py-1 px-space-sm rounded bg-surface-container-high flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span>Baseline: 52%</span>
+                  <span
+                    class="text-tertiary font-semibold flex items-center gap-0.5"
+                  >
+                    <span class="material-symbols-outlined text-xs"
+                      >trending_up</span
+                    >
+                    +16 pts
+                  </span>
+                  <span>Target: 85%</span>
+                </div>
+              </div>
+            </div>
+            <!-- Right: AI Executive Synthesis Card (4 cols on xl) -->
+            <div
+              class="xl:col-span-4 p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative"
+            >
+              <div class="flex flex-col gap-space-xs">
+                <div class="flex items-center justify-between">
+                  <span
+                    class="px-2 py-0.5 rounded bg-secondary-container/40 text-secondary font-label-code-sm text-label-code-sm flex items-center gap-1 font-semibold"
+                  >
+                    <span class="material-symbols-outlined text-xs"
+                      >auto_awesome</span
+                    >
+                    AI SKILL GAP SYNTHESIS
+                  </span>
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline"
+                    >Deep Engine 4.2</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface leading-relaxed mt-space-xs"
+                >
+                  Your profile demonstrates a resilient foundation in
+                  <strong class="text-primary font-medium">Python (90%)</strong
+                  >, NumPy, Pandas, and classical machine learning (<strong
+                    class="text-tertiary font-medium"
+                    >Scikit-learn 80%</strong
+                  >).
+                </p>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"
+                >
+                  However, for a
+                  <strong class="text-on-surface font-medium"
+                    >Tier-1 AI/ML Engineer profile</strong
+                  >, critical screening bottlenecks exist in
+                  <strong class="text-error font-medium"
+                    >Deep Learning (PyTorch/CNNs)</strong
+                  >,
+                  <strong class="text-error font-medium"
+                    >Docker containerization</strong
+                  >, FastAPI asynchronous serving, and production model
+                  deployment.
+                </p>
+              </div>
+              <div class="flex flex-col gap-space-sm mt-space-sm">
+                <div class="flex flex-col gap-1">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                    >Validated Strengths</span
+                  >
+                  <div class="flex flex-wrap gap-1">
+                    <span
+                      class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                      >Python (90%)</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                      >Pandas (86%)</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                      >NumPy (88%)</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                      >Scikit-learn (80%)</span
+                    >
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-error uppercase tracking-wider font-semibold"
+                    >Blocking Cutoffs</span
+                  >
+                  <div class="flex flex-wrap gap-1">
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                      >PyTorch &amp; Deep Learning</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                      >Docker</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                      >FastAPI Serving</span
+                    >
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                      >Model Deployment</span
+                    >
+                  </div>
+                </div>
+                <a
+                  class="w-full mt-1 py-1.5 px-space-sm rounded bg-surface-container-high hover:bg-surface-bright text-primary font-body-sm text-body-sm font-medium flex items-center justify-center gap-1 transition-colors"
+                  href="#high-priority-section"
+                >
+                  <span>Jump to Priority Gaps</span>
+                  <span class="material-symbols-outlined text-sm"
+                    >arrow_downward</span
+                  >
+                </a>
+              </div>
+            </div>
+          </div>
+          <!-- 4. CURRENT VS REQUIRED SKILLS (VISUAL COMPARISON BARS) -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm"
+            >
+              <div class="flex flex-col">
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  Current vs. Required Benchmark Matrix
+                </h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Top 9 skill requirements weighted by Tier-1 technical resume
+                  filtering algorithms.
+                </p>
+              </div>
+              <div
+                class="flex items-center gap-space-md font-label-code-sm text-label-code-sm"
+              >
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded bg-primary"></span>
+                  <span class="text-on-surface">Your Current Score</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span
+                    class="w-3 h-3 rounded bg-surface-container-highest border border-secondary/40"
+                  ></span>
+                  <span class="text-secondary">Required Benchmark</span>
+                </div>
+              </div>
+            </div>
+            <!-- Comparative Grid of Bars -->
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md"
+            >
+              <!-- 1. Python -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Python Core</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >Verified · Strong</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-tertiary">90%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">85%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 85%"
+                  ></div>
+                  <div
+                    class="bg-tertiary h-full rounded-full relative"
+                    style="width: 90%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs">check</span>
+                  +5% above minimum requirement
+                </span>
+              </div>
+              <!-- 2. NumPy -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >NumPy &amp; Vectorization</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >Verified · Strong</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-tertiary">88%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">85%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 85%"
+                  ></div>
+                  <div
+                    class="bg-tertiary h-full rounded-full relative"
+                    style="width: 88%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs">check</span>
+                  Meets Tier-1 algorithmic standard
+                </span>
+              </div>
+              <!-- 3. Pandas -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Pandas Data Manipulation</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >Verified · Strong</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-tertiary">86%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">85%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 85%"
+                  ></div>
+                  <div
+                    class="bg-tertiary h-full rounded-full relative"
+                    style="width: 86%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs">check</span>
+                  Clean AST pipeline validation
+                </span>
+              </div>
+              <!-- 4. Scikit-learn -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Scikit-learn (Classical ML)</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                    >Good · Polish</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-primary">80%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">85%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 85%"
+                  ></div>
+                  <div
+                    class="bg-primary h-full rounded-full relative"
+                    style="width: 80%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  5% deficit: Needs cross-validation pipelines
+                </span>
+              </div>
+              <!-- 5. Deep Learning (PyTorch) -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs border-l-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Deep Learning (PyTorch)</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                    >Critical Gap</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span>Current: <strong class="text-error">25%</strong></span>
+                  <span>Req: <strong class="text-secondary">85%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 85%"
+                  ></div>
+                  <div
+                    class="bg-error h-full rounded-full relative"
+                    style="width: 25%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error flex items-center gap-1 font-semibold"
+                >
+                  <span class="material-symbols-outlined text-xs">close</span>
+                  -60% gap · Direct screening risk
+                </span>
+              </div>
+              <!-- 6. FastAPI -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >FastAPI / Async REST</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                    >High Priority</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-primary">35%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">75%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 75%"
+                  ></div>
+                  <div
+                    class="bg-primary h-full rounded-full relative"
+                    style="width: 35%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  -40% gap · Streamlit used instead of REST API
+                </span>
+              </div>
+              <!-- 7. Docker -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs border-l-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Docker &amp; Containers</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                    >Critical Gap</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span>Current: <strong class="text-error">20%</strong></span>
+                  <span>Req: <strong class="text-secondary">75%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 75%"
+                  ></div>
+                  <div
+                    class="bg-error h-full rounded-full relative"
+                    style="width: 20%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error flex items-center gap-1 font-semibold"
+                >
+                  <span class="material-symbols-outlined text-xs">close</span>
+                  -55% gap · Zero Dockerfiles found
+                </span>
+              </div>
+              <!-- 8. Model Deployment -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs border-l-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Model Serving &amp; Deploy</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm"
+                    >Critical Gap</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span>Current: <strong class="text-error">22%</strong></span>
+                  <span>Req: <strong class="text-secondary">80%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 80%"
+                  ></div>
+                  <div
+                    class="bg-error h-full rounded-full relative"
+                    style="width: 22%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error flex items-center gap-1 font-semibold"
+                >
+                  <span class="material-symbols-outlined text-xs">close</span>
+                  -58% gap · Only localhost endpoints
+                </span>
+              </div>
+              <!-- 9. SQL -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >SQL &amp; Index Optimization</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >Medium Gap</span
+                  >
+                </div>
+                <div
+                  class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  <span
+                    >Current: <strong class="text-primary">45%</strong></span
+                  >
+                  <span>Req: <strong class="text-secondary">75%</strong></span>
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-2 relative overflow-hidden"
+                >
+                  <div
+                    class="bg-secondary/40 absolute top-0 bottom-0 left-0"
+                    style="width: 75%"
+                  ></div>
+                  <div
+                    class="bg-primary h-full rounded-full relative"
+                    style="width: 45%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+                >
+                  -30% gap · Needs query execution plans
+                </span>
+              </div>
+            </div>
+          </div>
+          <!-- 5. COMPREHENSIVE SKILL GAP AUDIT TABLE -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm"
+            >
+              <div class="flex flex-col">
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  Multi-Vector Skill Gap Audit
+                </h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Cross-matched against Resume, GitHub repos, LeetCode
+                  submissions, and architectural evaluations.
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-label-code-sm text-label-code-sm text-outline"
+                  >Filter:</span
+                >
+                <button
+                  class="px-2 py-1 rounded bg-surface-container-high text-on-surface font-label-code-sm text-label-code-sm"
+                >
+                  All (8)
+                </button>
+                <button
+                  class="px-2 py-1 rounded bg-surface-container-low text-error hover:bg-surface-container-high font-label-code-sm text-label-code-sm"
+                >
+                  Critical Only (3)
+                </button>
+              </div>
+            </div>
+            <!-- Responsive Table -->
+            <div class="overflow-x-auto w-full">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr
+                    class="border-b border-outline-variant/30 text-outline font-label-code-sm text-label-code-sm uppercase tracking-wider"
+                  >
+                    <th class="py-2.5 px-3">Skill &amp; Category</th>
+                    <th class="py-2.5 px-3">Current</th>
+                    <th class="py-2.5 px-3">Required</th>
+                    <th class="py-2.5 px-3">Gap Delta</th>
+                    <th class="py-2.5 px-3">Priority</th>
+                    <th class="py-2.5 px-3 min-w-[280px]">
+                      Multi-Source AI Evidence
+                    </th>
+                    <th class="py-2.5 px-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody
+                  class="divide-y divide-outline-variant/20 font-body-sm text-body-sm"
+                >
+                  <!-- Row 1: Deep Learning -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-error"
+                          >neurology</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Deep Learning &amp; PyTorch</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >AI / Neural Nets</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Advanced</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                        >-60% (High Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Critical Cutoff</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      No deep learning project detected; only Scikit-learn
+                      tabular models found across GitHub and Resume.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-primary-container text-on-primary font-body-sm text-body-sm font-medium hover:bg-primary-container/80 transition-colors"
+                      >
+                        Learn Path
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 2: Docker -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-error"
+                          >inventory_2</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Docker &amp; Containers</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >DevOps &amp; Infra</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                        >-55% (High Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Critical Cutoff</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      No Dockerfile or docker-compose configs in any of the 4
+                      evaluated Git repositories.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-secondary-container text-on-secondary font-body-sm text-body-sm font-medium hover:bg-secondary-container/80 transition-colors"
+                      >
+                        Containerize
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 3: FastAPI -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-primary"
+                          >api</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >FastAPI &amp; REST</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >Backend &amp; Serving</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-primary font-label-code-sm text-label-code-sm"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-primary font-semibold"
+                        >-40% (Medium Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                        >High</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      Only Streamlit scripts detected in
+                      Heart-Disease-Prediction; lacks decoupled RESTful API
+                      backend.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+                      >
+                        Build API
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 4: Model Deployment -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-error"
+                          >cloud_upload</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Model Deployment</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >MLOps</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                        >-58% (High Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                        >Critical Cutoff</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      All applications run bare-metal on localhost:8501; no
+                      public cloud endpoint or serverless serving.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+                      >
+                        Deploy
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 5: SQL & Indexing -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-secondary"
+                          >database</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >SQL &amp; Index Tuning</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >Databases</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-on-surface font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Advanced</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-on-surface-variant font-semibold"
+                        >-30% (Medium Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                        >Medium</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      Basic schema detected in PriceWise; query optimization,
+                      composite index tuning, and EXPLAIN plans absent.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+                      >
+                        Practice SQL
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 6: Dynamic Programming -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-primary"
+                          >data_object</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Dynamic Programming</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >Algorithms (DSA)</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-error font-label-code-sm text-label-code-sm"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                        >-50% (High Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                        >High</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      20% DP solve rate on LeetCode (12 solved); 4 of last 6
+                      submissions TLE'd on 2D tabulation.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+                      >
+                        Practice DP
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 7: Graph Algorithms -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-primary"
+                          >hub</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Graph Algorithms</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >Algorithms (DSA)</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-primary font-label-code-sm text-label-code-sm"
+                        >Beginner</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Intermediate</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-primary font-semibold"
+                        >-45% (High Gap)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                        >High</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      30% Graph solve rate on LeetCode; topological sort, Kahn's
+                      algorithm, and Dijkstra unattempted.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+                      >
+                        Practice Graphs
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 8: Python Core -->
+                  <tr
+                    class="hover:bg-surface-container-high/40 transition-colors"
+                  >
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="material-symbols-outlined text-base text-tertiary"
+                          >code</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-on-surface"
+                            >Python Core &amp; Idioms</span
+                          >
+                          <span
+                            class="font-label-code-sm text-label-code-sm text-outline"
+                            >Language</span
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-lowest text-tertiary font-label-code-sm text-label-code-sm font-semibold"
+                        >Advanced</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm"
+                        >Advanced</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="font-label-code-sm text-label-code-sm text-tertiary font-semibold"
+                        >0% (Mastered)</span
+                      >
+                    </td>
+                    <td class="py-3 px-3">
+                      <span
+                        class="px-2 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-code-sm text-label-code-sm"
+                        >Maintain</span
+                      >
+                    </td>
+                    <td
+                      class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm"
+                    >
+                      Strong presence in 12 repos, 486 commits, clean AST
+                      parsing score 90%, 284 LeetCode submissions.
+                    </td>
+                    <td class="py-3 px-3 text-right">
+                      <button
+                        class="px-2.5 py-1 rounded bg-surface-container-low text-tertiary font-body-sm text-body-sm hover:bg-surface-container-high transition-colors"
+                      >
+                        Maintain
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- 6. HIGH PRIORITY SKILL GAPS (DEEP DIVE CARDS) -->
+          <div class="flex flex-col gap-space-md" id="high-priority-section">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-space-sm">
+                <span
+                  class="p-1.5 rounded bg-error-container/30 text-error flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-lg"
+                    >local_fire_department</span
+                  >
+                </span>
+                <div class="flex flex-col">
+                  <h2
+                    class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                  >
+                    Top High-Priority Remediation Cards
+                  </h2>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">
+                    Immediate screening cutoffs that disqualify you before the
+                    technical interview round.
+                  </p>
+                </div>
+              </div>
+              <span
+                class="px-2 py-0.5 rounded bg-error-container/20 text-error font-label-code-sm text-label-code-sm font-semibold"
+              >
+                3 Disqualifiers Active
+              </span>
+            </div>
+            <!-- Deep Dive Cards Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+              <!-- Card 1: Deep Learning -->
+              <div
+                class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm relative border-t-2 border-error"
+              >
+                <div class="flex flex-col gap-space-xs">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold uppercase"
+                    >
+                      Cutoff Gap #1
+                    </span>
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary font-semibold flex items-center gap-1"
+                    >
+                      <span class="material-symbols-outlined text-xs"
+                        >upgrade</span
+                      >
+                      +6.5 pts Readiness
+                    </span>
+                  </div>
+                  <h3
+                    class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                  >
+                    Deep Learning (PyTorch)
+                  </h3>
+                  <div
+                    class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm text-on-surface-variant my-1"
+                  >
+                    <span
+                      >Level: <strong class="text-error">Beginner</strong></span
+                    >
+                    <span>→</span>
+                    <span
+                      >Target:
+                      <strong class="text-secondary">Advanced</strong></span
+                    >
+                    <span
+                      class="px-1.5 py-0.2 rounded bg-surface-container-highest text-error font-semibold"
+                      >Gap: High</span
+                    >
+                  </div>
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"
+                  >
+                    Your profile exhibits solid classical ML expertise (Random
+                    Forest, Logistic Regression), but modern Tier-1 AI/ML roles
+                    mandate hands-on familiarity with PyTorch, CNN/Transformer
+                    architectures, and tensor operations.
+                  </p>
+                  <!-- 4-step remediation plan -->
+                  <div class="mt-space-sm flex flex-col gap-1.5">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                      >Remediation Roadmap (4 Steps)</span
+                    >
+                    <div
+                      class="flex flex-col gap-1 text-on-surface font-body-sm text-body-sm"
+                    >
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >1</span
+                        >
+                        <span
+                          >Master PyTorch tensor workflows &amp; autograd
+                          mechanics</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >2</span
+                        >
+                        <span
+                          >Implement CNN/ResNet for image classification or
+                          LSTM/Transformer</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >3</span
+                        >
+                        <span
+                          >Train on GPU, log loss curves via
+                          TensorBoard/Weights&amp;Biases</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >4</span
+                        >
+                        <span
+                          >Commit repo with documented evaluation metrics &amp;
+                          weights</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="pt-space-md mt-space-md border-t border-outline-variant/30 flex flex-col gap-space-xs"
+                >
+                  <div
+                    class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                  >
+                    <span>Estimated Investment:</span>
+                    <strong class="text-on-surface">20–25 hours</strong>
+                  </div>
+                  <button
+                    class="w-full py-2 px-space-sm rounded bg-primary-container text-on-primary font-body-sm text-body-sm font-medium hover:bg-primary-container/80 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >add_circle</span
+                    >
+                    <span>Add Deep Learning to Roadmap</span>
+                  </button>
+                </div>
+              </div>
+              <!-- Card 2: Docker Containerization -->
+              <div
+                class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm relative border-t-2 border-error"
+              >
+                <div class="flex flex-col gap-space-xs">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold uppercase"
+                    >
+                      Cutoff Gap #2
+                    </span>
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary font-semibold flex items-center gap-1"
+                    >
+                      <span class="material-symbols-outlined text-xs"
+                        >upgrade</span
+                      >
+                      +4.8 pts Readiness
+                    </span>
+                  </div>
+                  <h3
+                    class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                  >
+                    Docker Containerization
+                  </h3>
+                  <div
+                    class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm text-on-surface-variant my-1"
+                  >
+                    <span
+                      >Level: <strong class="text-error">Beginner</strong></span
+                    >
+                    <span>→</span>
+                    <span
+                      >Target:
+                      <strong class="text-secondary">Intermediate</strong></span
+                    >
+                    <span
+                      class="px-1.5 py-0.2 rounded bg-surface-container-highest text-error font-semibold"
+                      >Gap: High</span
+                    >
+                  </div>
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"
+                  >
+                    Zero containerization evidence detected across all 4
+                    repositories. Tier-1 interviewers require proof of
+                    environment reproducibility, multi-stage builds, and Docker
+                    knowledge.
+                  </p>
+                  <!-- 4-step remediation plan -->
+                  <div class="mt-space-sm flex flex-col gap-1.5">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                      >Remediation Roadmap (4 Steps)</span
+                    >
+                    <div
+                      class="flex flex-col gap-1 text-on-surface font-body-sm text-body-sm"
+                    >
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >1</span
+                        >
+                        <span
+                          >Write multi-stage Dockerfile for
+                          Heart-Disease-Prediction</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >2</span
+                        >
+                        <span
+                          >Optimize container footprint using Python-slim base
+                          image</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >3</span
+                        >
+                        <span
+                          >Test local docker run with port mapping &amp; env
+                          variables</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >4</span
+                        >
+                        <span
+                          >Push built image to Docker Hub or GitHub Container
+                          Registry</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="pt-space-md mt-space-md border-t border-outline-variant/30 flex flex-col gap-space-xs"
+                >
+                  <div
+                    class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                  >
+                    <span>Estimated Investment:</span>
+                    <strong class="text-on-surface">8–10 hours</strong>
+                  </div>
+                  <button
+                    class="w-full py-2 px-space-sm rounded bg-secondary-container text-on-secondary font-body-sm text-body-sm font-medium hover:bg-secondary-container/80 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >add_circle</span
+                    >
+                    <span>Add Docker Sprint to Roadmap</span>
+                  </button>
+                </div>
+              </div>
+              <!-- Card 3: FastAPI Serving -->
+              <div
+                class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm relative border-t-2 border-primary"
+              >
+                <div class="flex flex-col gap-space-xs">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm font-semibold uppercase"
+                    >
+                      Cutoff Gap #3
+                    </span>
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary font-semibold flex items-center gap-1"
+                    >
+                      <span class="material-symbols-outlined text-xs"
+                        >upgrade</span
+                      >
+                      +4.2 pts Readiness
+                    </span>
+                  </div>
+                  <h3
+                    class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                  >
+                    FastAPI &amp; REST Serving
+                  </h3>
+                  <div
+                    class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm text-on-surface-variant my-1"
+                  >
+                    <span
+                      >Level:
+                      <strong class="text-primary">Beginner</strong></span
+                    >
+                    <span>→</span>
+                    <span
+                      >Target:
+                      <strong class="text-secondary">Intermediate</strong></span
+                    >
+                    <span
+                      class="px-1.5 py-0.2 rounded bg-surface-container-highest text-primary font-semibold"
+                      >Gap: Medium</span
+                    >
+                  </div>
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed"
+                  >
+                    Heart-Disease-Prediction embeds inference directly in the
+                    Streamlit UI thread. Decoupling inference behind a FastAPI
+                    REST endpoint with Pydantic validation is essential.
+                  </p>
+                  <!-- 4-step remediation plan -->
+                  <div class="mt-space-sm flex flex-col gap-1.5">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider"
+                      >Remediation Roadmap (4 Steps)</span
+                    >
+                    <div
+                      class="flex flex-col gap-1 text-on-surface font-body-sm text-body-sm"
+                    >
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >1</span
+                        >
+                        <span
+                          >Define request &amp; response schemas using Pydantic
+                          models</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >2</span
+                        >
+                        <span
+                          >Implement POST /predict endpoint with error
+                          handling</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >3</span
+                        >
+                        <span
+                          >Add health check (GET /health) and auto-generated
+                          Swagger UI</span
+                        >
+                      </div>
+                      <div class="flex items-start gap-2">
+                        <span
+                          class="w-4 h-4 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm flex items-center justify-center shrink-0 mt-0.5"
+                          >4</span
+                        >
+                        <span
+                          >Write asynchronous integration tests with
+                          pytest-httpx</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="pt-space-md mt-space-md border-t border-outline-variant/30 flex flex-col gap-space-xs"
+                >
+                  <div
+                    class="flex items-center justify-between font-label-code-sm text-label-code-sm text-on-surface-variant"
+                  >
+                    <span>Estimated Investment:</span>
+                    <strong class="text-on-surface">6–8 hours</strong>
+                  </div>
+                  <button
+                    class="w-full py-2 px-space-sm rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-bright transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >add_circle</span
+                    >
+                    <span>Add FastAPI Sprint to Roadmap</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 7. MEDIUM & LOW PRIORITY GAPS GRID -->
+          <div
+            class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-md"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  Medium &amp; Low Priority Gaps
+                </h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Secondary competencies that elevate a good candidate to a top
+                  10% standout.
+                </p>
+              </div>
+              <span class="font-label-code-sm text-label-code-sm text-outline"
+                >5 Tracked Topics</span
+              >
+            </div>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-sm"
+            >
+              <!-- Item 1 -->
+              <div
+                class="p-space-sm rounded bg-surface-container flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >ML System Design</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >High Impact / High Effort</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  Data drift detection, feature store abstraction, latency
+                  caching, inference queueing.
+                </p>
+                <div
+                  class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20 font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-secondary font-medium"
+                    >Estimated: 14 hrs</span
+                  >
+                  <a class="text-primary hover:underline" href="#"
+                    >Plan Module →</a
+                  >
+                </div>
+              </div>
+              <!-- Item 2 -->
+              <div
+                class="p-space-sm rounded bg-surface-container flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >SQL Indexing &amp; Query Plans</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-code-sm text-label-code-sm"
+                    >High Impact / Low Effort</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  B-Tree indexing, EXPLAIN ANALYZE execution traces, partition
+                  pruning.
+                </p>
+                <div
+                  class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20 font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-secondary font-medium"
+                    >Estimated: 4 hrs</span
+                  >
+                  <a class="text-primary hover:underline" href="#"
+                    >Quick Win →</a
+                  >
+                </div>
+              </div>
+              <!-- Item 3 -->
+              <div
+                class="p-space-sm rounded bg-surface-container flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Automated Unit Testing</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/20 text-tertiary font-label-code-sm text-label-code-sm"
+                    >Medium Impact / Low Effort</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  Pytest integration, test fixtures, GitHub Actions CI
+                  regression checks.
+                </p>
+                <div
+                  class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20 font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-secondary font-medium"
+                    >Estimated: 5 hrs</span
+                  >
+                  <a class="text-primary hover:underline" href="#"
+                    >Add Pytest →</a
+                  >
+                </div>
+              </div>
+              <!-- Item 4 -->
+              <div
+                class="p-space-sm rounded bg-surface-container flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Cloud Deployment Basics</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >Medium Impact</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  AWS EC2 / S3 bucket serving or GCP Cloud Run stateless
+                  container deployment.
+                </p>
+                <div
+                  class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20 font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-secondary font-medium"
+                    >Estimated: 6 hrs</span
+                  >
+                  <a class="text-primary hover:underline" href="#"
+                    >View AWS Path →</a
+                  >
+                </div>
+              </div>
+              <!-- Item 5 -->
+              <div
+                class="p-space-sm rounded bg-surface-container flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Repository Documentation Polish</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >Low Impact / Low Effort</span
+                  >
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  Dynamic CI badges, architecture diagrams, live demo GIF links.
+                </p>
+                <div
+                  class="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/20 font-label-code-sm text-label-code-sm"
+                >
+                  <span class="text-outline font-medium">Estimated: 2 hrs</span>
+                  <a class="text-outline hover:underline" href="#"
+                    >Optional →</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 8. WHY DID AI ASSIGN THIS LEVEL? (MULTI-SOURCE EVIDENCE ACCORDION) -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div class="flex flex-col">
+              <div class="flex items-center gap-space-sm">
+                <span class="material-symbols-outlined text-base text-secondary"
+                  >visibility</span
+                >
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  AI Multi-Vector Verification Breakdown
+                </h2>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">
+                Every score is strictly corroborated across 4 independent
+                telemetry channels without subjective hallucination.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+              <!-- Evidence 1: Python -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-md text-body-md text-on-surface font-semibold"
+                    >Python (Advanced · 90%)</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm font-semibold"
+                    >High Confidence</span
+                  >
+                </div>
+                <ul
+                  class="flex flex-col gap-1.5 mt-1 font-body-sm text-body-sm text-on-surface-variant"
+                >
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary uppercase font-bold w-16 shrink-0"
+                      >Resume:</span
+                    >
+                    <span
+                      >Listed as primary language; cited across 3 academic and
+                      personal projects.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-secondary uppercase font-bold w-16 shrink-0"
+                      >GitHub:</span
+                    >
+                    <span
+                      >42% codebase volume across 12 active repositories; 486
+                      commits analyzed with idiomatic list comprehensions and
+                      generators.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary uppercase font-bold w-16 shrink-0"
+                      >Projects:</span
+                    >
+                    <span
+                      >Heart Disease Prediction, PriceWise, and Stock Analyzer
+                      backends fully written in clean Python 3.11.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary-fixed-dim uppercase font-bold w-16 shrink-0"
+                      >LeetCode:</span
+                    >
+                    <span
+                      >284 accepted submissions written in Python 3 with optimal
+                      runtime distribution.</span
+                    >
+                  </li>
+                </ul>
+              </div>
+              <!-- Evidence 2: Docker -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-l-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-md text-body-md text-on-surface font-semibold"
+                    >Docker &amp; Containers (Beginner · 20%)</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                    >Deficit Confirmed</span
+                  >
+                </div>
+                <ul
+                  class="flex flex-col gap-1.5 mt-1 font-body-sm text-body-sm text-on-surface-variant"
+                >
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-error uppercase font-bold w-16 shrink-0"
+                      >Resume:</span
+                    >
+                    <span
+                      >Keyword missing from technical skills section and project
+                      bullet points.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-error uppercase font-bold w-16 shrink-0"
+                      >GitHub:</span
+                    >
+                    <span
+                      >0 Dockerfiles, 0 docker-compose.yml, and 0 .dockerignore
+                      files found across all 24 public repositories.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-error uppercase font-bold w-16 shrink-0"
+                      >Projects:</span
+                    >
+                    <span
+                      >All projects run bare-metal via manual pip install
+                      requirements.txt without container isolation.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase font-bold w-16 shrink-0"
+                      >Registry:</span
+                    >
+                    <span
+                      >No linked Docker Hub profile or container deployment
+                      badges.</span
+                    >
+                  </li>
+                </ul>
+              </div>
+              <!-- Evidence 3: Deep Learning -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-l-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-md text-body-md text-on-surface font-semibold"
+                    >Deep Learning (Beginner · 25%)</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                    >Deficit Confirmed</span
+                  >
+                </div>
+                <ul
+                  class="flex flex-col gap-1.5 mt-1 font-body-sm text-body-sm text-on-surface-variant"
+                >
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-error uppercase font-bold w-16 shrink-0"
+                      >Resume:</span
+                    >
+                    <span
+                      >No PyTorch, TensorFlow, or neural network architecture
+                      coursework/projects.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-error uppercase font-bold w-16 shrink-0"
+                      >GitHub:</span
+                    >
+                    <span
+                      >AST tree scanner detected 0 imports of torch,
+                      torchvision, keras, or tensorflow.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase font-bold w-16 shrink-0"
+                      >Projects:</span
+                    >
+                    <span
+                      >Existing machine learning models are strictly
+                      scikit-learn tabular ensembles
+                      (RandomForestClassifier).</span
+                    >
+                  </li>
+                </ul>
+              </div>
+              <!-- Evidence 4: Dynamic Programming -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-md text-body-md text-on-surface font-semibold"
+                    >Dynamic Programming (Beginner · 30%)</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-surface-container-highest text-primary font-label-code-sm text-label-code-sm"
+                    >DSA Telemetry</span
+                  >
+                </div>
+                <ul
+                  class="flex flex-col gap-1.5 mt-1 font-body-sm text-body-sm text-on-surface-variant"
+                >
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary uppercase font-bold w-16 shrink-0"
+                      >LeetCode:</span
+                    >
+                    <span
+                      >Only 12 DP problems solved; 20% success rate on Medium 2D
+                      DP problems.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline uppercase font-bold w-16 shrink-0"
+                      >Submissions:</span
+                    >
+                    <span
+                      >Last 4 attempts resulted in Time Limit Exceeded (TLE) due
+                      to recursion without memoization.</span
+                    >
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary uppercase font-bold w-16 shrink-0"
+                      >Status:</span
+                    >
+                    <span
+                      >Candidate understands 1D array DP; tabulating 2D matrices
+                      requires targeted practice.</span
+                    >
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- 9. 2x2 SKILL PRIORITY MATRIX (IMPACT VS. EFFORT QUADRANTS) -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm"
+            >
+              <div class="flex flex-col">
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  2x2 Skill Priority Matrix: Impact vs. Effort
+                </h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Actionable strategy to maximize your placement score before
+                  campus drive deadlines.
+                </p>
+              </div>
+              <span
+                class="font-label-code-sm text-label-code-sm text-secondary font-semibold"
+                >ROI-Weighted Prioritization</span
+              >
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+              <!-- Quadrant 1: Quick Wins -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-t-2 border-tertiary"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-tertiary font-bold"
+                    >Quadrant 1 · Quick Wins</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >High Impact / Low Effort</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Do these immediately to score quick placement points with
+                  minimal hours.
+                </p>
+                <div class="flex flex-col gap-2 mt-2">
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >FastAPI Endpoint Decoupling</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary"
+                      >~6 hrs · +4.2 pts</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >Dockerizing Heart Disease Project</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary"
+                      >~8 hrs · +4.8 pts</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >SQL Indexing &amp; Query Optimization</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-tertiary"
+                      >~4 hrs · +2.8 pts</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- Quadrant 2: Strategic Investments -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-t-2 border-primary"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-primary font-bold"
+                    >Quadrant 2 · Strategic Investments</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                    >High Impact / High Effort</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Mandatory for clearing Tier-1 tech interviews. Schedule deep
+                  focused blocks.
+                </p>
+                <div class="flex flex-col gap-2 mt-2">
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >Deep Learning (PyTorch Foundations + Flagship
+                      Model)</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary"
+                      >~25 hrs · +6.5 pts</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >Dynamic Programming &amp; Graph Algorithms Revision</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary"
+                      >~18 hrs · +5.4 pts</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >ML System Design (Feature Stores &amp; Real-time
+                      Ingestion)</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-primary"
+                      >~14 hrs · +4.0 pts</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- Quadrant 3: Fillers -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-t-2 border-outline"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline font-bold"
+                    >Quadrant 3 · Fillers</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >Low Impact / Low Effort</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Execute during energy dips or in between major coding sprints.
+                </p>
+                <div class="flex flex-col gap-2 mt-2">
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >GitHub Readme Badges &amp; Architecture Diagrams</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >~2 hrs · +1.0 pt</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface font-medium"
+                      >Advanced Git (Squash merges, rebase workflows)</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >~3 hrs · +0.8 pt</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <!-- Quadrant 4: Defer -->
+              <div
+                class="p-space-md rounded bg-surface-container-low flex flex-col gap-space-xs border-t-2 border-outline-variant"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline font-bold"
+                    >Quadrant 4 · Defer</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm"
+                    >Low Impact / High Effort</span
+                  >
+                </div>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Unnecessary for SDE-1 / entry-level roles. Do not burn
+                  preparation time here.
+                </p>
+                <div class="flex flex-col gap-2 mt-2">
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface-variant font-medium"
+                      >Full Kubernetes Cluster Management (k8s / Helm)</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >~35 hrs · Overkill</span
+                    >
+                  </div>
+                  <div
+                    class="p-2 rounded bg-surface-container flex items-center justify-between"
+                  >
+                    <span
+                      class="font-body-sm text-body-sm text-on-surface-variant font-medium"
+                      >Multi-Node Distributed GPU Training Clusters</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >~40 hrs · Defer</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 10. SKILL CATEGORY COVERAGE BREAKDOWN (8 CATEGORIES) -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <h2
+                  class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                >
+                  Category Coverage Breakdown
+                </h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Aggregate proficiency scores distributed across technical
+                  domains.
+                </p>
+              </div>
+              <span class="font-label-code-sm text-label-code-sm text-outline"
+                >8 Domains Calibrated</span
+              >
+            </div>
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm"
+            >
+              <!-- 1 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Languages</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >85%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-tertiary h-full rounded-full"
+                    style="width: 85%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary"
+                  >Strong foundation</span
+                >
+              </div>
+              <!-- 2 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Classical ML</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >78%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-tertiary h-full rounded-full"
+                    style="width: 78%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary"
+                  >Strong foundation</span
+                >
+              </div>
+              <!-- 3 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1 border-b-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Deep Learning</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                    >32%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-error h-full rounded-full"
+                    style="width: 32%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                  >Critical Gap ❌</span
+                >
+              </div>
+              <!-- 4 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Backend &amp; APIs</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                    >42%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-primary h-full rounded-full"
+                    style="width: 42%"
+                  ></div>
+                </div>
+                <span class="font-label-code-sm text-label-code-sm text-primary"
+                  >Needs Work ⚠</span
+                >
+              </div>
+              <!-- 5 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1 border-b-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Containers &amp; Deploy</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                    >25%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-error h-full rounded-full"
+                    style="width: 25%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                  >Critical Gap ❌</span
+                >
+              </div>
+              <!-- 6 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >Databases &amp; SQL</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm"
+                    >70%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-tertiary h-full rounded-full"
+                    style="width: 70%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-tertiary"
+                  >Good status</span
+                >
+              </div>
+              <!-- 7 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >CS &amp; Algorithms</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm"
+                    >63%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-primary h-full rounded-full"
+                    style="width: 63%"
+                  ></div>
+                </div>
+                <span class="font-label-code-sm text-label-code-sm text-primary"
+                  >Needs Work ⚠</span
+                >
+              </div>
+              <!-- 8 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1 border-b-2 border-error"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold"
+                    >System Design</span
+                  >
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-code-sm text-label-code-sm font-semibold"
+                    >30%</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-surface-container-highest rounded-full h-1.5 my-1"
+                >
+                  <div
+                    class="bg-error h-full rounded-full"
+                    style="width: 30%"
+                  ></div>
+                </div>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-error font-semibold"
+                  >Critical Gap ❌</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- 11. STEP-BY-STEP LEARNING PATH INSPECTOR (DEEP LEARNING WORKFLOW) -->
+          <div
+            class="p-space-md rounded bg-surface-container shadow-sm flex flex-col gap-space-md"
+          >
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm"
+            >
+              <div class="flex items-center gap-space-sm">
+                <span
+                  class="p-1.5 rounded bg-primary-container/20 text-primary flex items-center justify-center"
+                >
+                  <span class="material-symbols-outlined text-lg">schema</span>
+                </span>
+                <div class="flex flex-col">
+                  <h2
+                    class="font-headline-sm text-headline-sm text-on-surface tracking-tight"
+                  >
+                    Step-by-Step Learning Path: Deep Learning Mastery
+                  </h2>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">
+                    Recommended curated sprint to eliminate your #1 placement
+                    disqualifier in under 3 weeks.
+                  </p>
+                </div>
+              </div>
+              <span
+                class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm font-semibold"
+              >
+                25 Total Hours
+              </span>
+            </div>
+            <!-- Timeline Steps -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-space-sm relative">
+              <!-- Step 1 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <div class="flex flex-col">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code-sm text-label-code-sm font-bold"
+                      >Step 1</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >3 hrs</span
+                    >
+                  </div>
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold mt-2"
+                    >Neural Net Foundations</span
+                  >
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >
+                    Perceptron, backpropagation, loss functions (MSE,
+                    Cross-Entropy).
+                  </p>
+                </div>
+                <span
+                  class="text-tertiary font-label-code-sm text-label-code-sm mt-3 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs"
+                    >play_circle</span
+                  >
+                  Math &amp; Intuition
+                </span>
+              </div>
+              <!-- Step 2 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <div class="flex flex-col">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code-sm text-label-code-sm font-bold"
+                      >Step 2</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >5 hrs</span
+                    >
+                  </div>
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold mt-2"
+                    >PyTorch Core API</span
+                  >
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >
+                    Tensors, Dataset, DataLoader, torch.nn.Module, and manual
+                    training loop.
+                  </p>
+                </div>
+                <span
+                  class="text-tertiary font-label-code-sm text-label-code-sm mt-3 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs">code</span>
+                  Hands-on Code
+                </span>
+              </div>
+              <!-- Step 3 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <div class="flex items-center justify-between">
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code-sm text-label-code-sm font-bold"
+                    >Step 3</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm text-outline"
+                    >6 hrs</span
+                  >
+                </div>
+                <span
+                  class="font-body-sm text-body-sm text-on-surface font-semibold mt-2"
+                  >CV / NLP Transfer Learning</span
+                >
+                <p
+                  class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                >
+                  Fine-tune ResNet-18 for medical scans or DistilBERT for
+                  sentiment analysis.
+                </p>
+                <span
+                  class="text-secondary font-label-code-sm text-label-code-sm mt-3 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs"
+                    >auto_awesome</span
+                  >
+                  Model Adaptation
+                </span>
+              </div>
+              <!-- Step 4 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col justify-between"
+              >
+                <div class="flex flex-col">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code-sm text-label-code-sm font-bold"
+                      >Step 4</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >4 hrs</span
+                    >
+                  </div>
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold mt-2"
+                    >Optimization &amp; Weights</span
+                  >
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >
+                    AdamW, learning rate schedules, checkpoint saving (.pt), and
+                    evaluation metrics.
+                  </p>
+                </div>
+                <span
+                  class="text-secondary font-label-code-sm text-label-code-sm mt-3 flex items-center gap-1"
+                >
+                  <span class="material-symbols-outlined text-xs"
+                    >trending_up</span
+                  >
+                  Hyperparameter Tuning
+                </span>
+              </div>
+              <!-- Step 5 -->
+              <div
+                class="p-space-sm rounded bg-surface-container-low flex flex-col justify-between border-r-2 border-tertiary"
+              >
+                <div class="flex flex-col">
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm font-bold"
+                      >Step 5</span
+                    >
+                    <span
+                      class="font-label-code-sm text-label-code-sm text-outline"
+                      >7 hrs</span
+                    >
+                  </div>
+                  <span
+                    class="font-body-sm text-body-sm text-on-surface font-semibold mt-2"
+                    >Push Flagship DL Repo</span
+                  >
+                  <p
+                    class="font-body-sm text-body-sm text-on-surface-variant mt-1"
+                  >
+                    Publish fully reproducible repository with documented test
+                    set accuracy.
+                  </p>
+                </div>
+                <span
+                  class="text-tertiary font-label-code-sm text-label-code-sm mt-3 flex items-center gap-1 font-semibold"
+                >
+                  <span class="material-symbols-outlined text-xs"
+                    >verified</span
+                  >
+                  Portfolio Verification
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between pt-space-xs">
+              <span class="font-body-sm text-body-sm text-on-surface-variant">
+                Completing this module eliminates your highest risk cutoff and
+                raises your placement coverage from
+                <strong>68% to 74.5%</strong>.
+              </span>
+              <button
+                class="px-space-md py-1.5 rounded bg-primary-container text-on-primary font-body-sm text-body-sm font-medium hover:bg-primary-container/80 transition-colors flex items-center gap-1"
+              >
+                <span class="material-symbols-outlined text-base">route</span>
+                <span>Add 25-Hour Deep Learning Path to Roadmap</span>
+              </button>
+            </div>
+          </div>
+          <!-- 12. INTER-MODULE CONNECTIONS (BRIDGE TO OTHER SCREENSHOTS) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+            <!-- Link 1: Project Intelligence -->
+            <div
+              class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm"
+            >
+              <div class="flex flex-col gap-space-xs">
+                <div class="flex items-center gap-2 text-primary">
+                  <span class="material-symbols-outlined text-lg"
+                    >inventory_2</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider font-bold"
+                    >Project Intelligence Bridge</span
+                  >
+                </div>
+                <h3
+                  class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                >
+                  Close 3 Gaps in One Project
+                </h3>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Build "Production ML API with FastAPI &amp; Docker" to close
+                  your Docker, FastAPI, and Deployment gaps in a single
+                  portfolio piece.
+                </p>
+              </div>
+              <a
+                class="mt-space-md text-primary font-body-sm text-body-sm font-medium hover:underline flex items-center gap-1"
+                href="#"
+              >
+                <span>Open Project Analyzer</span>
+                <span class="material-symbols-outlined text-sm"
+                  >arrow_forward</span
+                >
+              </a>
+            </div>
+            <!-- Link 2: LeetCode Intelligence -->
+            <div
+              class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm"
+            >
+              <div class="flex flex-col gap-space-xs">
+                <div class="flex items-center gap-2 text-secondary">
+                  <span class="material-symbols-outlined text-lg"
+                    >terminal</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider font-bold"
+                    >LeetCode Intelligence Bridge</span
+                  >
+                </div>
+                <h3
+                  class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                >
+                  DSA Screening Deficits
+                </h3>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  10 targeted Dynamic Programming &amp; 8 Graph problems curated
+                  to fix your 20% DP pass rate before technical screening
+                  rounds.
+                </p>
+              </div>
+              <a
+                class="mt-space-md text-secondary font-body-sm text-body-sm font-medium hover:underline flex items-center gap-1"
+                href="#"
+              >
+                <span>View Curated Problem Set</span>
+                <span class="material-symbols-outlined text-sm"
+                  >arrow_forward</span
+                >
+              </a>
+            </div>
+            <!-- Link 3: Resume Intelligence -->
+            <div
+              class="p-space-md rounded bg-surface-container flex flex-col justify-between shadow-sm"
+            >
+              <div class="flex flex-col gap-space-xs">
+                <div class="flex items-center gap-2 text-tertiary">
+                  <span class="material-symbols-outlined text-lg"
+                    >description</span
+                  >
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider font-bold"
+                    >Resume Verification Bridge</span
+                  >
+                </div>
+                <h3
+                  class="font-headline-sm text-headline-sm text-on-surface mt-1"
+                >
+                  Safe Resume Synchronization
+                </h3>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Do not add Docker or Deep Learning to your resume skills
+                  section until your GitHub repositories corroborate commit
+                  evidence.
+                </p>
+              </div>
+              <a
+                class="mt-space-md text-tertiary font-body-sm text-body-sm font-medium hover:underline flex items-center gap-1"
+                href="#"
+              >
+                <span>Check Resume ATS Guardrails</span>
+                <span class="material-symbols-outlined text-sm"
+                  >arrow_forward</span
+                >
+              </a>
+            </div>
+          </div>
+          <!-- 13. STICKY NEXT BEST ACTION FOOTER BANNER -->
+          <div
+            class="p-space-md rounded bg-surface-container-high shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md border-l-4 border-primary"
+          >
+            <div class="flex items-center gap-space-md">
+              <div
+                class="p-2.5 rounded bg-primary-container text-on-primary flex items-center justify-center shrink-0"
+              >
+                <span class="material-symbols-outlined text-2xl"
+                  >rocket_launch</span
+                >
+              </div>
+              <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-primary font-bold"
+                    >Recommended Next Action</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-label-code-sm font-semibold"
+                  >
+                    +7.2 pts Placement Boost
+                  </span>
+                </div>
+                <p
+                  class="font-body-sm text-body-sm text-on-surface font-medium mt-0.5"
+                >
+                  Eliminate your 2 critical Tier-1 disqualifiers: Complete the
+                  8-hour Docker containerization sprint and start the Deep
+                  Learning fundamentals module.
+                </p>
+                <span
+                  class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+                  >Estimated weekly commitment: 8–10 hours</span
+                >
+              </div>
+            </div>
+            <div class="flex items-center gap-space-sm flex-wrap shrink-0">
+              <button
+                class="px-space-md py-2 rounded bg-surface-container-highest hover:bg-surface-bright text-on-surface font-body-sm text-body-sm transition-colors"
+              >
+                View LeetCode Plan
+              </button>
+              <button
+                class="px-space-md py-2 rounded bg-secondary-container hover:bg-secondary-container/90 text-on-secondary font-body-sm text-body-sm font-medium transition-colors"
+              >
+                Start Docker Sprint
+              </button>
+              <button
+                class="px-space-md py-2 rounded bg-primary-container hover:bg-primary-container/90 text-on-primary font-body-sm text-body-sm font-medium transition-all shadow-sm flex items-center gap-1"
+              >
+                <span>Generate 90-Day Roadmap</span>
+                <span class="material-symbols-outlined text-base"
+                  >arrow_forward</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Client-side Interactive Behavior -->
+        <script>
+          // Simple micro-interaction for Refresh Button
+          const refreshBtn = document.getElementById("btn-refresh");
+          if (refreshBtn) {
+            refreshBtn.addEventListener("click", () => {
+              const icon = refreshBtn.querySelector(
+                ".material-symbols-outlined",
+              );
+              if (icon) {
+                icon.classList.add("animate-spin");
+                setTimeout(() => {
+                  icon.classList.remove("animate-spin");
+                }, 800);
+              }
+            });
+          }
+
+          // Role selector simulated calibration feedback
+          const roleSelect = document.getElementById("role-selector");
+          if (roleSelect) {
+            roleSelect.addEventListener("change", (e) => {
+              console.log(`Calibrating benchmark to: ${e.target.value}`);
+            });
+          }
+        </script>
+      </main>
+    </div>
+    <footer
+      class="fixed bottom-0 left-0 right-0 h-10 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-margin-md text-on-surface-variant font-label-code-sm text-label-code-sm"
+    >
+      <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-space-xs">
+          <span class="w-2 h-2 rounded-full bg-tertiary"></span
+          ><span>GitHub &amp; LeetCode synced 12m ago</span>
+        </div>
+        <span class="text-outline">|</span>
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-sm text-secondary"
+            >bolt</span
+          ><span>Copilot v4.2 Active</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <a
+          class="flex items-center gap-space-xs hover:text-on-surface transition-colors"
+          href="#"
+          ><span class="material-symbols-outlined text-sm">help_outline</span
+          ><span>Help &amp; Docs</span></a
+        ><a
+          class="flex items-center gap-space-xs hover:text-on-surface transition-colors"
+          href="#"
+          ><span class="material-symbols-outlined text-sm">feedback</span
+          ><span>Feedback</span></a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

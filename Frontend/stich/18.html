@@ -1,0 +1,2300 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @layer base {
+        html,
+        body {
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          overscroll-behavior: none;
+        }
+        main > :first-child {
+          margin-top: 0 !important;
+        }
+        main > :last-child {
+          margin-bottom: 0 !important;
+        }
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-surface": "#dfe2f1",
+              "outline-variant": "#464554",
+              secondary: "#ddb7ff",
+              "surface-bright": "#353944",
+              "primary-fixed": "#e1e0ff",
+              "secondary-fixed-dim": "#ddb7ff",
+              "error-container": "#93000a",
+              "surface-variant": "#313540",
+              "on-primary-fixed": "#07006c",
+              "primary-fixed-dim": "#c0c1ff",
+              "on-tertiary-fixed": "#002113",
+              "surface-container-highest": "#313540",
+              "on-secondary": "#490080",
+              "secondary-fixed": "#f0dbff",
+              error: "#ffb4ab",
+              "on-primary-container": "#0d0096",
+              "on-error": "#690005",
+              "on-surface-variant": "#c7c4d7",
+              "surface-container-lowest": "#0a0e18",
+              "tertiary-fixed": "#6ffbbe",
+              tertiary: "#4edea3",
+              "on-primary": "#1000a9",
+              "on-secondary-fixed-variant": "#6900b3",
+              "on-surface": "#dfe2f1",
+              "on-tertiary-container": "#000703",
+              "tertiary-fixed-dim": "#4edea3",
+              "on-secondary-container": "#d6a9ff",
+              background: "#0f131d",
+              "inverse-primary": "#494bd6",
+              "on-background": "#dfe2f1",
+              "surface-container-low": "#171b26",
+              surface: "#0f131d",
+              "surface-tint": "#c0c1ff",
+              "on-tertiary": "#003824",
+              "surface-dim": "#0f131d",
+              "on-error-container": "#ffdad6",
+              "inverse-on-surface": "#2c303b",
+              "surface-container-high": "#262a35",
+              "secondary-container": "#6f00be",
+              "surface-container": "#1c1f2a",
+              primary: "#c0c1ff",
+              "primary-container": "#8083ff",
+              "tertiary-container": "#00885d",
+              "on-secondary-fixed": "#2c0051",
+              "on-primary-fixed-variant": "#2f2ebe",
+              outline: "#908fa0",
+              "on-tertiary-fixed-variant": "#005236",
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "0.75rem",
+            },
+            spacing: {
+              "space-xs": "0.25rem",
+              "space-sm": "0.5rem",
+              gutter: "1rem",
+              "space-lg": "1.25rem",
+              "margin-lg": "2rem",
+              "space-xl": "1.75rem",
+              margin: "1rem",
+              "margin-md": "1.5rem",
+              "gutter-lg": "1.5rem",
+              "space-md": "0.75rem",
+            },
+            fontFamily: {
+              "body-md": ["Inter"],
+              "headline-lg-mobile": ["Inter"],
+              "headline-xl-mobile": ["Inter"],
+              "headline-xl": ["Inter"],
+              "label-code-lg": ["JetBrains Mono"],
+              "headline-md": ["Inter"],
+              "label-code-md": ["JetBrains Mono"],
+              "body-sm": ["Inter"],
+              "headline-lg": ["Inter"],
+              "headline-sm": ["Inter"],
+              "label-code-sm": ["JetBrains Mono"],
+              "body-lg": ["Inter"],
+            },
+            fontSize: {
+              "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+              "headline-lg-mobile": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "headline-xl-mobile": [
+                "30px",
+                { lineHeight: "36px", fontWeight: "700" },
+              ],
+              "headline-xl": [
+                "40px",
+                { lineHeight: "48px", fontWeight: "700" },
+              ],
+              "label-code-lg": [
+                "14px",
+                { lineHeight: "20px", fontWeight: "500" },
+              ],
+              "headline-md": [
+                "24px",
+                { lineHeight: "32px", fontWeight: "600" },
+              ],
+              "label-code-md": [
+                "12px",
+                { lineHeight: "16px", fontWeight: "500" },
+              ],
+              "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+              "headline-lg": [
+                "32px",
+                { lineHeight: "40px", fontWeight: "600" },
+              ],
+              "headline-sm": [
+                "18px",
+                { lineHeight: "26px", fontWeight: "600" },
+              ],
+              "label-code-sm": [
+                "11px",
+                { lineHeight: "14px", fontWeight: "600" },
+              ],
+              "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-surface font-body-md text-body-md text-on-surface min-h-screen"
+  >
+    <header
+      class="fixed top-0 left-0 right-0 z-50 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant flex items-center justify-between px-margin-md"
+    >
+      <div class="flex items-center gap-space-md">
+        <img
+          alt="AI Placement Copilot Logo"
+          class="h-8 w-auto object-contain"
+          src="https://lh3.googleusercontent.com/aida/AEtjO1VmFJwwZ3SYidlowARETMWcoSA3RdAJTsdHTW9PYrTMu4m-kMVY2OQeNqIaM7-y3IfdY_DsZRr3zVcrWAPGh_fBJn0unmisK_Hw7uNBx6WCTfWaAfXIzaWSeETc4iPIZ1i6eAyRU5_5dd-VaDsfMu2DSSmlGC4V6PqUdX3d5jz2k4noXU3g0Oy4gey2zxx9G1dJxtWM2Jru2fPvjuPa_7MLN8p5kdDHd2n9CFA_11YsPOffMoNikuTE14cU"
+        />
+        <div class="flex flex-col">
+          <span
+            class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none"
+            >AI Placement Copilot</span
+          ><span
+            class="font-label-code-sm text-label-code-sm text-secondary tracking-wide uppercase"
+            >Engineering Suite</span
+          >
+        </div>
+        <div
+          class="hidden xl:flex items-center gap-space-sm ml-space-md pl-space-md border-l border-outline-variant"
+        >
+          <div
+            class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-sm text-primary"
+              >track_changes</span
+            ><span class="font-body-sm text-body-sm text-on-surface-variant"
+              >Targeting:
+              <strong class="text-on-surface font-medium"
+                >SDE-1 @ Tier-1 Tech (Google / Uber / Atlassian)</strong
+              ></span
+            >
+          </div>
+          <div
+            class="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-container rounded border border-outline-variant"
+          >
+            <span class="material-symbols-outlined text-sm text-tertiary"
+              >timer</span
+            ><span class="font-body-sm text-body-sm text-on-surface-variant"
+              >Campus Drive:
+              <strong class="text-tertiary font-medium"
+                >Day 42 / 90</strong
+              ></span
+            >
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <div
+          class="hidden md:flex items-center bg-surface-container px-space-md py-1 rounded border border-outline-variant text-on-surface-variant w-64 justify-between"
+        >
+          <div class="flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-base">search</span
+            ><span class="font-body-sm text-body-sm">Quick Search...</span>
+          </div>
+          <span
+            class="font-label-code-sm text-label-code-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface"
+            >⌘K</span
+          >
+        </div>
+        <div
+          class="hidden sm:flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded border border-tertiary/30 shadow-[0_0_12px_rgba(78,222,163,0.15)]"
+        >
+          <span class="material-symbols-outlined text-base text-tertiary"
+            >verified</span
+          >
+          <div class="flex flex-col">
+            <span
+              class="font-label-code-sm text-label-code-sm uppercase text-on-surface-variant"
+              >Readiness</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-tertiary font-semibold"
+              >78/100</span
+            >
+          </div>
+        </div>
+        <button
+          class="flex items-center gap-space-xs px-space-sm py-1.5 bg-secondary-container text-on-secondary rounded border border-secondary/40 hover:bg-secondary hover:text-on-secondary transition-all shadow-[0_0_12px_rgba(168,85,247,0.25)]"
+        >
+          <span class="material-symbols-outlined text-base">auto_awesome</span
+          ><span class="hidden lg:inline font-body-sm text-body-sm font-medium"
+            >AI Copilot</span
+          >
+        </button>
+        <div class="relative flex items-center">
+          <button
+            aria-label="Notifications"
+            class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded transition-colors"
+          >
+            <span class="material-symbols-outlined text-xl"
+              >notifications</span
+            ></button
+          ><span
+            class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full ring-2 ring-surface-container-lowest"
+          ></span>
+        </div>
+        <div
+          class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant"
+        >
+          <img
+            alt="Profile"
+            class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe6qOWJykQrxJdHtXtgIxzmPTV46RVlCqBUSxQYgWicqEOReYIcd4bguLZ5uWcFsrgNsYDrQWLh5iwhY6kPWl2cDOlO3MPMyces7YY16tuQ1DHLO_xweRYj9-EoRTUg9VtwUJtSG_bA3pTGTgXAe-d1JhXRyiVSRZfMhFCDwumL01q_jvxsE9j0fTX1BaZOHrhAwh0qFYHnl2dCKD5WLpH3VAgVI7WsAdFrbMTHlUqol3UnXF8iQtV4Q"
+          />
+          <div class="hidden 2xl:flex flex-col text-left">
+            <span
+              class="font-body-sm text-body-sm text-on-surface font-medium leading-tight"
+              >Arjun Sharma</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant"
+              >Final Year B.Tech CSE</span
+            >
+          </div>
+          <span
+            class="material-symbols-outlined text-base text-on-surface-variant"
+            >expand_more</span
+          >
+        </div>
+      </div>
+    </header>
+    <aside
+      class="fixed left-0 top-16 bottom-10 w-72 bg-surface-container-lowest border-r border-outline-variant z-40 overflow-y-auto flex flex-col justify-between p-space-sm"
+    >
+      <nav
+        class="flex flex-col gap-space-md w-full"
+        data-active-classes="bg-primary-container text-on-primary font-semibold rounded border border-primary"
+      >
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Main</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="dashboard"
+            href="#"
+            ><span class="font-body-md text-body-md">Dashboard</span
+            ><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span
+          ></a>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Preparation</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="resume-intel"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Resume Intel</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >84/100</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="github-intel"
+            href="#"
+            ><span class="font-body-sm text-body-sm">GitHub Intel</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container px-1 rounded"
+              >Top 12%</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="leetcode-intel"
+            href="#"
+            ><span class="font-body-sm text-body-sm">LeetCode Intel</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1 rounded"
+              >385</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="project-analyzer"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Project Analyzer</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1 rounded"
+              >4 eval</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Intelligence</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="placement-readiness"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Placement Readiness</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >78%</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="skill-gap-analyzer"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Skill Gap Analyzer</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-error bg-surface-container px-1 rounded"
+              >3 Gaps</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Planning</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="90-day-roadmap"
+            href="#"
+            ><span class="font-body-sm text-body-sm">90-Day Roadmap</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-primary bg-surface-container px-1 rounded"
+              >Phase 2</span
+            ></a
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="todays-tasks"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Today's Tasks</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-tertiary bg-surface-container px-1 rounded"
+              >4/6</span
+            ></a
+          ><a
+            class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+            data-path="progress-tracking"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Progress Tracking</span></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >Practice</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="ai-mock-interview"
+            href="#"
+            ><span class="font-body-sm text-body-sm">AI Mock Interview</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container px-1 rounded"
+              >Next</span
+            ></a
+          ><a
+            class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+            data-path="communication-coach"
+            href="#"
+            ><span class="font-body-sm text-body-sm"
+              >Communication Coach</span
+            ></a
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <span
+            class="px-space-sm font-label-code-sm text-label-code-sm uppercase tracking-wider text-outline"
+            >AI Core</span
+          ><a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="ai-mentor"
+            href="#"
+            ><span class="font-body-sm text-body-sm">AI Mentor</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-secondary bg-secondary-container/40 border border-secondary/30 px-1 rounded"
+              >24/7 Live</span
+            ></a
+          >
+        </div>
+      </nav>
+      <div
+        class="flex flex-col gap-1 pt-space-md border-t border-outline-variant mt-space-md"
+      >
+        <nav
+          class="flex flex-col gap-1 w-full"
+          data-active-classes="bg-primary-container text-on-primary font-semibold rounded border border-primary"
+        >
+          <a
+            class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+            data-path="achievements"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Achievements</span
+            ><span
+              class="font-label-code-sm text-label-code-sm text-primary bg-surface-container px-1 rounded"
+              >14</span
+            ></a
+          ><a
+            class="flex items-center px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-space-sm"
+            data-path="profile"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Profile</span></a
+          ><a
+            aria-current="page"
+            class="flex items-center px-space-sm py-1.5 transition-all gap-space-sm bg-primary-container text-on-primary font-semibold rounded border border-primary"
+            data-path="settings"
+            href="#"
+            ><span class="font-body-sm text-body-sm">Settings</span></a
+          >
+        </nav>
+      </div>
+    </aside>
+    <div class="pl-72">
+      <main
+        class="w-full pt-16 pb-14 px-gutter-lg bg-surface min-h-[calc(100vh-2.5rem)]"
+      >
+        <div class="flex flex-col w-full">
+          <!-- Notification Toast Simulation (Hidden by default, triggered on save) -->
+          <div
+            class="fixed bottom-14 right-8 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container-highest text-on-surface rounded shadow-xl"
+            id="saveToast"
+          >
+            <span class="material-symbols-outlined text-tertiary text-lg"
+              >check_circle</span
+            >
+            <div class="flex flex-col">
+              <span
+                class="font-headline-sm text-xs text-on-surface font-semibold"
+                >Settings Synchronized</span
+              >
+              <span class="font-label-code-sm text-[11px] text-tertiary"
+                >All AI reasoning matrices &amp; telemetry refreshed</span
+              >
+            </div>
+          </div>
+          <!-- Main Viewport Layout -->
+          <div class="w-full max-w-[1380px] mx-auto flex flex-col gap-space-lg">
+            <!-- Section: Header Strip -->
+            <div
+              class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md pb-space-md"
+            >
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-space-sm">
+                  <div
+                    class="w-7 h-7 rounded bg-secondary-container/40 flex items-center justify-center text-secondary"
+                  >
+                    <span class="material-symbols-outlined text-base"
+                      >settings_suggest</span
+                    >
+                  </div>
+                  <span
+                    class="font-label-code-sm text-secondary uppercase tracking-widest"
+                    >Engineering Suite · Engine Config</span
+                  >
+                  <span
+                    class="px-2 py-0.5 rounded bg-surface-container-high font-label-code-sm text-[10px] text-tertiary"
+                    >KERNEL v4.2-ACTIVE</span
+                  >
+                </div>
+                <h1
+                  class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight"
+                >
+                  System &amp; AI Settings
+                </h1>
+                <p class="font-body-sm text-on-surface-variant max-w-2xl">
+                  Configure your placement targets, AI reasoning parameters,
+                  telemetry weights, notification cadence, and account privacy.
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-space-sm">
+                <div
+                  class="hidden sm:flex items-center gap-space-xs px-space-sm py-1.5 bg-surface-container-low rounded"
+                >
+                  <span
+                    class="w-2 h-2 rounded-full bg-tertiary animate-pulse"
+                  ></span>
+                  <span
+                    class="font-label-code-sm text-on-surface-variant text-[11px]"
+                    >Synced to local engine:
+                    <strong class="text-on-surface font-mono"
+                      >0ms delta</strong
+                    ></span
+                  >
+                </div>
+                <button
+                  class="px-space-md py-2 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface rounded font-body-sm font-medium transition-colors"
+                  id="discardBtn"
+                >
+                  Discard
+                </button>
+                <button
+                  class="flex items-center gap-space-xs px-space-md py-2 bg-secondary-container hover:bg-secondary text-on-secondary hover:text-on-secondary transition-all rounded shadow-md font-body-sm font-medium"
+                  id="saveAllBtn"
+                >
+                  <span class="material-symbols-outlined text-base"
+                    >auto_awesome</span
+                  >
+                  <span>Save All Changes</span>
+                </button>
+              </div>
+            </div>
+            <!-- Layout Grid: Left Settings Navigation Pill Stack + Right Interactive Panels -->
+            <div
+              class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start"
+            >
+              <!-- LEFT COLUMN: Sticky Navigation Pills (3 cols) -->
+              <div
+                class="lg:col-span-3 lg:sticky lg:top-20 flex flex-col gap-space-md"
+              >
+                <!-- Navigation Menu Container -->
+                <div
+                  class="flex flex-col bg-surface-container-lowest rounded p-space-sm shadow-sm gap-1"
+                >
+                  <div
+                    class="px-space-sm py-1 flex items-center justify-between"
+                  >
+                    <span
+                      class="font-label-code-sm text-[11px] text-outline uppercase tracking-wider"
+                      >Configuration Modules</span
+                    >
+                    <span
+                      class="font-label-code-sm text-[10px] text-on-surface-variant bg-surface-container px-1.5 py-0.2 rounded"
+                      >8 tabs</span
+                    >
+                  </div>
+                  <button
+                    class="settings-nav-pill active flex items-center justify-between px-space-sm py-2 rounded text-left transition-all bg-primary-container text-on-primary font-medium"
+                    data-target="section-placement"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >track_changes</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >Placement &amp; Role Goals</span
+                      >
+                    </div>
+                    <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-telemetry"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >memory</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >AI Personalization</span
+                      >
+                    </div>
+                    <span
+                      class="font-label-code-sm text-[10px] text-secondary bg-surface-container px-1 rounded"
+                      >7 active</span
+                    >
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-mentor"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >record_voice_over</span
+                      >
+                      <span class="font-body-sm truncate">Mentor Persona</span>
+                    </div>
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-notifications"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >notifications_active</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >Notifications &amp; Cadence</span
+                      >
+                    </div>
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-privacy"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >shield_person</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >Privacy &amp; Data Usage</span
+                      >
+                    </div>
+                    <span
+                      class="font-label-code-sm text-[10px] text-tertiary bg-surface-container px-1 rounded"
+                      >Strict</span
+                    >
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-integrations"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >hub</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >Connected Accounts</span
+                      >
+                    </div>
+                    <span
+                      class="font-label-code-sm text-[10px] text-tertiary bg-surface-container px-1 rounded"
+                      >3 linked</span
+                    >
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-target="section-security"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >lock</span
+                      >
+                      <span class="font-body-sm truncate"
+                        >Account &amp; Security</span
+                      >
+                    </div>
+                  </button>
+                  <button
+                    class="settings-nav-pill flex items-center justify-between px-space-sm py-2 rounded text-left text-error hover:bg-error-container/20 transition-all"
+                    data-target="section-danger"
+                  >
+                    <div class="flex items-center gap-space-sm min-w-0">
+                      <span class="material-symbols-outlined text-base shrink-0"
+                        >warning</span
+                      >
+                      <span class="font-body-sm font-medium truncate"
+                        >Danger Zone</span
+                      >
+                    </div>
+                  </button>
+                </div>
+                <!-- Telemetry Summary Widget (Compact Info Box) -->
+                <div
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-sm"
+                >
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="font-label-code-sm text-[11px] text-on-surface uppercase"
+                      >Telemetry Load</span
+                    >
+                    <span class="font-label-code-sm text-tertiary font-semibold"
+                      >OPTIMAL (94%)</span
+                    >
+                  </div>
+                  <!-- Sparkline representation of processing capacity -->
+                  <div
+                    class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="bg-gradient-to-r from-tertiary via-primary to-secondary h-full rounded-full w-[94%]"
+                    ></div>
+                  </div>
+                  <p class="font-body-sm text-[11px] text-on-surface-variant">
+                    Adaptive model has calibrated
+                    <strong class="text-on-surface">1,480 prompt tokens</strong>
+                    allocated for immediate live interview latency (&lt;240ms).
+                  </p>
+                </div>
+              </div>
+              <!-- RIGHT COLUMN: Configuration Panels (9 cols) -->
+              <div class="lg:col-span-9 flex flex-col gap-space-lg">
+                <!-- SECTION 1: Placement & Role Targets -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-placement"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-primary"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >track_changes</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-on-surface"
+                        >
+                          Placement &amp; Role Targets
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Calibrate company tiers, role taxonomies, and time
+                          sprint deadlines.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="font-label-code-sm text-[11px] text-tertiary bg-surface-container px-2 py-1 rounded"
+                      >Target: Day 34 / 90</span
+                    >
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+                    <!-- Target Track Dropdown -->
+                    <div class="flex flex-col gap-1.5">
+                      <label
+                        class="font-body-sm text-on-surface font-medium flex items-center justify-between"
+                      >
+                        <span>Target Primary Track</span>
+                        <span
+                          class="font-label-code-sm text-[11px] text-secondary font-mono"
+                          >PRIORITY 1.0</span
+                        >
+                      </label>
+                      <div class="relative">
+                        <select
+                          class="w-full bg-surface-container text-on-surface px-space-md py-2.5 rounded font-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-high transition-colors pr-10"
+                        >
+                          <option selected="">
+                            Backend Developer (Tier-1 SDE / FAANG+)
+                          </option>
+                          <option>
+                            Full-Stack Systems Engineer (Mid-to-High Scale)
+                          </option>
+                          <option>
+                            Systems &amp; Cloud Infrastructure Engineer
+                          </option>
+                          <option>
+                            AI Platform / Machine Learning Engineer
+                          </option>
+                        </select>
+                        <span
+                          class="material-symbols-outlined pointer-events-none absolute right-3 top-2.5 text-on-surface-variant"
+                          >expand_more</span
+                        >
+                      </div>
+                      <span
+                        class="font-body-sm text-[11px] text-on-surface-variant"
+                        >Influences DSA difficulty weights (Graph, Dynamic
+                        Programming, and Concurrency).</span
+                      >
+                    </div>
+                    <!-- Secondary Track Dropdown -->
+                    <div class="flex flex-col gap-1.5">
+                      <label
+                        class="font-body-sm text-on-surface font-medium flex items-center justify-between"
+                      >
+                        <span>Secondary Fallback Track</span>
+                        <span
+                          class="font-label-code-sm text-[11px] text-outline font-mono"
+                          >OPTIONAL</span
+                        >
+                      </label>
+                      <div class="relative">
+                        <select
+                          class="w-full bg-surface-container text-on-surface px-space-md py-2.5 rounded font-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-container-high transition-colors pr-10"
+                        >
+                          <option>Distributed Systems Architecture</option>
+                          <option selected="">
+                            AI / ML Engineer &amp; Inference Pipeline
+                          </option>
+                          <option>DevOps / SRE Specialist</option>
+                          <option>None (Single Track Focus)</option>
+                        </select>
+                        <span
+                          class="material-symbols-outlined pointer-events-none absolute right-3 top-2.5 text-on-surface-variant"
+                          >expand_more</span
+                        >
+                      </div>
+                      <span
+                        class="font-body-sm text-[11px] text-on-surface-variant"
+                        >Injected into System Design mock interview prompts as
+                        bonus questions.</span
+                      >
+                    </div>
+                  </div>
+                  <!-- Target Drive Timeline Progress Component -->
+                  <div
+                    class="flex flex-col gap-space-xs p-space-md bg-surface-container rounded"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-space-xs">
+                        <span
+                          class="material-symbols-outlined text-secondary text-base"
+                          >flag</span
+                        >
+                        <span
+                          class="font-headline-sm text-sm text-on-surface font-medium"
+                          >90-Day Placement Sprint Target</span
+                        >
+                      </div>
+                      <span
+                        class="font-label-code-sm text-xs text-on-surface-variant font-mono"
+                        >Ends Nov 15, 2025 (56 days remaining)</span
+                      >
+                    </div>
+                    <!-- Custom segmented milestone bar -->
+                    <div class="grid grid-cols-3 gap-1 py-1">
+                      <div class="flex flex-col gap-1">
+                        <div class="h-1.5 bg-tertiary rounded-full"></div>
+                        <span
+                          class="font-label-code-sm text-[10px] text-tertiary"
+                          >Phase 1: Core DSA (Done)</span
+                        >
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <div class="h-1.5 bg-secondary rounded-full"></div>
+                        <span
+                          class="font-label-code-sm text-[10px] text-secondary font-bold"
+                          >Phase 2: SysDesign (Active)</span
+                        >
+                      </div>
+                      <div class="flex flex-col gap-1">
+                        <div
+                          class="h-1.5 bg-surface-container-highest rounded-full"
+                        ></div>
+                        <span
+                          class="font-label-code-sm text-[10px] text-outline"
+                          >Phase 3: Live Mocks</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Daily Study Commitment Radios -->
+                  <div class="flex flex-col gap-space-xs">
+                    <label class="font-body-sm text-on-surface font-medium"
+                      >Daily Study Commitment</label
+                    >
+                    <div
+                      class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm"
+                      id="studyCommitmentGroup"
+                    >
+                      <label
+                        class="cursor-pointer flex items-center justify-between p-space-sm bg-surface-container hover:bg-surface-container-high rounded transition-colors"
+                      >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >1.0 hr</span
+                          >
+                          <span
+                            class="font-label-code-sm text-[10px] text-on-surface-variant"
+                            >Maintenance</span
+                          >
+                        </div>
+                        <input
+                          class="accent-secondary h-4 w-4"
+                          name="study_hours"
+                          type="radio"
+                          value="1"
+                        />
+                      </label>
+                      <label
+                        class="cursor-pointer flex items-center justify-between p-space-sm bg-surface-container-high rounded transition-colors shadow-inner"
+                      >
+                        <div class="flex flex-col">
+                          <span
+                            class="font-body-sm text-secondary font-semibold"
+                            >2.5 hrs</span
+                          >
+                          <span
+                            class="font-label-code-sm text-[10px] text-secondary"
+                            >Optimal Sprint</span
+                          >
+                        </div>
+                        <input
+                          checked=""
+                          class="accent-secondary h-4 w-4"
+                          name="study_hours"
+                          type="radio"
+                          value="2.5"
+                        />
+                      </label>
+                      <label
+                        class="cursor-pointer flex items-center justify-between p-space-sm bg-surface-container hover:bg-surface-container-high rounded transition-colors"
+                      >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >4.0 hrs</span
+                          >
+                          <span
+                            class="font-label-code-sm text-[10px] text-on-surface-variant"
+                            >High Intensity</span
+                          >
+                        </div>
+                        <input
+                          class="accent-secondary h-4 w-4"
+                          name="study_hours"
+                          type="radio"
+                          value="4"
+                        />
+                      </label>
+                      <label
+                        class="cursor-pointer flex items-center justify-between p-space-sm bg-surface-container hover:bg-surface-container-high rounded transition-colors"
+                      >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Custom</span
+                          >
+                          <span
+                            class="font-label-code-sm text-[10px] text-on-surface-variant"
+                            >Variable</span
+                          >
+                        </div>
+                        <input
+                          class="accent-secondary h-4 w-4"
+                          name="study_hours"
+                          type="radio"
+                          value="custom"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <!-- Preferred Study Time Multi-Select Chips -->
+                  <div class="flex flex-col gap-space-xs">
+                    <label class="font-body-sm text-on-surface font-medium"
+                      >Preferred Focus Windows (Multi-select)</label
+                    >
+                    <div
+                      class="flex flex-wrap gap-space-xs"
+                      id="studyWindowsGroup"
+                    >
+                      <button
+                        class="chip-filter px-space-md py-1.5 rounded text-xs font-body-sm font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                        type="button"
+                      >
+                        🌅 Early Morning (06:00 - 09:00)
+                      </button>
+                      <button
+                        class="chip-filter active px-space-md py-1.5 rounded text-xs font-body-sm font-medium bg-secondary-container text-on-secondary shadow-sm transition-colors"
+                        type="button"
+                      >
+                        🌇 Evening (18:00 - 21:00)
+                      </button>
+                      <button
+                        class="chip-filter active px-space-md py-1.5 rounded text-xs font-body-sm font-medium bg-secondary-container text-on-secondary shadow-sm transition-colors"
+                        type="button"
+                      >
+                        🌙 Late Night (22:00 - 01:30)
+                      </button>
+                      <button
+                        class="chip-filter px-space-md py-1.5 rounded text-xs font-body-sm font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                        type="button"
+                      >
+                        ⚡ Flexible / Weekend Bursts
+                      </button>
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 2: AI Personalization & Context Telemetry -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-telemetry"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-secondary"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >psychology</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-space-xs">
+                          <h2
+                            class="font-headline-sm text-headline-sm text-on-surface"
+                          >
+                            AI Personalization &amp; Context Telemetry
+                          </h2>
+                          <span
+                            class="px-2 py-0.5 rounded bg-secondary-container/40 text-secondary font-label-code-sm text-[10px]"
+                            >RAG ACTIVE</span
+                          >
+                        </div>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Control which telemetry vectors the AI placement
+                          engine uses to adapt your roadmap and interview
+                          drills.</span
+                        >
+                      </div>
+                    </div>
+                    <button
+                      class="font-label-code-sm text-xs text-secondary hover:underline"
+                      id="toggleAllTelemetryBtn"
+                    >
+                      Select All
+                    </button>
+                  </div>
+                  <!-- Telemetry Toggle Items Stack -->
+                  <div class="flex flex-col gap-space-xs divide-y-0">
+                    <!-- Telemetry Item 1 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-tertiary text-lg mt-0.5"
+                          >description</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use Resume Context (ATS 84% Vector Cache)</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Injects projects, work experiences, and parsed
+                            skills into personalized questions.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 2 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-secondary text-lg mt-0.5"
+                          >code</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use GitHub Repository AST Scanner</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Analyzes commit architecture, test-coverage depth,
+                            and code smells across linked repositories.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 3 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-primary text-lg mt-0.5"
+                          >terminal</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use LeetCode Submission History</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Feeds 385 solved problem tags, runtime percentiles,
+                            and failure frequencies into daily tasks.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 4 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-secondary text-lg mt-0.5"
+                          >architecture</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use Project Intelligence Code Evaluation</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Includes deep system design and API breakdown
+                            metrics for your 4 evaluated portfolio
+                            projects.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 5 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-tertiary text-lg mt-0.5"
+                          >mic</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use Mock Interview Performance Transcripts</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Transcribes previous AI audio sessions to identify
+                            repeated nervous filler words or logic
+                            stumbles.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 6 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-primary text-lg mt-0.5"
+                          >graphic_eq</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Use Communication Coach Speech Polish
+                            Telemetry</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Calibrates confidence scores, speaking pacing
+                            (WPM), and STAR structured response clarity.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Telemetry Item 7 -->
+                    <div
+                      class="flex items-center justify-between p-space-sm bg-surface-container rounded hover:bg-surface-container-high transition-colors"
+                    >
+                      <div class="flex items-start gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-tertiary text-lg mt-0.5"
+                          >auto_mode</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Adaptive Roadmap Dynamic Re-balancing</span
+                          >
+                          <span
+                            class="font-body-sm text-[12px] text-on-surface-variant"
+                            >Automatically swaps tomorrow's curriculum if you
+                            score under 65% on any algorithmic topic
+                            today.</span
+                          >
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer telemetry-toggle"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 3: AI Mentor & Interview Persona Calibration -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-mentor"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-primary"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >record_voice_over</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-on-surface"
+                        >
+                          AI Mentor &amp; Persona Calibration
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Adjust feedback style, rigor, and hallucination
+                          safeguards during mocks.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="px-2 py-0.5 bg-surface-container text-on-surface-variant font-label-code-sm text-[11px] rounded"
+                      >Latency: 180ms</span
+                    >
+                  </div>
+                  <!-- Response Depth Segmented Control -->
+                  <div class="flex flex-col gap-space-xs">
+                    <label
+                      class="font-body-sm text-on-surface font-medium flex items-center justify-between"
+                    >
+                      <span>Response Depth &amp; Granularity</span>
+                      <span
+                        class="font-label-code-sm text-[11px] text-on-surface-variant font-mono"
+                        >TOKENS ~ 350 max</span
+                      >
+                    </label>
+                    <div
+                      class="grid grid-cols-1 sm:grid-cols-3 gap-1 p-1 bg-surface-container rounded"
+                      id="responseDepthSegment"
+                    >
+                      <button
+                        class="segment-btn px-space-md py-2 rounded text-xs font-body-sm font-medium text-on-surface-variant hover:text-on-surface transition-all"
+                        type="button"
+                      >
+                        ⚡ Concise (60s Drills)
+                      </button>
+                      <button
+                        class="segment-btn active px-space-md py-2 rounded text-xs font-body-sm font-semibold bg-surface-container-highest text-on-surface shadow-sm transition-all"
+                        type="button"
+                      >
+                        ⚖️ Balanced (Recommended)
+                      </button>
+                      <button
+                        class="segment-btn px-space-md py-2 rounded text-xs font-body-sm font-medium text-on-surface-variant hover:text-on-surface transition-all"
+                        type="button"
+                      >
+                        🏛️ Deep Architectural
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Persona Detail Toggles -->
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex flex-col justify-between gap-space-sm"
+                    >
+                      <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Zero-Hallucination Citations</span
+                          >
+                          <label
+                            class="relative inline-flex items-center cursor-pointer"
+                          >
+                            <input
+                              checked=""
+                              class="sr-only peer"
+                              type="checkbox"
+                            />
+                            <div
+                              class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"
+                            ></div>
+                          </label>
+                        </div>
+                        <span
+                          class="font-body-sm text-[11px] text-on-surface-variant"
+                          >Always verifies advice against your uploaded code AST
+                          or LeetCode solutions.</span
+                        >
+                      </div>
+                      <span class="font-label-code-sm text-[10px] text-tertiary"
+                        >STRICT VERIFICATION: ON</span
+                      >
+                    </div>
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex flex-col justify-between gap-space-sm"
+                    >
+                      <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Next Best Action Buttons</span
+                          >
+                          <label
+                            class="relative inline-flex items-center cursor-pointer"
+                          >
+                            <input
+                              checked=""
+                              class="sr-only peer"
+                              type="checkbox"
+                            />
+                            <div
+                              class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"
+                            ></div>
+                          </label>
+                        </div>
+                        <span
+                          class="font-body-sm text-[11px] text-on-surface-variant"
+                          >Generates contextual 1-click drill triggers below
+                          every AI chat critique.</span
+                        >
+                      </div>
+                      <span
+                        class="font-label-code-sm text-[10px] text-secondary"
+                        >DYNAMIC CTAS: ENABLED</span
+                      >
+                    </div>
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex flex-col justify-between gap-space-sm"
+                    >
+                      <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Auto-Follow-Up Questions</span
+                          >
+                          <label
+                            class="relative inline-flex items-center cursor-pointer"
+                          >
+                            <input
+                              checked=""
+                              class="sr-only peer"
+                              type="checkbox"
+                            />
+                            <div
+                              class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"
+                            ></div>
+                          </label>
+                        </div>
+                        <span
+                          class="font-body-sm text-[11px] text-on-surface-variant"
+                          >Simulates brutal Tier-1 interview follow-ups (e.g.,
+                          edge cases, scaling bottlenecks).</span
+                        >
+                      </div>
+                      <span class="font-label-code-sm text-[10px] text-tertiary"
+                        >STRESS DRILLS: ACTIVE</span
+                      >
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 4: Notifications & Study Reminders -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-notifications"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-tertiary"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >notifications_active</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-on-surface"
+                        >
+                          Notifications &amp; Study Cadence
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Keep your 90-day streak intact with intelligent
+                          automated nudges.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="font-label-code-sm text-tertiary text-xs bg-surface-container px-2 py-0.5 rounded"
+                      >Streak: 21 Days 🔥</span
+                    >
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+                    <!-- Row 1: Daily Task Schedule -->
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex flex-col gap-1 pr-space-sm">
+                        <span class="font-body-sm text-on-surface font-medium"
+                          >Daily Task Dispatch</span
+                        >
+                        <span
+                          class="font-body-sm text-[12px] text-on-surface-variant"
+                          >Dispatches curated DSA problems &amp; system
+                          designs.</span
+                        >
+                        <div class="flex items-center gap-space-xs mt-1">
+                          <span
+                            class="font-label-code-sm text-[11px] text-outline"
+                            >Schedule Time:</span
+                          >
+                          <input
+                            class="bg-surface-container-highest text-on-surface font-label-code-sm text-xs px-2 py-0.5 rounded focus:outline-none cursor-pointer"
+                            type="time"
+                            value="19:00"
+                          />
+                        </div>
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer shrink-0"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Row 2: Weekly Digest -->
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex flex-col gap-1 pr-space-sm">
+                        <span class="font-body-sm text-on-surface font-medium"
+                          >Weekly Readiness Digest</span
+                        >
+                        <span
+                          class="font-body-sm text-[12px] text-on-surface-variant"
+                          >Executive summary sent every Sunday with score
+                          changes.</span
+                        >
+                        <span
+                          class="font-label-code-sm text-[11px] text-tertiary mt-1"
+                          >Delivers to arjun.sharma@campus.edu</span
+                        >
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer shrink-0"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Row 3: Critical Skill Gap Alert -->
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex flex-col gap-1 pr-space-sm">
+                        <span class="font-body-sm text-on-surface font-medium"
+                          >Tier-1 Disqualifier Warning</span
+                        >
+                        <span
+                          class="font-body-sm text-[12px] text-on-surface-variant"
+                          >Instant push notification when an interview
+                          blind-spot is identified.</span
+                        >
+                        <span
+                          class="font-label-code-sm text-[11px] text-error mt-1"
+                          >Triggers when gap &gt; 30% from target</span
+                        >
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer shrink-0"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                    <!-- Row 4: Streak Saver Reminder -->
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex flex-col gap-1 pr-space-sm">
+                        <span class="font-body-sm text-on-surface font-medium"
+                          >Streak Saver Alarm</span
+                        >
+                        <span
+                          class="font-body-sm text-[12px] text-on-surface-variant"
+                          >Urgent reminder if 0 tasks are submitted by 9:00
+                          PM.</span
+                        >
+                        <span
+                          class="font-label-code-sm text-[11px] text-secondary mt-1"
+                          >SMS &amp; Browser WebPush</span
+                        >
+                      </div>
+                      <label
+                        class="relative inline-flex items-center cursor-pointer shrink-0"
+                      >
+                        <input
+                          checked=""
+                          class="sr-only peer"
+                          type="checkbox"
+                        />
+                        <div
+                          class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"
+                        ></div>
+                      </label>
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 5: Connected Accounts & Integrations -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-integrations"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-secondary"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >hub</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-on-surface"
+                        >
+                          Connected Accounts &amp; Integration State
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Live telemetry hooks sync your ongoing code
+                          contributions in real-time.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="font-label-code-sm text-tertiary text-xs bg-surface-container px-2 py-0.5 rounded"
+                      >All APIs Green</span
+                    >
+                  </div>
+                  <!-- Account Rows -->
+                  <div class="flex flex-col gap-space-sm">
+                    <!-- GitHub Card -->
+                    <div
+                      class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm"
+                    >
+                      <div class="flex items-center gap-space-md">
+                        <div
+                          class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface"
+                        >
+                          <span class="material-symbols-outlined text-2xl"
+                            >terminal</span
+                          >
+                        </div>
+                        <div class="flex flex-col">
+                          <div class="flex items-center gap-space-xs">
+                            <span
+                              class="font-headline-sm text-sm text-on-surface font-semibold"
+                              >GitHub Integration</span
+                            >
+                            <span
+                              class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-[10px]"
+                              >CONNECTED</span
+                            >
+                          </div>
+                          <span
+                            class="font-label-code-sm text-xs text-on-surface-variant"
+                            >Syncing:
+                            <strong class="text-on-surface"
+                              >@aarav-codes</strong
+                            >
+                            · 28 repos indexed (Top 12% percentile)</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="flex items-center gap-space-xs self-end sm:self-center"
+                      >
+                        <button
+                          class="px-space-sm py-1.5 bg-surface-container-highest hover:bg-surface-bright text-on-surface text-xs font-body-sm rounded transition-colors flex items-center gap-1"
+                        >
+                          <span class="material-symbols-outlined text-sm"
+                            >sync</span
+                          >
+                          <span>Re-sync Repos</span>
+                        </button>
+                        <button
+                          class="px-space-sm py-1.5 text-error hover:bg-error-container/20 text-xs font-body-sm rounded transition-colors"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    </div>
+                    <!-- LeetCode Card -->
+                    <div
+                      class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm"
+                    >
+                      <div class="flex items-center gap-space-md">
+                        <div
+                          class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary"
+                        >
+                          <span class="material-symbols-outlined text-2xl"
+                            >code_blocks</span
+                          >
+                        </div>
+                        <div class="flex flex-col">
+                          <div class="flex items-center gap-space-xs">
+                            <span
+                              class="font-headline-sm text-sm text-on-surface font-semibold"
+                              >LeetCode Profile</span
+                            >
+                            <span
+                              class="px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-code-sm text-[10px]"
+                              >CONNECTED</span
+                            >
+                          </div>
+                          <span
+                            class="font-label-code-sm text-xs text-on-surface-variant"
+                            >Syncing:
+                            <strong class="text-on-surface">@aarav_algo</strong>
+                            · 385 solved (Rating: 1,942)</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="flex items-center gap-space-xs self-end sm:self-center"
+                      >
+                        <button
+                          class="px-space-sm py-1.5 bg-surface-container-highest hover:bg-surface-bright text-on-surface text-xs font-body-sm rounded transition-colors flex items-center gap-1"
+                        >
+                          <span class="material-symbols-outlined text-sm"
+                            >sync</span
+                          >
+                          <span>Re-sync Solves</span>
+                        </button>
+                        <button
+                          class="px-space-sm py-1.5 text-error hover:bg-error-container/20 text-xs font-body-sm rounded transition-colors"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    </div>
+                    <!-- Resume ATS Card -->
+                    <div
+                      class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm"
+                    >
+                      <div class="flex items-center gap-space-md">
+                        <div
+                          class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-tertiary"
+                        >
+                          <span class="material-symbols-outlined text-2xl"
+                            >picture_as_pdf</span
+                          >
+                        </div>
+                        <div class="flex flex-col">
+                          <div class="flex items-center gap-space-xs">
+                            <span
+                              class="font-headline-sm text-sm text-on-surface font-semibold"
+                              >ATS Resume Vector Index</span
+                            >
+                            <span
+                              class="px-1.5 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-code-sm text-[10px]"
+                              >84/100 ATS SCORE</span
+                            >
+                          </div>
+                          <span
+                            class="font-label-code-sm text-xs text-on-surface-variant"
+                            >Source:
+                            <strong class="text-on-surface"
+                              >Aarav_Sharma_SDE_Resume.pdf</strong
+                            >
+                            · Updated 4 days ago</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        class="flex items-center gap-space-xs self-end sm:self-center"
+                      >
+                        <label
+                          class="px-space-sm py-1.5 bg-surface-container-highest hover:bg-surface-bright text-on-surface text-xs font-body-sm rounded cursor-pointer transition-colors flex items-center gap-1"
+                        >
+                          <span class="material-symbols-outlined text-sm"
+                            >upload_file</span
+                          >
+                          <span>Replace PDF</span>
+                          <input accept=".pdf" class="hidden" type="file" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 6: Security, Sessions & Danger Zone -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-sm flex flex-col gap-space-md scroll-mt-20"
+                  id="section-security"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >shield</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-on-surface"
+                        >
+                          Security &amp; Active Sessions
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Manage device authentication, cryptographic tokens,
+                          and account integrity.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="font-label-code-sm text-tertiary text-xs bg-surface-container px-2 py-0.5 rounded"
+                      >2FA Active</span
+                    >
+                  </div>
+                  <!-- 2FA Status -->
+                  <div
+                    class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                  >
+                    <div class="flex items-center gap-space-sm">
+                      <span
+                        class="material-symbols-outlined text-tertiary text-xl"
+                        >verified_user</span
+                      >
+                      <div class="flex flex-col">
+                        <span class="font-body-sm text-on-surface font-medium"
+                          >Two-Factor Authentication (TOTP)</span
+                        >
+                        <span
+                          class="font-body-sm text-[12px] text-on-surface-variant"
+                          >Authenticator app linked via Time-based One-Time
+                          Password.</span
+                        >
+                      </div>
+                    </div>
+                    <button
+                      class="px-space-sm py-1 bg-surface-container-highest hover:bg-surface-bright text-on-surface text-xs font-body-sm rounded transition-colors"
+                    >
+                      Re-configure
+                    </button>
+                  </div>
+                  <!-- Active Sessions List -->
+                  <div class="flex flex-col gap-space-xs">
+                    <span class="font-body-sm text-on-surface font-medium"
+                      >Active Devices &amp; Placement Sessions</span
+                    >
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex items-center gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-secondary text-lg"
+                          >laptop_mac</span
+                        >
+                        <div class="flex flex-col">
+                          <div class="flex items-center gap-space-xs">
+                            <span
+                              class="font-body-sm text-on-surface font-medium"
+                              >Chrome on macOS (Bengaluru, India)</span
+                            >
+                            <span
+                              class="font-label-code-sm text-[10px] text-tertiary font-bold"
+                              >THIS DEVICE</span
+                            >
+                          </div>
+                          <span
+                            class="font-label-code-sm text-[11px] text-on-surface-variant"
+                            >IP: 103.112.45.19 · Active right now</span
+                          >
+                        </div>
+                      </div>
+                      <span
+                        class="font-label-code-sm text-xs text-on-surface-variant font-mono"
+                        >Kernel Token #402</span
+                      >
+                    </div>
+                    <div
+                      class="p-space-sm bg-surface-container rounded flex items-center justify-between"
+                    >
+                      <div class="flex items-center gap-space-sm">
+                        <span
+                          class="material-symbols-outlined text-on-surface-variant text-lg"
+                          >phone_android</span
+                        >
+                        <div class="flex flex-col">
+                          <span class="font-body-sm text-on-surface font-medium"
+                            >Placement Mobile Companion (Android 14)</span
+                          >
+                          <span
+                            class="font-label-code-sm text-[11px] text-on-surface-variant"
+                            >Last active 48 mins ago · Push Notification
+                            Relay</span
+                          >
+                        </div>
+                      </div>
+                      <button
+                        class="text-error hover:underline font-label-code-sm text-xs"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  </div>
+                </section>
+                <!-- SECTION 7: Danger Zone -->
+                <section
+                  class="bg-surface-container-lowest rounded p-space-md shadow-md flex flex-col gap-space-md scroll-mt-20 border-0"
+                  id="section-danger"
+                >
+                  <div class="flex items-start justify-between pb-space-sm">
+                    <div class="flex items-center gap-space-sm">
+                      <div
+                        class="w-8 h-8 rounded bg-error-container/40 flex items-center justify-center text-error"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >dangerous</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <h2
+                          class="font-headline-sm text-headline-sm text-error"
+                        >
+                          Danger Zone &amp; Irreversible Actions
+                        </h2>
+                        <span class="font-body-sm text-on-surface-variant"
+                          >Actions here will wipe telemetry weights, reset
+                          roadmaps, or delete historical metrics.</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      class="font-label-code-sm text-error text-xs bg-error-container/30 px-2 py-0.5 rounded font-mono"
+                      >DESTRUCTIVE</span
+                    >
+                  </div>
+                  <!-- Danger Action 1: Reset Roadmap -->
+                  <div
+                    class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm"
+                  >
+                    <div class="flex flex-col gap-1">
+                      <span
+                        class="font-headline-sm text-sm text-on-surface font-semibold"
+                        >Reset Preparation Roadmap</span
+                      >
+                      <span
+                        class="font-body-sm text-xs text-on-surface-variant max-w-xl"
+                      >
+                        Clears all scheduled daily tasks and completed
+                        checkmarks. Re-executes Day 1 placement diagnostic test
+                        based on fresh target parameters.
+                      </span>
+                    </div>
+                    <button
+                      class="px-space-md py-2 bg-surface-container-highest hover:bg-error/20 hover:text-error text-on-surface text-xs font-body-sm font-medium rounded transition-colors shrink-0"
+                      id="resetRoadmapBtn"
+                    >
+                      Reset Roadmap
+                    </button>
+                  </div>
+                  <!-- Danger Action 2: Delete Account -->
+                  <div
+                    class="p-space-md bg-surface-container rounded flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-sm"
+                  >
+                    <div class="flex flex-col gap-1">
+                      <span
+                        class="font-headline-sm text-sm text-error font-semibold"
+                        >Delete Placement Account &amp; Data</span
+                      >
+                      <span
+                        class="font-body-sm text-xs text-on-surface-variant max-w-xl"
+                      >
+                        Permanently wipes all telemetry vectors, code AST
+                        evaluations, recorded AI audio mocks, and personal
+                        analytics. This cannot be undone.
+                      </span>
+                    </div>
+                    <button
+                      class="px-space-md py-2 bg-error text-on-error hover:opacity-90 text-xs font-body-sm font-medium rounded transition-opacity shadow-sm shrink-0"
+                      id="deleteAccountTrigger"
+                    >
+                      Delete Account
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+          <!-- CONFIRMATION MODAL (For Account Deletion / Reset) -->
+          <div
+            class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4"
+            id="deleteModal"
+          >
+            <div
+              class="bg-surface-container-lowest max-w-md w-full rounded p-space-lg shadow-2xl flex flex-col gap-space-md"
+            >
+              <div class="flex items-center gap-space-sm text-error">
+                <span class="material-symbols-outlined text-2xl">warning</span>
+                <h3 class="font-headline-sm text-headline-sm font-semibold">
+                  Confirm Irreversible Deletion
+                </h3>
+              </div>
+              <p class="font-body-sm text-on-surface-variant">
+                Are you absolutely certain? This will immediately purge your 385
+                LeetCode metrics, ATS vector embeds, and audio transcripts. Type
+                <strong class="text-error font-mono">DELETE</strong> to
+                authorize.
+              </p>
+              <input
+                class="w-full bg-surface-container text-on-surface px-space-md py-2 rounded font-label-code-sm text-xs focus:outline-none focus:bg-surface-container-high transition-colors"
+                id="confirmInput"
+                placeholder="Type DELETE here..."
+                type="text"
+              />
+              <div
+                class="flex items-center justify-end gap-space-sm pt-space-xs"
+              >
+                <button
+                  class="px-space-md py-2 bg-surface-container hover:bg-surface-container-high text-on-surface-variant text-xs font-body-sm rounded transition-colors"
+                  id="cancelModalBtn"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="px-space-md py-2 bg-error text-on-error opacity-40 cursor-not-allowed text-xs font-body-sm font-medium rounded transition-all"
+                  disabled=""
+                  id="confirmDeleteBtn"
+                >
+                  Permanently Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <script>
+          (function () {
+            // 1. Sidebar Link Sync: Ensure "Settings" is active in main app shell
+            const aside = document.querySelector("aside");
+            if (aside) {
+              const allLinks = aside.querySelectorAll("a[data-path]");
+              allLinks.forEach((link) => {
+                if (link.getAttribute("data-path") === "settings") {
+                  link.classList.add(
+                    "bg-primary-container",
+                    "text-on-primary",
+                    "font-semibold",
+                    "border",
+                    "border-primary",
+                  );
+                  link.classList.remove("text-on-surface-variant");
+                } else {
+                  link.classList.remove(
+                    "bg-primary-container",
+                    "text-on-primary",
+                    "font-semibold",
+                    "border",
+                    "border-primary",
+                  );
+                  if (!link.classList.contains("text-on-surface-variant")) {
+                    link.classList.add("text-on-surface-variant");
+                  }
+                }
+              });
+            }
+
+            // 2. Settings In-Page Pill Navigation Smooth Scroll & Active Tracking
+            const navPills = document.querySelectorAll(".settings-nav-pill");
+            navPills.forEach((pill) => {
+              pill.addEventListener("click", () => {
+                const targetId = pill.getAttribute("data-target");
+                const targetElem = document.getElementById(targetId);
+
+                navPills.forEach((p) => {
+                  p.classList.remove(
+                    "bg-primary-container",
+                    "text-on-primary",
+                    "font-medium",
+                  );
+                  p.classList.add("text-on-surface-variant");
+                });
+
+                pill.classList.add(
+                  "bg-primary-container",
+                  "text-on-primary",
+                  "font-medium",
+                );
+                pill.classList.remove("text-on-surface-variant");
+
+                if (targetElem) {
+                  targetElem.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              });
+            });
+
+            // 3. Multi-Select Study Chips Interaction
+            const chips = document.querySelectorAll(".chip-filter");
+            chips.forEach((chip) => {
+              chip.addEventListener("click", () => {
+                chip.classList.toggle("active");
+                if (chip.classList.contains("active")) {
+                  chip.classList.remove(
+                    "bg-surface-container",
+                    "text-on-surface-variant",
+                  );
+                  chip.classList.add(
+                    "bg-secondary-container",
+                    "text-on-secondary",
+                    "shadow-sm",
+                  );
+                } else {
+                  chip.classList.remove(
+                    "bg-secondary-container",
+                    "text-on-secondary",
+                    "shadow-sm",
+                  );
+                  chip.classList.add(
+                    "bg-surface-container",
+                    "text-on-surface-variant",
+                  );
+                }
+              });
+            });
+
+            // 4. Response Depth Segmented Control
+            const segmentButtons = document.querySelectorAll(
+              "#responseDepthSegment .segment-btn",
+            );
+            segmentButtons.forEach((btn) => {
+              btn.addEventListener("click", () => {
+                segmentButtons.forEach((b) => {
+                  b.classList.remove(
+                    "active",
+                    "bg-surface-container-highest",
+                    "text-on-surface",
+                    "font-semibold",
+                    "shadow-sm",
+                  );
+                  b.classList.add("text-on-surface-variant", "font-medium");
+                });
+                btn.classList.add(
+                  "active",
+                  "bg-surface-container-highest",
+                  "text-on-surface",
+                  "font-semibold",
+                  "shadow-sm",
+                );
+                btn.classList.remove("text-on-surface-variant", "font-medium");
+              });
+            });
+
+            // 5. Select All Telemetry Vectors
+            const toggleAllBtn = document.getElementById(
+              "toggleAllTelemetryBtn",
+            );
+            if (toggleAllBtn) {
+              let allChecked = true;
+              toggleAllBtn.addEventListener("click", () => {
+                const toggles = document.querySelectorAll(".telemetry-toggle");
+                allChecked = !allChecked;
+                toggles.forEach((t) => (t.checked = allChecked));
+                toggleAllBtn.textContent = allChecked
+                  ? "Deselect All"
+                  : "Select All";
+              });
+            }
+
+            // 6. Save CTA Toast Trigger
+            const saveBtn = document.getElementById("saveAllBtn");
+            const toast = document.getElementById("saveToast");
+            if (saveBtn && toast) {
+              saveBtn.addEventListener("click", () => {
+                toast.classList.remove("translate-y-20", "opacity-0");
+                toast.classList.add("translate-y-0", "opacity-100");
+                setTimeout(() => {
+                  toast.classList.remove("translate-y-0", "opacity-100");
+                  toast.classList.add("translate-y-20", "opacity-0");
+                }, 3200);
+              });
+            }
+
+            // 7. Danger Zone Deletion Confirmation Modal Logic
+            const deleteTrigger = document.getElementById(
+              "deleteAccountTrigger",
+            );
+            const deleteModal = document.getElementById("deleteModal");
+            const cancelModal = document.getElementById("cancelModalBtn");
+            const confirmInput = document.getElementById("confirmInput");
+            const confirmDeleteBtn =
+              document.getElementById("confirmDeleteBtn");
+
+            if (deleteTrigger && deleteModal) {
+              deleteTrigger.addEventListener("click", () => {
+                deleteModal.classList.remove("hidden");
+                deleteModal.classList.add("flex");
+                confirmInput.value = "";
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.classList.add(
+                  "opacity-40",
+                  "cursor-not-allowed",
+                );
+              });
+
+              cancelModal.addEventListener("click", () => {
+                deleteModal.classList.add("hidden");
+                deleteModal.classList.remove("flex");
+              });
+
+              confirmInput.addEventListener("input", (e) => {
+                if (e.target.value.trim() === "DELETE") {
+                  confirmDeleteBtn.disabled = false;
+                  confirmDeleteBtn.classList.remove(
+                    "opacity-40",
+                    "cursor-not-allowed",
+                  );
+                } else {
+                  confirmDeleteBtn.disabled = true;
+                  confirmDeleteBtn.classList.add(
+                    "opacity-40",
+                    "cursor-not-allowed",
+                  );
+                }
+              });
+
+              confirmDeleteBtn.addEventListener("click", () => {
+                alert("Telemetry and account data successfully wiped.");
+                deleteModal.classList.add("hidden");
+                deleteModal.classList.remove("flex");
+              });
+            }
+
+            // Reset Roadmap simple alert confirmation
+            const resetBtn = document.getElementById("resetRoadmapBtn");
+            if (resetBtn) {
+              resetBtn.addEventListener("click", () => {
+                if (
+                  confirm(
+                    "Reset your 90-day roadmap back to Day 1 diagnostic mode?",
+                  )
+                ) {
+                  alert("Roadmap reset initiated. Diagnostic tasks queued.");
+                }
+              });
+            }
+          })();
+        </script>
+      </main>
+    </div>
+    <footer
+      class="fixed bottom-0 left-0 right-0 h-10 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-margin-md text-on-surface-variant font-label-code-sm text-label-code-sm"
+    >
+      <div class="flex items-center gap-space-md">
+        <div class="flex items-center gap-space-xs">
+          <span class="w-2 h-2 rounded-full bg-tertiary"></span
+          ><span>GitHub &amp; LeetCode synced 12m ago</span>
+        </div>
+        <span class="text-outline">|</span>
+        <div class="flex items-center gap-space-xs">
+          <span class="material-symbols-outlined text-sm text-secondary"
+            >bolt</span
+          ><span>Copilot v4.2 Active</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-md">
+        <a
+          class="flex items-center gap-space-xs hover:text-on-surface transition-colors"
+          href="#"
+          ><span class="material-symbols-outlined text-sm">help_outline</span
+          ><span>Help &amp; Docs</span></a
+        ><a
+          class="flex items-center gap-space-xs hover:text-on-surface transition-colors"
+          href="#"
+          ><span class="material-symbols-outlined text-sm">feedback</span
+          ><span>Feedback</span></a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

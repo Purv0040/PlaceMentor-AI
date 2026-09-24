@@ -1,0 +1,2825 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Placement Copilot - Landing, Auth & Onboarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef2ff",
+                100: "#e0e7ff",
+                400: "#818cf8",
+                500: "#6366f1",
+                600: "#4f46e5",
+                700: "#4338ca",
+              },
+              ai: {
+                400: "#c084fc",
+                500: "#a855f7",
+                600: "#9333ea",
+              },
+              obsidian: {
+                base: "#07090e",
+                surface: "#0d111a",
+                card: "#121724",
+                elevated: "#171e2e",
+                border: "rgba(255, 255, 255, 0.08)",
+                borderLight: "rgba(255, 255, 255, 0.14)",
+              },
+            },
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', "Inter", "sans-serif"],
+              mono: ['"JetBrains Mono"', "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background-color: #07090e;
+        color: #e2e8f0;
+        font-family: "Plus Jakarta Sans", sans-serif;
+      }
+      .glow-indigo {
+        box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
+      }
+      .glow-ai {
+        box-shadow: 0 0 45px -10px rgba(168, 85, 247, 0.25);
+      }
+      .bg-grid {
+        background-size: 32px 32px;
+        background-image:
+          linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.03) 1px,
+            transparent 1px
+          );
+      }
+      /* Hide scrollbar for tabs */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen bg-obsidian-base text-slate-200 antialiased selection:bg-brand-500/30 selection:text-brand-100"
+  >
+    <!-- Interactive State Bar / Route Switcher (Prototyping & Demo Bar) -->
+    <aside
+      class="sticky top-0 z-50 bg-[#0a0d14]/90 backdrop-blur-md border-b border-obsidian-border text-xs px-4 py-2 flex flex-wrap items-center justify-between gap-3"
+    >
+      <div class="flex items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[11px] border border-emerald-500/20"
+        >
+          <span
+            class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"
+          ></span>
+          PUBLIC SUITE
+        </span>
+        <span class="text-slate-400 font-mono hidden sm:inline text-[11px]"
+          >AI Placement Copilot Engine v4.2</span
+        >
+      </div>
+
+      <!-- Quick Route Simulator Pills -->
+      <div
+        class="flex items-center gap-1 bg-obsidian-surface/80 p-1 rounded-lg border border-obsidian-border text-[11px] font-medium overflow-x-auto no-scrollbar"
+      >
+        <button
+          onclick="switchView('landing')"
+          id="tab-landing"
+          class="px-2.5 py-1 rounded transition-all bg-brand-500 text-white shadow-sm"
+        >
+          Landing (/)
+        </button>
+        <button
+          onclick="switchView('login')"
+          id="tab-login"
+          class="px-2.5 py-1 rounded transition-all text-slate-400 hover:text-slate-200"
+        >
+          Login (/login)
+        </button>
+        <button
+          onclick="switchView('signup')"
+          id="tab-signup"
+          class="px-2.5 py-1 rounded transition-all text-slate-400 hover:text-slate-200"
+        >
+          Sign Up (/signup)
+        </button>
+        <button
+          onclick="switchView('forgot')"
+          id="tab-forgot"
+          class="px-2.5 py-1 rounded transition-all text-slate-400 hover:text-slate-200"
+        >
+          Reset Password
+        </button>
+        <button
+          onclick="switchView('onboarding')"
+          id="tab-onboarding"
+          class="px-2.5 py-1 rounded transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1"
+        >
+          <span class="text-ai-400">✨</span> Onboarding (6 Steps)
+        </button>
+        <button
+          onclick="switchView('analysis')"
+          id="tab-analysis"
+          class="px-2.5 py-1 rounded transition-all text-slate-400 hover:text-slate-200 flex items-center gap-1"
+        >
+          <span>⚡</span> AI Analysis
+        </button>
+      </div>
+
+      <!-- Context Auth State pill -->
+      <div class="flex items-center gap-2 text-[11px]">
+        <span class="text-slate-400">Auth State:</span>
+        <span
+          id="auth-state-badge"
+          class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono"
+          >Logged Out</span
+        >
+      </div>
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- 1. PUBLIC LANDING PAGE (VIEW: landing)                                   -->
+    <!-- ========================================================================= -->
+    <div id="view-landing" class="transition-all duration-300">
+      <!-- Landing Navigation -->
+      <header
+        class="sticky top-[41px] z-40 bg-obsidian-base/80 backdrop-blur-lg border-b border-obsidian-border"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-8">
+            <a href="#hero" class="flex items-center gap-2.5 group">
+              <div
+                class="w-9 h-9 rounded-lg bg-gradient-to-tr from-brand-600 to-ai-500 p-0.5 shadow-md group-hover:scale-105 transition-transform"
+              >
+                <div
+                  class="w-full h-full bg-obsidian-card rounded-[7px] flex items-center justify-center"
+                >
+                  <svg
+                    class="w-5 h-5 text-brand-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div
+                  class="font-bold text-white tracking-tight text-sm sm:text-base leading-none flex items-center gap-1.5"
+                >
+                  AI Placement Copilot
+                  <span
+                    class="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                    >v4.2</span
+                  >
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono"
+                  >ENGINEERING PLACEMENT SUITE</span
+                >
+              </div>
+            </a>
+
+            <nav
+              class="hidden md:flex items-center gap-6 text-xs text-slate-300 font-medium"
+            >
+              <a href="#features" class="hover:text-white transition-colors"
+                >Features</a
+              >
+              <a href="#how-it-works" class="hover:text-white transition-colors"
+                >How It Works</a
+              >
+              <a href="#architecture" class="hover:text-white transition-colors"
+                >Intelligence System</a
+              >
+              <a href="#roadmap" class="hover:text-white transition-colors"
+                >90-Day Roadmap</a
+              >
+              <a href="#interview" class="hover:text-white transition-colors"
+                >Mock Interviews</a
+              >
+              <a href="#mentor" class="hover:text-white transition-colors"
+                >AI Mentor</a
+              >
+              <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+            </nav>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              onclick="switchView('login')"
+              class="text-xs font-semibold px-3 py-1.5 text-slate-300 hover:text-white transition-colors"
+            >
+              Log In
+            </button>
+            <button
+              onclick="switchView('signup')"
+              class="text-xs font-semibold px-4 py-2 rounded-lg bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-md shadow-brand-500/20 border border-brand-400/30 transition-all transform hover:-translate-y-0.5"
+            >
+              Start Preparing Free →
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <section id="hero" class="relative pt-12 pb-20 overflow-hidden bg-grid">
+        <!-- Glow Gradients -->
+        <div
+          class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-brand-600/15 via-ai-600/10 to-transparent blur-3xl pointer-events-none -z-10"
+        ></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <!-- Hero Copy (Left 6 Cols) -->
+            <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-obsidian-surface border border-obsidian-borderLight text-xs text-slate-300 font-medium"
+              >
+                <span
+                  class="flex h-2 w-2 rounded-full bg-ai-400 animate-ping"
+                ></span>
+                <span class="text-ai-400 font-semibold"
+                  >Autonomous Placement Reasoning</span
+                >
+                <span class="text-slate-500">|</span>
+                <span class="text-slate-400">Campus Drives 2025–2026</span>
+              </div>
+
+              <h1
+                class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.15]"
+              >
+                Your AI Copilot for <br class="hidden sm:inline" />
+                <span
+                  class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-indigo-200 to-ai-400"
+                >
+                  Placement Preparation
+                </span>
+              </h1>
+
+              <p
+                class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl mx-auto lg:mx-0"
+              >
+                Analyze your resume, GitHub, and LeetCode. Build a synchronized
+                90-day execution roadmap, practice realistic mock interviews,
+                polish speech pacing, and prepare smarter with one cohesive AI
+                system.
+              </p>
+
+              <div
+                class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2"
+              >
+                <button
+                  onclick="switchView('signup')"
+                  class="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-ai-600 text-white font-semibold text-sm shadow-xl shadow-brand-600/25 hover:shadow-brand-500/40 border border-indigo-400/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                >
+                  <span>Start Preparing Free</span>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M14 5l7 7m0 0l-7 7m7-7H3"
+                    />
+                  </svg>
+                </button>
+                <a
+                  href="#how-it-works"
+                  class="w-full sm:w-auto px-5 py-3 rounded-xl bg-obsidian-surface hover:bg-obsidian-elevated text-slate-300 hover:text-white font-medium text-sm border border-obsidian-borderLight transition-all flex items-center justify-center gap-2"
+                >
+                  <svg
+                    class="w-4 h-4 text-brand-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>See How It Works</span>
+                </a>
+              </div>
+
+              <!-- Realistic Trust Tag (No fake stats, strict constraint) -->
+              <div
+                class="pt-2 flex items-center justify-center lg:justify-start gap-3 text-xs text-slate-400"
+              >
+                <div class="flex items-center gap-1.5">
+                  <svg
+                    class="w-4 h-4 text-emerald-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>Built for students & freshers</span>
+                </div>
+                <span class="text-slate-600">•</span>
+                <div class="flex items-center gap-1.5">
+                  <svg
+                    class="w-4 h-4 text-emerald-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>Zero fake guarantees</span>
+                </div>
+                <span class="text-slate-600">•</span>
+                <div class="flex items-center gap-1.5">
+                  <svg
+                    class="w-4 h-4 text-emerald-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>Full Telemetry Sync</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hero Visual: Real Application Mockup (Right 6 Cols) -->
+            <div class="lg:col-span-6 relative">
+              <div class="relative mx-auto max-w-lg lg:max-w-none">
+                <!-- Obsidian Dashboard Window Frame -->
+                <div
+                  class="rounded-2xl bg-obsidian-card/90 border border-obsidian-borderLight shadow-2xl overflow-hidden glow-indigo"
+                >
+                  <!-- Mockup Header -->
+                  <div
+                    class="bg-obsidian-surface px-4 py-2.5 border-b border-obsidian-border flex items-center justify-between"
+                  >
+                    <div class="flex items-center gap-2">
+                      <div class="flex gap-1.5">
+                        <span
+                          class="w-2.5 h-2.5 rounded-full bg-red-500/70 inline-block"
+                        ></span>
+                        <span
+                          class="w-2.5 h-2.5 rounded-full bg-amber-500/70 inline-block"
+                        ></span>
+                        <span
+                          class="w-2.5 h-2.5 rounded-full bg-emerald-500/70 inline-block"
+                        ></span>
+                      </div>
+                      <span class="text-[11px] font-mono text-slate-400 ml-2"
+                        >app.aiplacementcopilot.io/dashboard</span
+                      >
+                    </div>
+                    <span
+                      class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      >Day 34 / 90</span
+                    >
+                  </div>
+
+                  <!-- Dashboard Content Snapshot -->
+                  <div class="p-5 space-y-4 text-xs">
+                    <!-- Row 1: Key Telemetry Cards -->
+                    <div class="grid grid-cols-3 gap-3">
+                      <div
+                        class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 uppercase tracking-wider block font-mono"
+                          >Readiness</span
+                        >
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-xl font-bold text-white">76</span>
+                          <span class="text-[10px] text-slate-400">/ 100</span>
+                        </div>
+                        <span
+                          class="text-[10px] text-emerald-400 font-mono mt-0.5 block"
+                          >Tier-1 Threshold: 85</span
+                        >
+                      </div>
+
+                      <div
+                        class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 uppercase tracking-wider block font-mono"
+                          >Roadmap</span
+                        >
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-xl font-bold text-brand-400"
+                            >38%</span
+                          >
+                          <span class="text-[10px] text-slate-400"
+                            >Phase 2</span
+                          >
+                        </div>
+                        <span
+                          class="text-[10px] text-indigo-300 font-mono mt-0.5 block"
+                          >18 / 42 tasks done</span
+                        >
+                      </div>
+
+                      <div
+                        class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border"
+                      >
+                        <span
+                          class="text-[10px] text-slate-400 uppercase tracking-wider block font-mono"
+                          >Today's Focus</span
+                        >
+                        <div class="flex items-baseline gap-1 mt-1">
+                          <span class="text-xl font-bold text-ai-400"
+                            >3 / 5</span
+                          >
+                          <span class="text-[10px] text-slate-400">Done</span>
+                        </div>
+                        <span
+                          class="text-[10px] text-slate-400 font-mono mt-0.5 block"
+                          >2h 30m allocation</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- Row 2: AI Mentor Live Dispatch Card -->
+                    <div
+                      class="p-3.5 rounded-xl bg-gradient-to-r from-brand-950/60 via-obsidian-surface to-ai-950/40 border border-brand-500/30 space-y-2"
+                    >
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span
+                            class="w-2 h-2 rounded-full bg-ai-400 animate-pulse"
+                          ></span>
+                          <span
+                            class="font-semibold text-white text-[11px] flex items-center gap-1"
+                          >
+                            <span>✨</span> AI Placement Mentor Dispatch
+                          </span>
+                        </div>
+                        <span class="text-[10px] font-mono text-ai-300"
+                          >RAG Calibrated</span
+                        >
+                      </div>
+                      <p class="text-[11px] text-slate-300 leading-snug">
+                        "Aarav, your Python & algorithmic problem solving is
+                        strong (284 LeetCode solves). For Day 34, prioritize
+                        <span class="text-brand-300 font-semibold"
+                          >FastAPI JWT Token Validation</span
+                        >
+                        and
+                        <span class="text-ai-300 font-semibold"
+                          >STAR Speech Conciseness</span
+                        >
+                        before campus drives."
+                      </p>
+                      <div class="flex items-center gap-2 pt-1">
+                        <span
+                          class="px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 text-[10px] font-mono"
+                          >Dynamic Programming (+5.5 pts)</span
+                        >
+                        <span
+                          class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono"
+                          >Docker Gap Flagged</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- Row 3: Live Task Row -->
+                    <div
+                      class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border space-y-2"
+                    >
+                      <div
+                        class="flex items-center justify-between text-[11px]"
+                      >
+                        <span class="text-slate-400 font-mono"
+                          >ACTIVE TASK PRIORITY</span
+                        >
+                        <span class="text-emerald-400 font-mono text-[10px]"
+                          >High Priority • 60 min</span
+                        >
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                          <div
+                            class="w-4 h-4 rounded border border-brand-500/40 flex items-center justify-center bg-brand-500/10"
+                          >
+                            <div class="w-2 h-2 rounded-sm bg-brand-400"></div>
+                          </div>
+                          <span class="text-white font-medium text-[11px]"
+                            >Implement FastAPI JWT Authentication &
+                            Middleware</span
+                          >
+                        </div>
+                        <span
+                          class="text-[10px] px-2 py-0.5 rounded bg-brand-500 text-white font-semibold"
+                          >Start →</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Floating Micro-Telemetry Badges -->
+                <div
+                  class="absolute -bottom-4 -left-4 p-2.5 rounded-xl bg-obsidian-elevated/95 border border-obsidian-borderLight shadow-xl flex items-center gap-2.5 text-xs"
+                >
+                  <div
+                    class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm"
+                  >
+                    ✓
+                  </div>
+                  <div>
+                    <span class="block text-[10px] text-slate-400 font-mono"
+                      >ATS RESUME PARSED</span
+                    >
+                    <span class="text-xs font-semibold text-white"
+                      >82 / 100 Vector Score</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  class="absolute -top-4 -right-4 p-2.5 rounded-xl bg-obsidian-elevated/95 border border-obsidian-borderLight shadow-xl flex items-center gap-2.5 text-xs"
+                >
+                  <div
+                    class="w-8 h-8 rounded-lg bg-ai-500/20 border border-ai-500/30 flex items-center justify-center text-ai-400 font-bold text-sm"
+                  >
+                    🎙️
+                  </div>
+                  <div>
+                    <span class="block text-[10px] text-slate-400 font-mono"
+                      >MOCK INTERVIEW</span
+                    >
+                    <span class="text-xs font-semibold text-white"
+                      >78% Tier-1 Parity</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Value Strip / Connected Modules Banner -->
+      <section
+        class="border-y border-obsidian-border bg-obsidian-surface/60 py-6"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p
+            class="text-center text-xs font-mono uppercase tracking-widest text-slate-400 mb-4"
+          >
+            Everything Connected in One Unified AI Preparation Pipeline
+          </p>
+          <div
+            class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3 text-center"
+          >
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">📄</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >Resume Intel</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">🐙</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >GitHub Intel</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">💡</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >LeetCode Intel</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">📦</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >Project Analyzer</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">🎯</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >Skill Gap AI</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">🗓️</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >90-Day Plan</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">🤖</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >Mock Interv</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border"
+            >
+              <span class="text-base block mb-0.5">🎙️</span>
+              <span class="text-[11px] font-semibold text-slate-300 block"
+                >Comm Coach</span
+              >
+            </div>
+            <div
+              class="p-2.5 rounded-lg bg-obsidian-card/70 border border-obsidian-border col-span-3 sm:col-span-1"
+            >
+              <span class="text-base block mb-0.5">✨</span>
+              <span class="text-[11px] font-semibold text-ai-300 block"
+                >AI Mentor</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Problem vs Solution Transformation -->
+      <section class="py-16 bg-obsidian-base border-b border-obsidian-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2
+              class="text-xs font-mono uppercase tracking-widest text-brand-400 mb-2"
+            >
+              The Placement Paradox
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Placement preparation is scattered.
+            </p>
+            <p class="text-sm text-slate-400 mt-2">
+              Candidates juggle 7+ disconnected tools with no contextual
+              feedback loop. AI Placement Copilot unifies the entire lifecycle
+              into a single adaptive engine.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            <!-- Disconnected Reality -->
+            <div
+              class="p-6 rounded-2xl bg-obsidian-surface/60 border border-red-500/20 space-y-4"
+            >
+              <div
+                class="flex items-center gap-2 text-red-400 font-semibold text-sm"
+              >
+                <span
+                  class="w-2.5 h-2.5 rounded-full bg-red-400 inline-block"
+                ></span>
+                Traditional Scattered Preparation
+              </div>
+              <ul class="space-y-3 text-xs text-slate-400">
+                <li class="flex items-start gap-2.5">
+                  <span class="text-red-400 font-bold">✕</span>
+                  <span
+                    >Blind DSA grinding on LeetCode with no direct tie to
+                    company question frequency or personal weaknesses.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-red-400 font-bold">✕</span>
+                  <span
+                    >Static PDF resumes with zero ATS verification or GitHub
+                    code commit corroboration.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-red-400 font-bold">✕</span>
+                  <span
+                    >Generic chatbot prompts giving surface-level advice with no
+                    context on your active projects or interview speech filler
+                    rate.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-red-400 font-bold">✕</span>
+                  <span
+                    >No automated adjustment when study schedules fall
+                    behind.</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <!-- Unified AI Copilot Reality -->
+            <div
+              class="p-6 rounded-2xl bg-gradient-to-br from-brand-950/40 via-obsidian-card to-ai-950/30 border border-brand-500/40 space-y-4 shadow-lg shadow-brand-500/10"
+            >
+              <div
+                class="flex items-center gap-2 text-brand-300 font-semibold text-sm"
+              >
+                <span
+                  class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse inline-block"
+                ></span>
+                One Unified AI Placement System
+              </div>
+              <ul class="space-y-3 text-xs text-slate-300">
+                <li class="flex items-start gap-2.5">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span
+                    ><strong class="text-white"
+                      >Understand Where You Stand:</strong
+                    >
+                    Multi-vector analysis of Resume, GitHub commits, LeetCode
+                    solves, and project architectures.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span
+                    ><strong class="text-white">Know What To Do Next:</strong>
+                    Dynamic 90-day roadmap adapting automatically if a daily
+                    task is delayed.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span
+                    ><strong class="text-white"
+                      >Improve Through Realistic Drills:</strong
+                    >
+                    Simulated Bar-Raiser mock interviews with speech conciseness
+                    and filler word analysis.</span
+                  >
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <span class="text-emerald-400 font-bold">✓</span>
+                  <span
+                    ><strong class="text-white"
+                      >Zero-Hallucination AI Mentor:</strong
+                    >
+                    Grounded strictly in your actual code AST and campus
+                    placement benchmarks.</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Intelligence Architecture Flow -->
+      <section
+        id="architecture"
+        class="py-16 bg-obsidian-surface/40 border-b border-obsidian-border"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2
+              class="text-xs font-mono uppercase tracking-widest text-ai-400 mb-2"
+            >
+              Contextual Telemetry Engine
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              AI that understands your preparation journey.
+            </p>
+            <p class="text-sm text-slate-400 mt-2">
+              Instead of giving generic advice, AI Placement Copilot uses your
+              verified candidate vectors to make recommendations relevant to
+              your current placement sprint.
+            </p>
+          </div>
+
+          <!-- 4-Stage Architecture Diagram -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+            <!-- Stage 1 -->
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-obsidian-border relative"
+            >
+              <span
+                class="text-xs font-mono text-slate-400 uppercase tracking-widest block mb-2"
+                >01 · YOUR DATA</span
+              >
+              <h3 class="text-white font-bold text-sm mb-2">
+                Candidate Telemetry
+              </h3>
+              <ul class="text-xs text-slate-400 space-y-1 font-mono">
+                <li>• ATS Resume Vectors</li>
+                <li>• GitHub Commits & AST</li>
+                <li>• LeetCode Tag Profiles</li>
+                <li>• Project Microservices</li>
+              </ul>
+            </div>
+
+            <!-- Stage 2 -->
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-brand-500/40 relative"
+            >
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-widest block mb-2"
+                >02 · AI PROFILE</span
+              >
+              <h3 class="text-white font-bold text-sm mb-2">
+                Multi-Vector Synthesis
+              </h3>
+              <ul class="text-xs text-slate-300 space-y-1 font-mono">
+                <li>• Verified Competencies</li>
+                <li>• 5 Priority Skill Gaps</li>
+                <li>• Speech Pacing (WPM)</li>
+                <li>• Tier-1 Gap Diagnostics</li>
+              </ul>
+            </div>
+
+            <!-- Stage 3 -->
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-ai-500/40 relative"
+            >
+              <span
+                class="text-xs font-mono text-ai-400 uppercase tracking-widest block mb-2"
+                >03 · AI DECISIONS</span
+              >
+              <h3 class="text-white font-bold text-sm mb-2">
+                Dynamic Planning
+              </h3>
+              <ul class="text-xs text-slate-300 space-y-1 font-mono">
+                <li>• 3-Phase 90-Day Sprints</li>
+                <li>• Curated Daily Tasks</li>
+                <li>• Auto-balancing Engine</li>
+                <li>• Predictive Readiness Model</li>
+              </ul>
+            </div>
+
+            <!-- Stage 4 -->
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-emerald-500/40 relative"
+            >
+              <span
+                class="text-xs font-mono text-emerald-400 uppercase tracking-widest block mb-2"
+                >04 · REAL PRACTICE</span
+              >
+              <h3 class="text-white font-bold text-sm mb-2">
+                Continuous Polish
+              </h3>
+              <ul class="text-xs text-slate-300 space-y-1 font-mono">
+                <li>• AI Bar-Raiser Mocks</li>
+                <li>• 60s STAR Elevators</li>
+                <li>• Real-Time Transcripts</li>
+                <li>• Achievement XP & Streaks</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Core Features Grid (9 Pillars) -->
+      <section
+        id="features"
+        class="py-16 bg-obsidian-base border-b border-obsidian-border"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2
+              class="text-xs font-mono uppercase tracking-widest text-brand-400 mb-2"
+            >
+              Complete Platform Suite
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Everything connected to your placement journey.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 1 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                📄
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                Resume Intelligence
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Analyze your resume vector score (ATS parser), identify missing
+                framework keywords, weak metrics, and verify single-column
+                formatting.
+              </p>
+            </div>
+
+            <!-- Card 2 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                🐙
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                GitHub Intelligence
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Deep commit evaluation across public repositories, architectural
+                test coverage, AST analysis, and verifiable technical depth.
+              </p>
+            </div>
+
+            <!-- Card 3 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                💡
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                LeetCode Intelligence
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Diagnostic tracking of algorithmic accuracy by topic tags
+                (Graphs, Trees, DP) to prevent over-practicing already mastered
+                concepts.
+              </p>
+            </div>
+
+            <!-- Card 4 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                📦
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                Project Intelligence
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Inspect project architecture, backend microservices, Docker
+                containerization, and prepare defense answers for interviewer
+                grilling.
+              </p>
+            </div>
+
+            <!-- Card 5 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                🎯
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                Skill Gap Analyzer
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Isolate exact Tier-1 disqualifiers (e.g. lack of async
+                concurrency or Docker multi-stage builds) with predicted
+                readiness delta scores.
+              </p>
+            </div>
+
+            <!-- Card 6 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-brand-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                🗓️
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                90-Day AI Roadmap
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Personalized 3-phase calendar translating high-level placement
+                goals into concrete 2–3 hr daily actionable sprint tasks.
+              </p>
+            </div>
+
+            <!-- Card 7 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-ai-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-ai-500/20 text-ai-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                🤖
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                AI Mock Interview
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Interactive technical, system design, and behavioral simulations
+                with real-time question adaptation and follow-ups.
+              </p>
+            </div>
+
+            <!-- Card 8 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-ai-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-ai-500/20 text-ai-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                🎙️
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                Communication Coach
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Polish verbal articulation, trim filler words ("basically"),
+                calibrate speaking rate to 130 WPM, and practice 60s elevator
+                pitches.
+              </p>
+            </div>
+
+            <!-- Card 9 -->
+            <div
+              class="p-5 rounded-2xl bg-obsidian-card border border-obsidian-border hover:border-ai-500/40 transition-colors"
+            >
+              <div
+                class="w-9 h-9 rounded-lg bg-ai-500/20 text-ai-400 flex items-center justify-center font-bold text-sm mb-3.5"
+              >
+                ✨
+              </div>
+              <h3 class="text-white font-semibold text-base mb-1.5">
+                AI Placement Mentor
+              </h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Central 24/7 technical tutor and strategist answering questions
+                with deep cross-module context from your verified resume and
+                repos.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works Step-by-Step Flow -->
+      <section
+        id="how-it-works"
+        class="py-16 bg-obsidian-surface/40 border-b border-obsidian-border"
+      >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2
+              class="text-xs font-mono uppercase tracking-widest text-brand-400 mb-2"
+            >
+              Streamlined Onboarding Flow
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              How It Works in 4 Steps
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-obsidian-border relative"
+            >
+              <span
+                class="text-2xl font-extrabold text-brand-400/40 block mb-2 font-mono"
+                >01</span
+              >
+              <h4 class="text-white font-bold text-sm mb-1.5">
+                Build Your Profile
+              </h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Input target role (Backend, AI/ML, Full Stack), upload your
+                single-column resume, and connect your GitHub & LeetCode
+                handles.
+              </p>
+            </div>
+
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-obsidian-border relative"
+            >
+              <span
+                class="text-2xl font-extrabold text-brand-400/40 block mb-2 font-mono"
+                >02</span
+              >
+              <h4 class="text-white font-bold text-sm mb-1.5">
+                AI Telemetry Analysis
+              </h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                The engine diagnoses verified competencies vs Tier-1 company
+                cutoffs, computing your baseline Placement Readiness score (e.g.
+                76/100).
+              </p>
+            </div>
+
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-obsidian-border relative"
+            >
+              <span
+                class="text-2xl font-extrabold text-brand-400/40 block mb-2 font-mono"
+                >03</span
+              >
+              <h4 class="text-white font-bold text-sm mb-1.5">
+                Execute 90-Day Roadmap
+              </h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Follow curated daily tasks (DSA, system design, mock interviews)
+                structured around your target daily study commitment (2–3 hrs).
+              </p>
+            </div>
+
+            <div
+              class="p-5 rounded-xl bg-obsidian-card border border-obsidian-border relative"
+            >
+              <span
+                class="text-2xl font-extrabold text-brand-400/40 block mb-2 font-mono"
+                >04</span
+              >
+              <h4 class="text-white font-bold text-sm mb-1.5">
+                Adaptive Re-balancing
+              </h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                As mock interview scores improve and LeetCode accuracy shifts,
+                the AI re-balances upcoming weeks to close residual bottlenecks.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-10 text-center">
+            <button
+              onclick="switchView('signup')"
+              class="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shadow-lg shadow-brand-600/20 transition-all"
+            >
+              Get Started Now & Analyze Profile →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Accordion Section -->
+      <section
+        id="faq"
+        class="py-16 bg-obsidian-base border-b border-obsidian-border"
+      >
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-12">
+            <h2
+              class="text-xs font-mono uppercase tracking-widest text-brand-400 mb-2"
+            >
+              Clarity & Expectations
+            </h2>
+            <p class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Frequently Asked Questions
+            </p>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <details
+              class="group p-4 rounded-xl bg-obsidian-card border border-obsidian-border transition-all open:border-brand-500/40"
+            >
+              <summary
+                class="font-semibold text-slate-200 cursor-pointer flex items-center justify-between text-sm"
+              >
+                <span>What exactly is AI Placement Copilot?</span>
+                <span
+                  class="text-slate-400 group-open:rotate-180 transition-transform"
+                  >▼</span
+                >
+              </summary>
+              <p class="text-slate-400 mt-3 leading-relaxed">
+                AI Placement Copilot is an end-to-end engineering preparation
+                platform that unifies your resume, code repositories,
+                algorithmic history, and speech practice into a dynamic 90-day
+                execution plan with continuous AI feedback.
+              </p>
+            </details>
+
+            <details
+              class="group p-4 rounded-xl bg-obsidian-card border border-obsidian-border transition-all open:border-brand-500/40"
+            >
+              <summary
+                class="font-semibold text-slate-200 cursor-pointer flex items-center justify-between text-sm"
+              >
+                <span>Does this platform guarantee a placement or offer?</span>
+                <span
+                  class="text-slate-400 group-open:rotate-180 transition-transform"
+                  >▼</span
+                >
+              </summary>
+              <p class="text-slate-400 mt-3 leading-relaxed">
+                No. We strictly do not provide artificial or misleading "job
+                guarantees". Success depends on your disciplined practice and
+                interview performance. Our role is to give you honest
+                diagnostics, eliminate skill gaps, and optimize your study
+                velocity.
+              </p>
+            </details>
+
+            <details
+              class="group p-4 rounded-xl bg-obsidian-card border border-obsidian-border transition-all open:border-brand-500/40"
+            >
+              <summary
+                class="font-semibold text-slate-200 cursor-pointer flex items-center justify-between text-sm"
+              >
+                <span
+                  >Can I upload my existing resume and connect my
+                  accounts?</span
+                >
+                <span
+                  class="text-slate-400 group-open:rotate-180 transition-transform"
+                  >▼</span
+                >
+              </summary>
+              <p class="text-slate-400 mt-3 leading-relaxed">
+                Yes. You can upload any standard PDF resume. The system
+                vectorizes your technical claims and cross-references them
+                against your connected GitHub repositories and LeetCode solve
+                history.
+              </p>
+            </details>
+
+            <details
+              class="group p-4 rounded-xl bg-obsidian-card border border-obsidian-border transition-all open:border-brand-500/40"
+            >
+              <summary
+                class="font-semibold text-slate-200 cursor-pointer flex items-center justify-between text-sm"
+              >
+                <span
+                  >What happens if I miss a few days on the 90-day
+                  roadmap?</span
+                >
+                <span
+                  class="text-slate-400 group-open:rotate-180 transition-transform"
+                  >▼</span
+                >
+              </summary>
+              <p class="text-slate-400 mt-3 leading-relaxed">
+                The AI Adaptive Scheduling Engine automatically recalculates
+                your sprint velocity. Incomplete tasks can be rescheduled with a
+                single click, or absorbed into weekend practice blocks without
+                derailing your campus timeline.
+              </p>
+            </details>
+
+            <details
+              class="group p-4 rounded-xl bg-obsidian-card border border-obsidian-border transition-all open:border-brand-500/40"
+            >
+              <summary
+                class="font-semibold text-slate-200 cursor-pointer flex items-center justify-between text-sm"
+              >
+                <span
+                  >Can I switch my target role (e.g. from Backend to
+                  AI/ML)?</span
+                >
+                <span
+                  class="text-slate-400 group-open:rotate-180 transition-transform"
+                  >▼</span
+                >
+              </summary>
+              <p class="text-slate-400 mt-3 leading-relaxed">
+                Yes. You can update your primary target track anytime inside
+                Settings. The system immediately re-evaluates your skill gaps
+                and adjusts roadmap weights accordingly.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Master Call to Action Section -->
+      <section
+        class="py-16 bg-gradient-to-b from-obsidian-surface/60 to-obsidian-base relative overflow-hidden"
+      >
+        <div
+          class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6"
+        >
+          <h2
+            class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight"
+          >
+            Start building your placement readiness today.
+          </h2>
+          <p class="text-sm text-slate-300 max-w-xl mx-auto">
+            Create your profile, discover your skill gaps, and get your
+            personalized preparation plan calibrated against Tier-1 SDE rubrics.
+          </p>
+          <div
+            class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2"
+          >
+            <button
+              onclick="switchView('signup')"
+              class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-brand-600 to-ai-600 text-white font-semibold text-sm shadow-xl shadow-brand-600/30 hover:shadow-brand-500/50 border border-brand-400/40 transition-all"
+            >
+              Get Started Free →
+            </button>
+            <button
+              onclick="switchView('login')"
+              class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-obsidian-card text-slate-300 hover:text-white font-medium text-sm border border-obsidian-border transition-all"
+            >
+              Sign In to Existing Account
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Public Landing Footer -->
+      <footer
+        class="border-t border-obsidian-border bg-obsidian-base py-12 text-xs text-slate-400"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold"
+            >
+              ⚡
+            </div>
+            <div>
+              <span class="font-bold text-white text-sm"
+                >AI Placement Copilot</span
+              >
+              <p class="text-[11px] text-slate-400">
+                Prepare smarter. Practice consistently. Improve continuously.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="flex flex-wrap items-center gap-6 font-medium text-slate-400"
+          >
+            <a href="#features" class="hover:text-slate-200">Features</a>
+            <a href="#how-it-works" class="hover:text-slate-200"
+              >How It Works</a
+            >
+            <a href="#faq" class="hover:text-slate-200">FAQ</a>
+            <span class="text-slate-600">|</span>
+            <button onclick="switchView('login')" class="hover:text-slate-200">
+              Log In
+            </button>
+            <button onclick="switchView('signup')" class="hover:text-slate-200">
+              Sign Up
+            </button>
+          </div>
+
+          <div class="text-[11px] text-slate-400 font-mono">
+            © 2026 AI Placement Copilot. Engineering Placement Suite.
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 2. LOGIN VIEW (/login)                                                   -->
+    <!-- ========================================================================= -->
+    <div
+      id="view-login"
+      class="hidden min-h-[calc(100vh-45px)] flex items-center justify-center p-4 bg-grid py-12"
+    >
+      <div
+        class="w-full max-w-md bg-obsidian-card rounded-2xl border border-obsidian-borderLight shadow-2xl p-6 sm:p-8 space-y-6 glow-indigo relative"
+      >
+        <!-- Back Link -->
+        <button
+          onclick="switchView('landing')"
+          class="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-mono transition-colors"
+        >
+          ← Back to home
+        </button>
+
+        <!-- Header -->
+        <div class="space-y-1">
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center text-brand-400 font-bold mb-3"
+          >
+            ⚡
+          </div>
+          <h2 class="text-xl font-bold text-white">Welcome back</h2>
+          <p class="text-xs text-slate-400">
+            Continue your placement preparation journey.
+          </p>
+        </div>
+
+        <!-- Quick Mock Google Auth Button -->
+        <button
+          onclick="mockGoogleAuth()"
+          class="w-full py-2.5 px-4 rounded-xl bg-obsidian-surface hover:bg-obsidian-elevated text-white border border-obsidian-borderLight text-xs font-semibold flex items-center justify-center gap-2.5 transition-all"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
+            />
+            <path
+              fill="#4285F4"
+              d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.1-2 .4-2.7L1.6 6.4C.6 8.3 0 10.1 0 12s.6 3.7 1.6 5.6l3.7-2.9z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.8 7.4 23 12 23z"
+            />
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-obsidian-border w-full"></div>
+          <span
+            class="bg-obsidian-card px-3 text-[11px] text-slate-400 uppercase font-mono tracking-wider absolute"
+            >OR</span
+          >
+        </div>
+
+        <!-- Login Form -->
+        <form onsubmit="handleLoginSubmit(event)" class="space-y-4 text-xs">
+          <div class="space-y-1.5">
+            <label class="block text-slate-300 font-medium"
+              >Email address</label
+            >
+            <input
+              type="email"
+              id="login-email"
+              required
+              value="alex.patel@charusat.edu.in"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-slate-300 font-medium">Password</label>
+              <button
+                type="button"
+                onclick="switchView('forgot')"
+                class="text-brand-400 hover:text-brand-300 text-[11px]"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <input
+              type="password"
+              id="login-password"
+              required
+              value="••••••••••••"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+            />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="remember-me"
+              checked
+              class="w-4 h-4 rounded border-obsidian-borderLight bg-obsidian-surface text-brand-500 focus:ring-0"
+            />
+            <label for="remember-me" class="text-slate-400 text-[11px]"
+              >Remember my device for 30 days</label
+            >
+          </div>
+
+          <button
+            type="submit"
+            id="login-btn"
+            class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Log In to Dashboard</span>
+            <span>→</span>
+          </button>
+        </form>
+
+        <div class="text-center pt-2 text-xs text-slate-400">
+          Don't have an account yet?
+          <button
+            onclick="switchView('signup')"
+            class="text-brand-400 font-semibold hover:underline ml-1"
+          >
+            Create Account
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. SIGN UP VIEW (/signup)                                                -->
+    <!-- ========================================================================= -->
+    <div
+      id="view-signup"
+      class="hidden min-h-[calc(100vh-45px)] flex items-center justify-center p-4 bg-grid py-12"
+    >
+      <div
+        class="w-full max-w-md bg-obsidian-card rounded-2xl border border-obsidian-borderLight shadow-2xl p-6 sm:p-8 space-y-6 glow-indigo relative"
+      >
+        <!-- Back Link -->
+        <button
+          onclick="switchView('landing')"
+          class="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-mono transition-colors"
+        >
+          ← Back to home
+        </button>
+
+        <!-- Header -->
+        <div class="space-y-1">
+          <div
+            class="w-10 h-10 rounded-xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center text-brand-400 font-bold mb-3"
+          >
+            ✨
+          </div>
+          <h2 class="text-xl font-bold text-white">Create your account</h2>
+          <p class="text-xs text-slate-400">
+            Start building your personalized AI placement journey.
+          </p>
+        </div>
+
+        <!-- Quick Mock Google Auth Button -->
+        <button
+          onclick="mockGoogleAuth()"
+          class="w-full py-2.5 px-4 rounded-xl bg-obsidian-surface hover:bg-obsidian-elevated text-white border border-obsidian-borderLight text-xs font-semibold flex items-center justify-center gap-2.5 transition-all"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
+            />
+            <path
+              fill="#4285F4"
+              d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.1-2 .4-2.7L1.6 6.4C.6 8.3 0 10.1 0 12s.6 3.7 1.6 5.6l3.7-2.9z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 15.9C3.5 19.8 7.4 23 12 23z"
+            />
+          </svg>
+          <span>Sign up with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-obsidian-border w-full"></div>
+          <span
+            class="bg-obsidian-card px-3 text-[11px] text-slate-400 uppercase font-mono tracking-wider absolute"
+            >OR</span
+          >
+        </div>
+
+        <!-- Signup Form -->
+        <form onsubmit="handleSignupSubmit(event)" class="space-y-3.5 text-xs">
+          <div class="space-y-1">
+            <label class="block text-slate-300 font-medium">Full Name</label>
+            <input
+              type="text"
+              id="signup-name"
+              required
+              value="Alex Patel"
+              class="w-full px-3.5 py-2 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-slate-300 font-medium"
+              >College / Personal Email</label
+            >
+            <input
+              type="email"
+              id="signup-email"
+              required
+              value="alex.patel@charusat.edu.in"
+              class="w-full px-3.5 py-2 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-slate-300 font-medium"
+              >Create Password</label
+            >
+            <input
+              type="password"
+              id="signup-password"
+              required
+              value="PlacementCopilot2026!"
+              class="w-full px-3.5 py-2 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+            />
+          </div>
+
+          <div class="flex items-start gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="signup-terms"
+              required
+              checked
+              class="w-4 h-4 mt-0.5 rounded border-obsidian-borderLight bg-obsidian-surface text-brand-500 focus:ring-0"
+            />
+            <label
+              for="signup-terms"
+              class="text-slate-400 text-[11px] leading-tight"
+            >
+              I agree to the
+              <a href="#" class="text-brand-400 underline">Terms of Service</a>
+              and acknowledge telemetry profile data processing for placement
+              adaptation.
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            id="signup-btn"
+            class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-lg shadow-brand-600/20 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Create Account & Start Onboarding</span>
+            <span>→</span>
+          </button>
+        </form>
+
+        <div class="text-center pt-2 text-xs text-slate-400">
+          Already have an account?
+          <button
+            onclick="switchView('login')"
+            class="text-brand-400 font-semibold hover:underline ml-1"
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 4. FORGOT PASSWORD VIEW (/forgot-password)                                -->
+    <!-- ========================================================================= -->
+    <div
+      id="view-forgot"
+      class="hidden min-h-[calc(100vh-45px)] flex items-center justify-center p-4 bg-grid py-12"
+    >
+      <div
+        class="w-full max-w-md bg-obsidian-card rounded-2xl border border-obsidian-borderLight shadow-2xl p-6 sm:p-8 space-y-6 glow-indigo relative"
+      >
+        <button
+          onclick="switchView('login')"
+          class="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-mono transition-colors"
+        >
+          ← Back to login
+        </button>
+
+        <div class="space-y-1">
+          <div
+            class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold mb-3"
+          >
+            🔑
+          </div>
+          <h2 class="text-xl font-bold text-white">Reset your password</h2>
+          <p class="text-xs text-slate-400">
+            Enter your registered email and we'll send verification recovery
+            instructions.
+          </p>
+        </div>
+
+        <div id="forgot-form-container">
+          <form onsubmit="handleForgotSubmit(event)" class="space-y-4 text-xs">
+            <div class="space-y-1.5">
+              <label class="block text-slate-300 font-medium"
+                >Registered Email address</label
+              >
+              <input
+                type="email"
+                id="forgot-email"
+                required
+                value="alex.patel@charusat.edu.in"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs"
+              />
+            </div>
+
+            <button
+              type="submit"
+              id="forgot-btn"
+              class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-lg shadow-brand-600/20 transition-all"
+            >
+              Send Reset Link
+            </button>
+          </form>
+        </div>
+
+        <!-- Success Feedback Alert (Hidden initially) -->
+        <div
+          id="forgot-success"
+          class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-2 text-xs"
+        >
+          <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+            <span>✓</span> Check your email
+          </div>
+          <p class="text-slate-300 text-[11px]">
+            Instructions have been sent if an active account exists for that
+            email address.
+          </p>
+          <button
+            onclick="switchView('login')"
+            class="text-brand-400 font-semibold text-[11px] underline pt-1 block"
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 5. ONBOARDING WIZARD (/onboarding) — 6 Progressive Steps                  -->
+    <!-- ========================================================================= -->
+    <div
+      id="view-onboarding"
+      class="hidden min-h-[calc(100vh-45px)] bg-obsidian-base py-8 px-4 sm:px-6"
+    >
+      <div class="max-w-3xl mx-auto space-y-6">
+        <!-- Top Wizard Header: Logo & Step Progression Tracker -->
+        <div
+          class="bg-obsidian-card p-4 sm:p-5 rounded-2xl border border-obsidian-border flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm"
+            >
+              ⚡
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white leading-none">
+                Placement Profile Setup
+              </h3>
+              <span class="text-[11px] text-slate-400 font-mono"
+                >Calibrating AI Copilot Reasoning Vectors</span
+              >
+            </div>
+          </div>
+
+          <!-- 6 Step Progress Pills -->
+          <div class="flex items-center gap-1.5 text-xs font-mono">
+            <span
+              id="step-pill-1"
+              class="px-2.5 py-1 rounded bg-brand-500 text-white font-bold"
+              >1</span
+            >
+            <span class="text-slate-600">•</span>
+            <span
+              id="step-pill-2"
+              class="px-2.5 py-1 rounded bg-obsidian-surface text-slate-400"
+              >2</span
+            >
+            <span class="text-slate-600">•</span>
+            <span
+              id="step-pill-3"
+              class="px-2.5 py-1 rounded bg-obsidian-surface text-slate-400"
+              >3</span
+            >
+            <span class="text-slate-600">•</span>
+            <span
+              id="step-pill-4"
+              class="px-2.5 py-1 rounded bg-obsidian-surface text-slate-400"
+              >4</span
+            >
+            <span class="text-slate-600">•</span>
+            <span
+              id="step-pill-5"
+              class="px-2.5 py-1 rounded bg-obsidian-surface text-slate-400"
+              >5</span
+            >
+            <span class="text-slate-600">•</span>
+            <span
+              id="step-pill-6"
+              class="px-2.5 py-1 rounded bg-obsidian-surface text-slate-400"
+              >6</span
+            >
+          </div>
+        </div>
+
+        <!-- Main Step Container Card -->
+        <div
+          class="bg-obsidian-card p-6 sm:p-8 rounded-2xl border border-obsidian-borderLight shadow-2xl relative"
+        >
+          <!-- STEP 1: Personal & Academic Credentials -->
+          <div id="onboarding-step-1" class="space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 1 of 6 · Profile Credentials</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                Tell us about yourself
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Provide your academic baseline so the AI can index campus
+                recruitment criteria.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div class="space-y-1 sm:col-span-2">
+                <label class="block text-slate-300 font-medium"
+                  >Full Name</label
+                >
+                <input
+                  type="text"
+                  id="ob-name"
+                  value="Alex Patel"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white text-xs focus:border-brand-500"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-slate-300 font-medium"
+                  >College / Institute</label
+                >
+                <input
+                  type="text"
+                  id="ob-college"
+                  value="CSPIT (CHARUSAT)"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white text-xs focus:border-brand-500"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-slate-300 font-medium"
+                  >Degree & Branch</label
+                >
+                <input
+                  type="text"
+                  id="ob-degree"
+                  value="B.Tech Information Technology"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white text-xs focus:border-brand-500"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-slate-300 font-medium"
+                  >Graduation Year</label
+                >
+                <select
+                  id="ob-grad"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white text-xs focus:border-brand-500"
+                >
+                  <option value="2027" selected>2027 (Current 3rd Year)</option>
+                  <option value="2026">
+                    2026 (Final Year / Upcoming Placement)
+                  </option>
+                  <option value="2025">2025 (Immediate Drive)</option>
+                  <option value="2028">2028 (2nd Year Foundation)</option>
+                </select>
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-slate-300 font-medium"
+                  >Current CGPA</label
+                >
+                <input
+                  type="text"
+                  id="ob-cgpa"
+                  value="8.84"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white text-xs focus:border-brand-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Target Roles & Career Track -->
+          <div id="onboarding-step-2" class="hidden space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 2 of 6 · Target Role Taxonomy</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                What role are you targeting?
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Select your primary placement objective. The AI will customize
+                DSA and system design expectations accordingly.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <label
+                class="p-4 rounded-xl bg-obsidian-surface border border-brand-500/50 flex items-start gap-3 cursor-pointer hover:bg-obsidian-elevated transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="target-role"
+                  value="backend"
+                  checked
+                  class="mt-1 text-brand-500 focus:ring-0"
+                />
+                <div>
+                  <span class="font-bold text-white block text-sm"
+                    >Backend Developer (Tier-1 SDE)</span
+                  >
+                  <span class="text-slate-400 text-[11px] block mt-0.5"
+                    >REST APIs, Async Concurrency, SQL/NoSQL, System Design,
+                    Concurrency</span
+                  >
+                </div>
+              </label>
+
+              <label
+                class="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-start gap-3 cursor-pointer hover:bg-obsidian-elevated transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="target-role"
+                  value="aiml"
+                  class="mt-1 text-brand-500 focus:ring-0"
+                />
+                <div>
+                  <span class="font-bold text-white block text-sm"
+                    >AI / ML Engineer</span
+                  >
+                  <span class="text-slate-400 text-[11px] block mt-0.5"
+                    >PyTorch, LLM inference, Model Serving, Scikit-Learn,
+                    Feature Engineering</span
+                  >
+                </div>
+              </label>
+
+              <label
+                class="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-start gap-3 cursor-pointer hover:bg-obsidian-elevated transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="target-role"
+                  value="fullstack"
+                  class="mt-1 text-brand-500 focus:ring-0"
+                />
+                <div>
+                  <span class="font-bold text-white block text-sm"
+                    >Full Stack Developer</span
+                  >
+                  <span class="text-slate-400 text-[11px] block mt-0.5"
+                    >React, Next.js, Node/FastAPI, State Management, Full
+                    Product Deployments</span
+                  >
+                </div>
+              </label>
+
+              <label
+                class="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-start gap-3 cursor-pointer hover:bg-obsidian-elevated transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="target-role"
+                  value="sde-general"
+                  class="mt-1 text-brand-500 focus:ring-0"
+                />
+                <div>
+                  <span class="font-bold text-white block text-sm"
+                    >General Software Engineer</span
+                  >
+                  <span class="text-slate-400 text-[11px] block mt-0.5"
+                    >Core DSA, OS, DBMS, Computer Networks, Problem Solving
+                    Mastery</span
+                  >
+                </div>
+              </label>
+            </div>
+
+            <div
+              class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-center justify-between text-xs"
+            >
+              <span class="text-slate-300">Secondary Fallback Role:</span>
+              <span class="text-brand-300 font-mono font-medium"
+                >AI / ML Solutions Engineer</span
+              >
+            </div>
+          </div>
+
+          <!-- STEP 3: Technical Skills Inventory -->
+          <div id="onboarding-step-3" class="hidden space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 3 of 6 · Competency Inventory</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                What skills do you already have?
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Select your active technical stack. AI will verify these against
+                uploaded code.
+              </p>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              <div>
+                <span
+                  class="text-[11px] font-mono uppercase text-slate-400 block mb-2"
+                  >Core Languages</span
+                >
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >Python (Advanced)</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >C++ (Intermediate)</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >JavaScript</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border hover:text-white cursor-pointer"
+                    >+ Java</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border hover:text-white cursor-pointer"
+                    >+ Go</span
+                  >
+                </div>
+              </div>
+
+              <div>
+                <span
+                  class="text-[11px] font-mono uppercase text-slate-400 block mb-2"
+                  >Frameworks & Backend</span
+                >
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >FastAPI</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >React</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >SQL & PostgreSQL</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >MongoDB</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border hover:text-white cursor-pointer"
+                    >+ Node.js</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border hover:text-white cursor-pointer"
+                    >+ Redis</span
+                  >
+                </div>
+              </div>
+
+              <div>
+                <span
+                  class="text-[11px] font-mono uppercase text-slate-400 block mb-2"
+                  >DevOps & AI Systems</span
+                >
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >Git & GitHub</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/40 font-medium"
+                    >Scikit-Learn</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-medium"
+                    >Docker (Beginner - Flagged Gap)</span
+                  >
+                  <span
+                    class="px-3 py-1 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border hover:text-white cursor-pointer"
+                    >+ Kubernetes</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: Connected Telemetry Integrations -->
+          <div id="onboarding-step-4" class="hidden space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 4 of 6 · Profile Integrations</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                Connect your preparation accounts
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Connecting enables real-time vector analysis of your actual code
+                AST and algorithmic solve history.
+              </p>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <!-- Resume Integration -->
+              <div
+                class="p-4 rounded-xl bg-obsidian-surface border border-brand-500/40 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 rounded-lg bg-brand-600/20 text-brand-400 flex items-center justify-center font-bold"
+                  >
+                    📄
+                  </div>
+                  <div>
+                    <span class="font-bold text-white block text-sm"
+                      >ATS Single-Column Resume</span
+                    >
+                    <span class="text-slate-400 text-[11px]"
+                      >Alex_Patel_SDE_Resume_v4.pdf (Indexed)</span
+                    >
+                  </div>
+                </div>
+                <span
+                  class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[11px] border border-emerald-500/20"
+                  >Vectorized 82%</span
+                >
+              </div>
+
+              <!-- GitHub Integration -->
+              <div
+                class="p-4 rounded-xl bg-obsidian-surface border border-brand-500/40 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 rounded-lg bg-brand-600/20 text-brand-400 flex items-center justify-center font-bold"
+                  >
+                    🐙
+                  </div>
+                  <div>
+                    <span class="font-bold text-white block text-sm"
+                      >GitHub Profile</span
+                    >
+                    <span class="text-slate-400 text-[11px]"
+                      >@alex-codes (486 commits, 12 repositories synced)</span
+                    >
+                  </div>
+                </div>
+                <span
+                  class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[11px] border border-emerald-500/20"
+                  >Connected</span
+                >
+              </div>
+
+              <!-- LeetCode Integration -->
+              <div
+                class="p-4 rounded-xl bg-obsidian-surface border border-brand-500/40 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 rounded-lg bg-brand-600/20 text-brand-400 flex items-center justify-center font-bold"
+                  >
+                    💡
+                  </div>
+                  <div>
+                    <span class="font-bold text-white block text-sm"
+                      >LeetCode Handle</span
+                    >
+                    <span class="text-slate-400 text-[11px]"
+                      >@alex_algo (284 solved, Knight 1840 rank)</span
+                    >
+                  </div>
+                </div>
+                <span
+                  class="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[11px] border border-emerald-500/20"
+                  >Connected</span
+                >
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500 italic">
+              *Integrations are optional; you can skip or disconnect anytime
+              inside Settings.
+            </p>
+          </div>
+
+          <!-- STEP 5: Study Cadence & Learning Preferences -->
+          <div id="onboarding-step-5" class="hidden space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 5 of 6 · Cadence Calibration</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                How do you prefer to prepare?
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Configure your daily time window so the AI engine avoids
+                overloading your daily execution matrix.
+              </p>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              <div>
+                <label class="block text-slate-300 font-medium mb-2"
+                  >Daily Study Commitment</label
+                >
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border text-center hover:border-brand-500"
+                  >
+                    <span class="font-bold text-white block">1.0 hr</span>
+                    <span class="text-[10px] text-slate-400">Maintenance</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="p-3 rounded-xl bg-obsidian-surface border border-brand-500 text-center bg-brand-500/10"
+                  >
+                    <span class="font-bold text-brand-400 block">2.5 hrs</span>
+                    <span class="text-[10px] text-slate-300"
+                      >Optimal Sprint</span
+                    >
+                  </button>
+                  <button
+                    type="button"
+                    class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border text-center hover:border-brand-500"
+                  >
+                    <span class="font-bold text-white block">4.0 hrs</span>
+                    <span class="text-[10px] text-slate-400"
+                      >High Intensity</span
+                    >
+                  </button>
+                  <button
+                    type="button"
+                    class="p-3 rounded-xl bg-obsidian-surface border border-obsidian-border text-center hover:border-brand-500"
+                  >
+                    <span class="font-bold text-white block">Variable</span>
+                    <span class="text-[10px] text-slate-400"
+                      >Weekend Bursts</span
+                    >
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-300 font-medium mb-2"
+                  >Preferred Study Windows</label
+                >
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    class="px-3 py-1.5 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                    >🌅 Early Morning (06:00 - 09:00)</span
+                  >
+                  <span
+                    class="px-3 py-1.5 rounded-lg bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                    >🌆 Evening (18:00 - 21:00)</span
+                  >
+                  <span
+                    class="px-3 py-1.5 rounded-lg bg-obsidian-surface text-slate-400 border border-obsidian-border"
+                    >🌙 Late Night (22:00 - 01:30)</span
+                  >
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-300 font-medium mb-2"
+                  >Pedagogical Style</label
+                >
+                <div
+                  class="p-3.5 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-center justify-between"
+                >
+                  <span class="text-slate-300"
+                    >Hands-on micro-tasks + AST verifiable proof</span
+                  >
+                  <span class="text-ai-400 font-mono font-medium"
+                    >Applied Engineering</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 6: Placement Target Deadline & Generation -->
+          <div id="onboarding-step-6" class="hidden space-y-6">
+            <div>
+              <span
+                class="text-xs font-mono text-brand-400 uppercase tracking-wider block mb-1"
+                >Step 6 of 6 · Milestone Gate</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                What is your placement goal?
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Finalize your timeline. AI will synthesize all telemetry vectors
+                to produce your initial 90-day execution plan.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div
+                class="p-4 rounded-xl bg-obsidian-surface border border-brand-500/40 space-y-1"
+              >
+                <span class="text-brand-400 font-bold block text-sm"
+                  >Campus Recruitment 2025–2026</span
+                >
+                <p class="text-slate-400 text-[11px]">
+                  Primary drive starting within ~60–90 days.
+                </p>
+              </div>
+
+              <div
+                class="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border space-y-1"
+              >
+                <span class="text-white font-bold block text-sm"
+                  >Sprint Duration</span
+                >
+                <p class="text-slate-400 text-[11px]">
+                  Standard 90-Day 3-Phase Execution Architecture.
+                </p>
+              </div>
+            </div>
+
+            <!-- Summary Preview Card -->
+            <div
+              class="p-4 rounded-xl bg-gradient-to-r from-brand-950/40 via-obsidian-surface to-ai-950/30 border border-brand-500/30 space-y-2 text-xs"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-white font-semibold"
+                  >Ready to Synthesize Profile:</span
+                >
+                <span class="text-emerald-400 font-mono text-[11px]"
+                  >Telemetry Validated</span
+                >
+              </div>
+              <div
+                class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-mono"
+              >
+                <div class="text-slate-400">
+                  Role: <span class="text-white">Tier-1 SDE</span>
+                </div>
+                <div class="text-slate-400">
+                  Pace: <span class="text-white">2.5 hrs/day</span>
+                </div>
+                <div class="text-slate-400">
+                  Solves: <span class="text-white">284 DSA</span>
+                </div>
+                <div class="text-slate-400">
+                  Resume: <span class="text-white">82% Verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons inside Wizard Card -->
+          <div
+            class="mt-8 pt-4 border-t border-obsidian-border flex items-center justify-between text-xs"
+          >
+            <button
+              id="ob-back-btn"
+              onclick="prevOnboardingStep()"
+              class="hidden px-4 py-2 rounded-xl text-slate-400 hover:text-white font-medium transition-colors"
+            >
+              ← Back
+            </button>
+            <div class="ml-auto flex items-center gap-3">
+              <button
+                onclick="skipOnboarding()"
+                class="text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                id="ob-next-btn"
+                onclick="nextOnboardingStep()"
+                class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold shadow-md shadow-brand-600/20 transition-all flex items-center gap-1.5"
+              >
+                <span>Continue</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 6. AI PROFILE ANALYSIS SCREEN (/onboarding/analysis)                     -->
+    <!-- ========================================================================= -->
+    <div
+      id="view-analysis"
+      class="hidden min-h-[calc(100vh-45px)] flex items-center justify-center p-4 bg-grid py-12"
+    >
+      <div
+        class="w-full max-w-xl bg-obsidian-card rounded-2xl border border-obsidian-borderLight shadow-2xl p-6 sm:p-8 space-y-6 glow-ai relative"
+      >
+        <!-- Loading / Synthesis State (Stage 1) -->
+        <div id="analysis-loading-state" class="space-y-6 text-center py-4">
+          <div
+            class="w-14 h-14 rounded-2xl bg-ai-500/20 border border-ai-500/40 flex items-center justify-center text-ai-400 text-2xl mx-auto animate-bounce"
+          >
+            ⚡
+          </div>
+          <div class="space-y-1">
+            <h2 class="text-xl font-bold text-white">
+              AI is building your placement profile...
+            </h2>
+            <p class="text-xs text-slate-400">
+              Corroborating AST vectors, ATS resume tokens, and LeetCode
+              accuracy...
+            </p>
+          </div>
+
+          <!-- Multi-step animated check stream -->
+          <div class="max-w-md mx-auto space-y-2.5 text-xs text-left font-mono">
+            <div
+              class="flex items-center justify-between p-2 rounded bg-obsidian-surface border border-obsidian-border"
+            >
+              <span class="text-slate-300"
+                >✓ Academic profile indexed (CSPIT · 8.84 CGPA)</span
+              >
+              <span class="text-emerald-400 text-[10px]">VERIFIED</span>
+            </div>
+            <div
+              class="flex items-center justify-between p-2 rounded bg-obsidian-surface border border-obsidian-border"
+            >
+              <span class="text-slate-300"
+                >✓ Resume parsed (ATS 82% Single Column)</span
+              >
+              <span class="text-emerald-400 text-[10px]">PARSED</span>
+            </div>
+            <div
+              class="flex items-center justify-between p-2 rounded bg-obsidian-surface border border-obsidian-border"
+            >
+              <span class="text-slate-300"
+                >✓ GitHub AST scanned (486 commits · 12 repos)</span
+              >
+              <span class="text-emerald-400 text-[10px]">CORROBORATED</span>
+            </div>
+            <div
+              class="flex items-center justify-between p-2 rounded bg-obsidian-surface border border-obsidian-border"
+            >
+              <span class="text-slate-300"
+                >✓ LeetCode topics categorized (284 problems)</span
+              >
+              <span class="text-emerald-400 text-[10px]">INDEXED</span>
+            </div>
+            <div
+              class="flex items-center justify-between p-2 rounded bg-brand-500/10 border border-brand-500/30 animate-pulse"
+            >
+              <span class="text-brand-300"
+                >● Synthesizing 3-Phase 90-Day Execution Roadmap...</span
+              >
+              <span class="text-brand-400 text-[10px]">IN PROGRESS</span>
+            </div>
+          </div>
+
+          <button
+            onclick="revealAnalysisResult()"
+            class="text-xs text-ai-400 hover:underline font-mono pt-2"
+          >
+            (Skip animation & preview diagnostic result)
+          </button>
+        </div>
+
+        <!-- Result State (Stage 2 - Revealed after 3 seconds or on click) -->
+        <div id="analysis-result-state" class="hidden space-y-6">
+          <div
+            class="flex items-center justify-between border-b border-obsidian-border pb-4"
+          >
+            <div>
+              <span
+                class="text-[10px] font-mono uppercase tracking-widest text-ai-400 block"
+                >Synthesis Complete</span
+              >
+              <h2 class="text-xl font-bold text-white">
+                Your Initial Placement Analysis
+              </h2>
+            </div>
+            <div
+              class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold"
+            >
+              Ready for Launch
+            </div>
+          </div>
+
+          <!-- Readiness Gauge Card -->
+          <div
+            class="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-center justify-between"
+          >
+            <div>
+              <span class="text-xs text-slate-400 block font-mono"
+                >ESTIMATED PLACEMENT READINESS</span
+              >
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-3xl font-extrabold text-white">76</span>
+                <span class="text-xs text-slate-400">/ 100</span>
+                <span class="text-[11px] text-brand-400 font-mono"
+                  >(Tier-1 Cutoff: 85)</span
+                >
+              </div>
+              <span class="text-[10px] text-slate-400 block mt-1"
+                >AI-assisted preparation estimate calibrated against Tier-1 SDE
+                benchmarks.</span
+              >
+            </div>
+            <div
+              class="w-14 h-14 rounded-full border-4 border-brand-500 flex items-center justify-center font-bold text-white font-mono text-sm"
+            >
+              76%
+            </div>
+          </div>
+
+          <!-- 2 Columns: Strengths vs Gaps -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div
+              class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2"
+            >
+              <span
+                class="font-bold text-emerald-400 flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider"
+              >
+                <span>✓</span> Primary Strengths
+              </span>
+              <ul class="space-y-1 text-slate-300 text-[11px]">
+                <li>• Python AST & Async fundamentals (90%)</li>
+                <li>• Foundational DSA (284 LeetCode solves)</li>
+                <li>• FastAPI JWT Auth project portfolio</li>
+              </ul>
+            </div>
+
+            <div
+              class="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2"
+            >
+              <span
+                class="font-bold text-amber-400 flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider"
+              >
+                <span>⚠</span> 3 Primary Bottlenecks
+              </span>
+              <ul class="space-y-1 text-slate-300 text-[11px]">
+                <li>• Dynamic Programming pass rate (20% gap)</li>
+                <li>• Multi-stage Docker containerization</li>
+                <li>• Interview speech conciseness (target 75s)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Next Action Card -->
+          <div
+            class="p-4 rounded-xl bg-gradient-to-r from-brand-950/40 to-ai-950/30 border border-brand-500/30 space-y-2 text-xs"
+          >
+            <span class="text-white font-bold block"
+              >Your 90-Day Roadmap has been personalized:</span
+            >
+            <p class="text-slate-300 text-[11px]">
+              Day 34 will immediately kick off with FastAPI validation, Graph
+              DFS practice, and a 60-second STAR technique self-introduction
+              challenge.
+            </p>
+          </div>
+
+          <button
+            onclick="enterAuthenticatedDashboard()"
+            class="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-ai-600 text-white font-bold text-xs shadow-xl shadow-brand-600/30 hover:shadow-brand-500/50 transition-all flex items-center justify-center gap-2"
+          >
+            <span>Enter My Dashboard</span>
+            <span>→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client-Side Vanilla Routing & Interaction Script -->
+    <script>
+      let currentStep = 1;
+      let authState = "logged_out";
+
+      function switchView(viewName) {
+        // Hide all primary views
+        document.getElementById("view-landing").classList.add("hidden");
+        document.getElementById("view-login").classList.add("hidden");
+        document.getElementById("view-signup").classList.add("hidden");
+        document.getElementById("view-forgot").classList.add("hidden");
+        document.getElementById("view-onboarding").classList.add("hidden");
+        document.getElementById("view-analysis").classList.add("hidden");
+
+        // Remove active tab highlight
+        [
+          "landing",
+          "login",
+          "signup",
+          "forgot",
+          "onboarding",
+          "analysis",
+        ].forEach((tab) => {
+          const btn = document.getElementById("tab-" + tab);
+          if (btn) {
+            btn.classList.remove("bg-brand-500", "text-white", "shadow-sm");
+            btn.classList.add("text-slate-400");
+          }
+        });
+
+        // Show requested view
+        const targetView = document.getElementById("view-" + viewName);
+        if (targetView) {
+          targetView.classList.remove("hidden");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // Highlight active tab
+        const activeBtn = document.getElementById("tab-" + viewName);
+        if (activeBtn) {
+          activeBtn.classList.remove("text-slate-400");
+          activeBtn.classList.add("bg-brand-500", "text-white", "shadow-sm");
+        }
+      }
+
+      function mockGoogleAuth() {
+        authState = "onboarding_in_progress";
+        document.getElementById("auth-state-badge").innerText =
+          "Logged In (Onboarding)";
+        document.getElementById("auth-state-badge").className =
+          "px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
+        switchView("onboarding");
+      }
+
+      function handleLoginSubmit(e) {
+        e.preventDefault();
+        authState = "authenticated";
+        document.getElementById("auth-state-badge").innerText =
+          "Authenticated (Alex Patel)";
+        document.getElementById("auth-state-badge").className =
+          "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono";
+
+        const btn = document.getElementById("login-btn");
+        btn.innerText = "Authenticating with telemetry cache...";
+        setTimeout(() => {
+          alert(
+            "Authentication Successful! Redirecting to Authenticated Dashboard...",
+          );
+          switchView("landing");
+        }, 700);
+      }
+
+      function handleSignupSubmit(e) {
+        e.preventDefault();
+        authState = "onboarding_in_progress";
+        document.getElementById("auth-state-badge").innerText =
+          "Logged In (Onboarding)";
+        document.getElementById("auth-state-badge").className =
+          "px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono";
+        switchView("onboarding");
+      }
+
+      function handleForgotSubmit(e) {
+        e.preventDefault();
+        document
+          .getElementById("forgot-form-container")
+          .classList.add("hidden");
+        document.getElementById("forgot-success").classList.remove("hidden");
+      }
+
+      function nextOnboardingStep() {
+        if (currentStep < 6) {
+          document
+            .getElementById("onboarding-step-" + currentStep)
+            .classList.add("hidden");
+          currentStep++;
+          document
+            .getElementById("onboarding-step-" + currentStep)
+            .classList.remove("hidden");
+          updateOnboardingPills();
+        } else {
+          // From step 6, advance to AI Analysis
+          switchView("analysis");
+          setTimeout(() => {
+            revealAnalysisResult();
+          }, 3000);
+        }
+      }
+
+      function prevOnboardingStep() {
+        if (currentStep > 1) {
+          document
+            .getElementById("onboarding-step-" + currentStep)
+            .classList.add("hidden");
+          currentStep--;
+          document
+            .getElementById("onboarding-step-" + currentStep)
+            .classList.remove("hidden");
+          updateOnboardingPills();
+        }
+      }
+
+      function updateOnboardingPills() {
+        for (let i = 1; i <= 6; i++) {
+          const pill = document.getElementById("step-pill-" + i);
+          if (i === currentStep) {
+            pill.className =
+              "px-2.5 py-1 rounded bg-brand-500 text-white font-bold";
+          } else if (i < currentStep) {
+            pill.className =
+              "px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-medium";
+          } else {
+            pill.className =
+              "px-2.5 py-1 rounded bg-obsidian-surface text-slate-400";
+          }
+        }
+
+        const backBtn = document.getElementById("ob-back-btn");
+        if (currentStep > 1) {
+          backBtn.classList.remove("hidden");
+        } else {
+          backBtn.classList.add("hidden");
+        }
+
+        const nextBtn = document.getElementById("ob-next-btn");
+        if (currentStep === 6) {
+          nextBtn.innerHTML = "<span>Synthesize AI Plan</span> <span>⚡</span>";
+        } else {
+          nextBtn.innerHTML = "<span>Continue</span> <span>→</span>";
+        }
+      }
+
+      function skipOnboarding() {
+        switchView("analysis");
+        setTimeout(() => {
+          revealAnalysisResult();
+        }, 2000);
+      }
+
+      function revealAnalysisResult() {
+        document
+          .getElementById("analysis-loading-state")
+          .classList.add("hidden");
+        document
+          .getElementById("analysis-result-state")
+          .classList.remove("hidden");
+      }
+
+      function enterAuthenticatedDashboard() {
+        authState = "authenticated";
+        document.getElementById("auth-state-badge").innerText =
+          "Authenticated (Alex Patel)";
+        document.getElementById("auth-state-badge").className =
+          "px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono";
+        alert(
+          "Entering Central AI Placement Copilot Dashboard with personalized readiness score (76/100) and Day 34 Roadmap!",
+        );
+        switchView("landing");
+      }
+    </script>
+  </body>
+</html>

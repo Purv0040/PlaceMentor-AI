@@ -1,6 +1,0 @@
-{
-  "name": "PlaceMentor AI",
-  "description": "AI-powered career placement and mentorship portal",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
