@@ -63,28 +63,28 @@ export const CommunicationPage = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] p-6 rounded-2xl border border-indigo-500/30 shadow-xl backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-2xl font-bold text-on-surface tracking-tight">Communication Readiness Lab</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/40 text-secondary text-xs font-mono border border-secondary/30">
-              <Zap className="w-3.5 h-3.5 text-secondary" />
+            <h1 className="text-2xl font-bold text-white tracking-tight">Communication Readiness Lab</h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-mono border border-cyan-500/30">
+              <Zap className="w-3.5 h-3.5 text-cyan-400" />
               TELEMETRY V4.2 · SPEECH & ARTICULATION ENGINE
             </span>
           </div>
-          <p className="text-sm text-on-surface-variant max-w-2xl">
+          <p className="text-sm text-slate-300 max-w-2xl">
             Calibrate speaking pace (WPM), technical vocabulary density, verbal clarity, and filler word frequency for Tier-1 engineering interviews.
           </p>
         </div>
 
         <div className="flex items-center gap-3 self-start lg:self-center shrink-0">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-tertiary-container/20 text-tertiary text-xs font-mono border border-tertiary/30">
-            <Mic className="w-4 h-4 text-tertiary" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-mono border border-emerald-500/30">
+            <Mic className="w-4 h-4 text-emerald-400" />
             AI Coach Active
           </span>
           <button
             onClick={() => navigate('/mock-interview')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary hover:bg-primary-fixed-dim text-sm font-semibold rounded-xl transition-all shadow-md"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-indigo-600/25"
           >
             <span>Practice Mock Interview</span>
             <ArrowUpRight className="w-4 h-4" />
@@ -95,74 +95,74 @@ export const CommunicationPage = () => {
       {/* Communication Score Hero Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Readiness Score Card */}
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 space-y-6 flex flex-col justify-between shadow-sm">
+        <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-6 flex flex-col justify-between shadow-lg">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">Diagnostic Matrix</span>
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-secondary-container/40 text-secondary border border-secondary/30">
+              <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Diagnostic Matrix</span>
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">
                 +7% vs Day 1
               </span>
             </div>
 
             <div className="py-4 text-center">
-              <div className="inline-flex flex-col items-center justify-center w-36 h-36 rounded-full border-4 border-secondary/30 bg-surface-container/60 shadow-[0_0_24px_rgba(221,183,255,0.2)]">
-                <span className="text-4xl font-black text-on-surface tracking-tight">78</span>
-                <span className="text-[11px] font-mono text-secondary font-semibold">/ 100 Index</span>
+              <div className="inline-flex flex-col items-center justify-center w-36 h-36 rounded-full border-4 border-purple-500/30 bg-[#0b0e17] shadow-[0_0_24px_rgba(168,85,247,0.25)]">
+                <span className="text-4xl font-black text-white tracking-tight">78</span>
+                <span className="text-[11px] font-mono text-purple-400 font-semibold">/ 100 Index</span>
               </div>
             </div>
 
             <div className="text-center space-y-1">
-              <p className="text-sm font-semibold text-on-surface">Good Technical Articulation</p>
-              <p className="text-xs text-on-surface-variant">Optimal interview cadence (140-150 WPM)</p>
+              <p className="text-sm font-semibold text-white">Good Technical Articulation</p>
+              <p className="text-xs text-slate-400">Optimal interview cadence (140-150 WPM)</p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-outline-variant/50 flex items-center justify-between text-xs font-mono">
-            <span className="text-on-surface-variant font-medium">Engine Telemetry</span>
-            <span className="text-tertiary font-bold">Speech Verified</span>
+          <div className="pt-4 border-t border-[#232b3e] flex items-center justify-between text-xs font-mono">
+            <span className="text-slate-400 font-medium">Engine Telemetry</span>
+            <span className="text-emerald-400 font-bold">Speech Verified</span>
           </div>
         </div>
 
         {/* 4 Diagnostic Metrics Grid */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Metric 1: Verbal Clarity */}
-          <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 space-y-2 shadow-sm">
+          <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] space-y-2 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-on-surface-variant">Verbal Clarity</span>
-              <span className="text-xs font-mono font-bold text-tertiary">82% Score</span>
+              <span className="text-xs font-mono uppercase text-slate-400">Verbal Clarity</span>
+              <span className="text-xs font-mono font-bold text-emerald-400">82% Score</span>
             </div>
-            <span className="text-2xl font-bold text-on-surface">High Precision</span>
-            <p className="text-xs text-on-surface-variant">Clear structural transitions between points</p>
+            <span className="text-2xl font-bold text-white">High Precision</span>
+            <p className="text-xs text-slate-400">Clear structural transitions between points</p>
           </div>
 
           {/* Metric 2: Speaking Pace */}
-          <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 space-y-2 shadow-sm">
+          <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] space-y-2 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-on-surface-variant">Speaking Pace</span>
-              <span className="text-xs font-mono font-bold text-primary">145 WPM</span>
+              <span className="text-xs font-mono uppercase text-slate-400">Speaking Pace</span>
+              <span className="text-xs font-mono font-bold text-indigo-400">145 WPM</span>
             </div>
-            <span className="text-2xl font-bold text-on-surface">Optimal Cadence</span>
-            <p className="text-xs text-on-surface-variant">Ideal target range: 140–150 WPM</p>
+            <span className="text-2xl font-bold text-white">Optimal Cadence</span>
+            <p className="text-xs text-slate-400">Ideal target range: 140–150 WPM</p>
           </div>
 
           {/* Metric 3: Pitch Stability */}
-          <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 space-y-2 shadow-sm">
+          <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] space-y-2 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-on-surface-variant">Pitch Stability</span>
-              <span className="text-xs font-mono font-bold text-secondary">74% Score</span>
+              <span className="text-xs font-mono uppercase text-slate-400">Pitch Stability</span>
+              <span className="text-xs font-mono font-bold text-purple-400">74% Score</span>
             </div>
-            <span className="text-2xl font-bold text-on-surface">Confident Tone</span>
-            <p className="text-xs text-on-surface-variant">Steady pitch modulation during STAR narrative</p>
+            <span className="text-2xl font-bold text-white">Confident Tone</span>
+            <p className="text-xs text-slate-400">Steady pitch modulation during STAR narrative</p>
           </div>
 
           {/* Metric 4: Filler Words */}
-          <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 space-y-2 shadow-sm">
+          <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] space-y-2 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-on-surface-variant">Filler Words Frequency</span>
-              <span className="text-xs font-mono font-bold text-tertiary">2 / min</span>
+              <span className="text-xs font-mono uppercase text-slate-400">Filler Words Frequency</span>
+              <span className="text-xs font-mono font-bold text-amber-400">2 / min</span>
             </div>
-            <span className="text-2xl font-bold text-on-surface">Low Frequency</span>
-            <p className="text-xs text-on-surface-variant">Target: &lt; 3 filler words per minute</p>
+            <span className="text-2xl font-bold text-white">Low Frequency</span>
+            <p className="text-xs text-slate-400">Target: &lt; 3 filler words per minute</p>
           </div>
         </div>
       </div>
@@ -170,15 +170,15 @@ export const CommunicationPage = () => {
       {/* Interactive Practice Prompt Studio */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-on-surface text-lg flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold text-white text-lg flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-indigo-400" />
             Articulation Practice Prompts
           </h3>
-          <span className="text-xs font-mono text-on-surface-variant">Select Prompt Category</span>
+          <span className="text-xs font-mono text-slate-400">Select Prompt Category</span>
         </div>
 
         {/* Prompt Selection Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-outline-variant/50">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-[#232b3e]">
           {prompts.map((p, idx) => (
             <button
               key={p.id}
@@ -189,8 +189,8 @@ export const CommunicationPage = () => {
               }}
               className={`px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all whitespace-nowrap ${
                 activePromptIdx === idx
-                  ? 'bg-primary text-on-primary shadow-sm'
-                  : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
+                  : 'bg-[#1a2133] text-slate-400 hover:text-white hover:bg-[#232b3e] border border-[#232b3e]'
               }`}
             >
               {p.title}
@@ -199,21 +199,21 @@ export const CommunicationPage = () => {
         </div>
 
         {/* Active Prompt Card & Input Studio */}
-        <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant/60 space-y-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-outline-variant/40">
-            <span className="text-xs font-mono uppercase font-semibold text-secondary">
+        <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
+            <span className="text-xs font-mono uppercase font-semibold text-purple-400">
               Category: {currentPrompt.category}
             </span>
-            <span className="text-xs font-mono text-on-surface-variant">Target Pace: {currentPrompt.targetWpm} WPM</span>
+            <span className="text-xs font-mono text-slate-400">Target Pace: {currentPrompt.targetWpm} WPM</span>
           </div>
 
-          <h4 className="text-base font-bold text-on-surface leading-relaxed">{currentPrompt.promptText}</h4>
+          <h4 className="text-base font-bold text-white leading-relaxed">{currentPrompt.promptText}</h4>
 
           <div className="space-y-2">
-            <span className="text-xs font-mono uppercase text-on-surface-variant block">Suggested Keywords to Include:</span>
+            <span className="text-xs font-mono uppercase text-slate-400 block">Suggested Keywords to Include:</span>
             <div className="flex flex-wrap gap-1.5">
               {currentPrompt.suggestedKeywords.map((kw, idx) => (
-                <span key={idx} className="px-2.5 py-0.5 rounded bg-surface-container text-on-surface text-xs font-mono border border-outline-variant/40">
+                <span key={idx} className="px-2.5 py-0.5 rounded bg-[#1a2133] text-indigo-300 text-xs font-mono border border-indigo-500/20">
                   {kw}
                 </span>
               ))}
@@ -221,7 +221,7 @@ export const CommunicationPage = () => {
           </div>
 
           <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between text-xs font-mono text-on-surface-variant">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-400">
               <span>Type your response or speech transcription below:</span>
               <span>Word Count: {wordCount} words</span>
             </div>
@@ -230,15 +230,15 @@ export const CommunicationPage = () => {
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               placeholder="Structure your response clearly with STAR or technical breakdown..."
-              className="w-full p-4 rounded-xl bg-surface-container border border-outline-variant text-on-surface text-sm focus:outline-none focus:border-primary transition-colors resize-none font-sans leading-relaxed"
+              className="w-full p-4 rounded-xl bg-[#0b0e17] border border-[#232b3e] text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none font-sans leading-relaxed"
             ></textarea>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant/40">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#232b3e]">
             <button
               onClick={handleEvaluate}
               disabled={!responseText.trim() || isEvaluating}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:bg-primary-fixed-dim transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 flex items-center gap-2"
             >
               <Send className="w-4 h-4" />
               <span>{isEvaluating ? 'Analyzing Speech...' : 'Analyze Articulation'}</span>
@@ -249,57 +249,57 @@ export const CommunicationPage = () => {
 
       {/* Evaluation Results Card */}
       {evalResult && (
-        <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant/60 space-y-6 shadow-sm animate-in fade-in">
-          <div className="flex items-center justify-between pb-3 border-b border-outline-variant/40">
-            <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-secondary" />
+        <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-6 shadow-lg animate-in fade-in">
+          <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-400" />
               AI Articulation Diagnostic Evaluation
             </h3>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-tertiary-container/30 text-tertiary border border-tertiary/30">
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
               Overall Score: {evalResult.overallScore}/100
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs font-mono">
-            <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/40 space-y-1">
-              <span className="text-on-surface-variant block">Verbal Clarity</span>
-              <span className="text-xl font-bold text-on-surface">{evalResult.verbalClarity}%</span>
+            <div className="p-3.5 rounded-xl bg-[#0b0e17] border border-[#1e2638] space-y-1">
+              <span className="text-slate-400 block">Verbal Clarity</span>
+              <span className="text-xl font-bold text-white">{evalResult.verbalClarity}%</span>
             </div>
-            <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/40 space-y-1">
-              <span className="text-on-surface-variant block">Speaking Pace</span>
-              <span className="text-xl font-bold text-on-surface">{evalResult.wpm} WPM</span>
+            <div className="p-3.5 rounded-xl bg-[#0b0e17] border border-[#1e2638] space-y-1">
+              <span className="text-slate-400 block">Speaking Pace</span>
+              <span className="text-xl font-bold text-white">{evalResult.wpm} WPM</span>
             </div>
-            <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/40 space-y-1">
-              <span className="text-on-surface-variant block">Pitch Stability</span>
-              <span className="text-xl font-bold text-on-surface">{evalResult.pitchStability}%</span>
+            <div className="p-3.5 rounded-xl bg-[#0b0e17] border border-[#1e2638] space-y-1">
+              <span className="text-slate-400 block">Pitch Stability</span>
+              <span className="text-xl font-bold text-white">{evalResult.pitchStability}%</span>
             </div>
-            <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/40 space-y-1">
-              <span className="text-on-surface-variant block">Filler Words</span>
-              <span className="text-xl font-bold text-tertiary">{evalResult.fillerWordsCount} detected</span>
+            <div className="p-3.5 rounded-xl bg-[#0b0e17] border border-[#1e2638] space-y-1">
+              <span className="text-slate-400 block">Filler Words</span>
+              <span className="text-xl font-bold text-amber-400">{evalResult.fillerWordsCount} detected</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-primary-container/10 border border-primary/30 text-xs text-on-surface font-sans space-y-1">
-            <span className="font-semibold text-primary font-mono block">Coaching Rationale:</span>
+          <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-slate-200 font-sans space-y-1">
+            <span className="font-semibold text-indigo-400 font-mono block">Coaching Rationale:</span>
             <p>{evalResult.feedback}</p>
           </div>
         </div>
       )}
 
       {/* Practice History List */}
-      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/50">
-          <h3 className="font-semibold text-on-surface text-base flex items-center gap-2">
-            <History className="w-5 h-5 text-primary" />
+      <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-lg">
+        <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
+          <h3 className="font-semibold text-white text-base flex items-center gap-2">
+            <History className="w-5 h-5 text-indigo-400" />
             Communication Practice History
           </h3>
-          <span className="text-xs font-mono text-on-surface-variant">{history.length} Saved Sessions</span>
+          <span className="text-xs font-mono text-slate-400">{history.length} Saved Sessions</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-mono text-xs">
             <thead>
-              <tr className="border-b border-outline-variant/40 text-[11px] uppercase text-on-surface-variant">
+              <tr className="border-b border-[#232b3e] text-[11px] uppercase text-slate-400">
                 <th className="py-2.5 px-3">Date</th>
                 <th className="py-2.5 px-3">Prompt Title</th>
                 <th className="py-2.5 px-3">Verbal Clarity</th>
@@ -307,14 +307,14 @@ export const CommunicationPage = () => {
                 <th className="py-2.5 px-3">Score</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant/30">
+            <tbody className="divide-y divide-[#1e2638]">
               {history.map((item) => (
-                <tr key={item.id} className="hover:bg-surface-container/50 transition-colors">
-                  <td className="py-3 px-3 font-semibold text-on-surface">{item.date}</td>
-                  <td className="py-3 px-3 text-on-surface-variant">{item.title}</td>
-                  <td className="py-3 px-3 text-tertiary">{item.verbalClarity}%</td>
-                  <td className="py-3 px-3 text-on-surface-variant">{item.wpm} WPM</td>
-                  <td className="py-3 px-3 font-bold text-tertiary">{item.score}%</td>
+                <tr key={item.id} className="hover:bg-[#1a2133] transition-colors">
+                  <td className="py-3 px-3 font-semibold text-white">{item.date}</td>
+                  <td className="py-3 px-3 text-slate-300">{item.title}</td>
+                  <td className="py-3 px-3 text-emerald-400">{item.verbalClarity}%</td>
+                  <td className="py-3 px-3 text-slate-400">{item.wpm} WPM</td>
+                  <td className="py-3 px-3 font-bold text-emerald-400">{item.score}%</td>
                 </tr>
               ))}
             </tbody>

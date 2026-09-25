@@ -94,22 +94,22 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-surface-container-high border border-outline-variant rounded-2xl shadow-2xl overflow-hidden p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg bg-[#121624] border border-[#232b3e] rounded-2xl shadow-2xl overflow-hidden p-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-outline-variant/50">
+        <div className="flex items-center justify-between pb-4 border-b border-[#232b3e]">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary-container/20 text-primary border border-primary/30">
+            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-on-surface">Upload Resume PDF</h3>
-              <p className="text-xs text-on-surface-variant">Telemetry V4.2 ATS Audit Engine</p>
+              <h3 className="font-semibold text-lg text-white">Upload Resume PDF</h3>
+              <p className="text-xs text-slate-400">Telemetry V4.2 ATS Audit Engine</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a2133] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -123,8 +123,8 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
             onDrop={handleDrop}
             className={`mt-6 border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
               dragActive
-                ? 'border-primary bg-primary-container/10'
-                : 'border-outline-variant hover:border-primary/50 bg-surface-container-low/50'
+                ? 'border-indigo-500 bg-indigo-500/10'
+                : 'border-[#232b3e] hover:border-indigo-500/50 bg-[#0b0e17]'
             }`}
           >
             <input
@@ -135,16 +135,16 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
               onChange={handleFileChange}
             />
             <label htmlFor="resume-dropzone-input" className="cursor-pointer flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary mb-3 shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-inner">
                 <FileText className="w-6 h-6" />
               </div>
-              <p className="text-sm font-medium text-on-surface">
+              <p className="text-sm font-medium text-white">
                 Drag and drop your resume PDF here
               </p>
-              <p className="text-xs text-on-surface-variant mt-1">
-                or <span className="text-primary hover:underline font-semibold">browse files</span> from your computer
+              <p className="text-xs text-slate-400 mt-1">
+                or <span className="text-indigo-400 hover:underline font-semibold">browse files</span> from your computer
               </p>
-              <p className="text-[11px] text-outline font-mono mt-4">
+              <p className="text-[11px] text-slate-500 font-mono mt-4">
                 Supported format: PDF only (Max 5MB)
               </p>
             </label>
@@ -153,20 +153,20 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
         {/* Selected File Card */}
         {file && !isUploading && (
-          <div className="mt-6 p-4 rounded-xl bg-surface-container-low border border-outline-variant">
+          <div className="mt-6 p-4 rounded-xl bg-[#0b0e17] border border-[#232b3e]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-error/10 text-error flex items-center justify-center font-bold text-xs border border-error/20">
+                <div className="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold text-xs border border-rose-500/20">
                   PDF
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-on-surface truncate max-w-[240px]">{file.name}</h4>
-                  <p className="text-xs text-on-surface-variant font-mono">{formatFileSize(file.size)}</p>
+                  <h4 className="text-sm font-medium text-white truncate max-w-[240px]">{file.name}</h4>
+                  <p className="text-xs text-slate-400 font-mono">{formatFileSize(file.size)}</p>
                 </div>
               </div>
               <button
                 onClick={() => setFile(null)}
-                className="text-xs text-error hover:underline px-2 py-1"
+                className="text-xs text-rose-400 hover:underline px-2 py-1"
               >
                 Remove
               </button>
@@ -176,14 +176,14 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
         {/* Upload Progress */}
         {isUploading && (
-          <div className="mt-6 p-6 rounded-xl bg-surface-container-low border border-primary/30 text-center">
-            <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium mb-3">
+          <div className="mt-6 p-6 rounded-xl bg-[#0b0e17] border border-indigo-500/30 text-center">
+            <div className="flex items-center justify-center gap-2 text-indigo-400 text-sm font-medium mb-3">
               <RefreshCw className="w-4 h-4 animate-spin" />
               <span>Analyzing resume structure & keywords... ({progress}%)</span>
             </div>
-            <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden border border-outline-variant">
+            <div className="w-full bg-[#121624] rounded-full h-2 overflow-hidden border border-[#232b3e]">
               <div
-                className="bg-primary h-full transition-all duration-300"
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -192,25 +192,25 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
         {/* Error Alert */}
         {error && (
-          <div className="mt-4 p-3 rounded-lg bg-error/10 border border-error/30 text-error text-xs flex items-center gap-2">
+          <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/50">
+        <div className="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-[#232b3e]">
           <button
             onClick={onClose}
             disabled={isUploading}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-[#1a2133] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleStartUpload}
             disabled={!file || isUploading}
-            className="px-5 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:bg-primary-fixed-dim transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 flex items-center gap-2"
           >
             <Upload className="w-4 h-4" />
             <span>Run ATS Analysis</span>

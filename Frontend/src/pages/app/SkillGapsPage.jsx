@@ -48,17 +48,17 @@ export const SkillGapsPage = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-2xl font-bold text-on-surface tracking-tight">AI Skill Gap Analyzer</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/40 text-secondary text-xs font-mono border border-secondary/30">
-              <Zap className="w-3.5 h-3.5 text-secondary" />
+      {/* 1. HERO BANNER */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 shadow-2xl">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-semibold border border-indigo-500/30">
+              <Zap className="w-3.5 h-3.5 text-indigo-400" />
               TELEMETRY V4.2 · ROLE BENCHMARK ENGINE
             </span>
           </div>
-          <p className="text-sm text-on-surface-variant max-w-2xl">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">AI Skill Gap Analyzer</h1>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
             Discover which skills you already have, which skills you need, and what to learn next for your target role.
           </p>
         </div>
@@ -67,14 +67,14 @@ export const SkillGapsPage = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-surface-container-high hover:bg-surface-bright text-on-surface text-sm font-medium rounded-xl transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a2030] hover:bg-[#232b3e] text-slate-200 hover:text-white text-xs sm:text-sm font-semibold rounded-xl border border-[#232b3e] transition-all shadow-md disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 text-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-indigo-400 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{isRefreshing ? 'Recalibrating Role Gaps...' : 'Refresh Analysis'}</span>
           </button>
           <button
             onClick={() => navigate('/roadmap')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary hover:bg-primary-fixed-dim text-sm font-semibold rounded-xl transition-all shadow-md"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
           >
             <span>View 90-Day Roadmap</span>
             <ArrowUpRight className="w-4 h-4" />
@@ -82,94 +82,94 @@ export const SkillGapsPage = () => {
         </div>
       </div>
 
-      {/* Target Profile & Calibration Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-surface-container-low border border-outline-variant text-sm font-mono">
-        <div className="flex items-center justify-between px-3 py-1.5 bg-surface-container rounded-lg border border-outline-variant/50">
-          <span className="text-xs text-on-surface-variant">Target Profile</span>
-          <span className="text-primary font-bold truncate max-w-[180px]">{displayTargetRole}</span>
+      {/* 2. TARGET PROFILE & CALIBRATION BAR */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#121624] border border-[#232b3e] text-xs font-mono shadow-xl">
+        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
+          <span className="text-slate-400">Target Profile</span>
+          <span className="text-indigo-400 font-bold truncate max-w-[180px]">{displayTargetRole}</span>
         </div>
 
-        <div className="flex items-center justify-between px-3 py-1.5 bg-surface-container rounded-lg border border-outline-variant/50">
-          <span className="text-xs text-on-surface-variant">Last Calibrated</span>
-          <span className="text-on-surface font-medium">{data.lastCalibrated}</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
+          <span className="text-slate-400">Last Calibrated</span>
+          <span className="text-slate-200 font-semibold">{data.lastCalibrated}</span>
         </div>
 
-        <div className="flex items-center justify-between px-3 py-1.5 bg-surface-container rounded-lg border border-outline-variant/50">
-          <span className="text-xs text-on-surface-variant">Confidence Index</span>
-          <span className="text-tertiary font-bold">{data.confidenceIndex}</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
+          <span className="text-slate-400">Confidence Index</span>
+          <span className="text-emerald-400 font-bold">{data.confidenceIndex}</span>
         </div>
       </div>
 
-      {/* Overall Skill Coverage KPI Banner */}
+      {/* 3. OVERALL SKILL COVERAGE KPI BANNER */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Coverage Score */}
-        <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 shadow-sm">
+        <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] hover:border-emerald-500/40 transition-colors shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">Overall Skill Coverage</span>
-            <div className="p-2 rounded-xl bg-tertiary-container/20 text-tertiary">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Overall Skill Coverage</span>
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-on-surface">{data.overallCoverage}%</span>
+            <span className="text-3xl font-extrabold text-white font-mono">{data.overallCoverage}%</span>
           </div>
-          <div className="mt-3 text-xs text-on-surface-variant">
+          <div className="mt-3 text-xs text-slate-400 font-medium">
             Target cutoff: Tier-1 Readiness Threshold
           </div>
         </div>
 
         {/* Audited Skills Count */}
-        <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 shadow-sm">
+        <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] hover:border-indigo-500/40 transition-colors shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">Skills Audited</span>
-            <div className="p-2 rounded-xl bg-primary-container/20 text-primary">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Skills Audited</span>
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
               <Layers className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-on-surface">{data.totalAudited}</span>
-            <span className="text-xs text-on-surface-variant font-mono">Skills</span>
+            <span className="text-3xl font-extrabold text-white font-mono">{data.totalAudited}</span>
+            <span className="text-xs text-slate-400 font-mono">Skills</span>
           </div>
-          <div className="mt-3 text-xs text-on-surface-variant">
+          <div className="mt-3 text-xs text-slate-400 font-medium">
             Evaluated across 4 engineering domains
           </div>
         </div>
 
         {/* Gaps Identified Count */}
-        <div className="p-5 bg-surface-container-low rounded-2xl border border-outline-variant/60 shadow-sm">
+        <div className="p-5 bg-[#121624] rounded-2xl border border-[#232b3e] hover:border-amber-500/40 transition-colors shadow-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">Critical/High Gaps</span>
-            <div className="p-2 rounded-xl bg-secondary-container/20 text-secondary">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Critical/High Gaps</span>
+            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-on-surface">{data.gapsIdentifiedCount}</span>
-            <span className="text-xs text-on-surface-variant font-mono">Gaps</span>
+            <span className="text-3xl font-extrabold text-white font-mono">{data.gapsIdentifiedCount}</span>
+            <span className="text-xs text-slate-400 font-mono">Gaps</span>
           </div>
-          <div className="mt-3 text-xs text-secondary font-medium">
+          <div className="mt-3 text-xs text-amber-400 font-semibold">
             Requires active roadmap remediation
           </div>
         </div>
       </div>
 
-      {/* Category Coverage Progress Breakdown */}
-      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/50">
-          <h3 className="font-semibold text-on-surface text-base">Category Coverage Breakdown</h3>
-          <span className="text-xs font-mono text-on-surface-variant">Target Role Benchmarks</span>
+      {/* 4. CATEGORY COVERAGE PROGRESS BREAKDOWN */}
+      <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
+          <h3 className="font-bold text-white text-base">Category Coverage Breakdown</h3>
+          <span className="text-xs font-mono text-indigo-400 font-semibold px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">Target Role Benchmarks</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {data.categoryCoverage.map((cat, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-surface-container border border-outline-variant/40 space-y-2">
+            <div key={idx} className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2.5 hover:border-indigo-500/30 transition-colors">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-on-surface">{cat.category}</span>
-                <span className="font-mono text-on-surface font-bold">{cat.coverage}% Coverage</span>
+                <span className="font-bold text-white">{cat.category}</span>
+                <span className="font-mono text-indigo-400 font-bold">{cat.coverage}% Coverage</span>
               </div>
-              <div className="w-full bg-surface-container-high rounded-full h-2 overflow-hidden border border-outline-variant/30">
+              <div className="w-full bg-[#121624] rounded-full h-2 overflow-hidden border border-[#232b3e]">
                 <div
-                  className="h-full transition-all duration-500"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${cat.coverage}%`, backgroundColor: cat.color }}
                 ></div>
               </div>
@@ -178,12 +178,12 @@ export const SkillGapsPage = () => {
         </div>
       </div>
 
-      {/* Current vs Required Benchmark Matrix (Skill Gaps Grid) */}
+      {/* 5. CURRENT VS REQUIRED BENCHMARK MATRIX (SKILL GAPS GRID) */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="font-semibold text-on-surface text-lg">Multi-Vector Skill Gap Audit</h3>
-            <p className="text-xs text-on-surface-variant">Current skill level vs target role benchmark</p>
+            <h3 className="font-bold text-white text-lg">Multi-Vector Skill Gap Audit</h3>
+            <p className="text-xs text-slate-400">Current skill level vs target role benchmark</p>
           </div>
 
           {/* Category Filter Pills */}
@@ -192,10 +192,10 @@ export const SkillGapsPage = () => {
               <button
                 key={filter}
                 onClick={() => setActiveCategoryFilter(filter)}
-                className={`px-3 py-1 rounded-lg border transition-all ${
+                className={`px-3 py-1.5 rounded-lg border transition-all ${
                   activeCategoryFilter === filter
-                    ? 'bg-primary text-on-primary border-primary shadow-sm font-semibold'
-                    : 'bg-surface-container text-on-surface-variant border-outline-variant/60 hover:text-on-surface'
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400/30 shadow-md font-bold'
+                    : 'bg-[#121624] text-slate-400 border-[#232b3e] hover:text-white hover:bg-[#1a2030]'
                 }`}
               >
                 {filter}
@@ -208,23 +208,23 @@ export const SkillGapsPage = () => {
           {filteredGaps.map((gap) => (
             <div
               key={gap.id}
-              className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant/60 space-y-4 hover:border-primary/40 transition-colors shadow-sm"
+              className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 hover:border-indigo-500/40 transition-colors shadow-xl"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-outline-variant/40">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-on-surface text-base">{gap.skill}</h4>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-surface-container text-on-surface-variant border border-outline-variant/50">
+                  <h4 className="font-bold text-white text-base">{gap.skill}</h4>
+                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-semibold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                     {gap.category}
                   </span>
                 </div>
 
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold uppercase self-start sm:self-auto ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold uppercase self-start sm:self-auto ${
                     gap.priority === 'Critical'
-                      ? 'bg-error/20 text-error border border-error/30'
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                       : gap.priority === 'High'
-                      ? 'bg-secondary-container/30 text-secondary border border-secondary/30'
-                      : 'bg-primary-container/20 text-primary border border-primary/30'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
                   }`}
                 >
                   {gap.priority} Priority
@@ -232,26 +232,26 @@ export const SkillGapsPage = () => {
               </div>
 
               {/* Level Comparison Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-surface-container/60 border border-outline-variant/30 text-xs font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#0f131d] border border-[#232b3e] text-xs font-mono">
                 <div>
-                  <span className="text-[11px] text-outline block mb-0.5">CURRENT LEVEL</span>
-                  <span className="text-on-surface font-semibold">{gap.currentLevelText}</span>
-                  <span className="text-[11px] text-on-surface-variant ml-2">(Level {gap.currentLevel}/5)</span>
+                  <span className="text-[11px] text-slate-400 block mb-0.5">CURRENT LEVEL</span>
+                  <span className="text-white font-bold">{gap.currentLevelText}</span>
+                  <span className="text-[11px] text-slate-400 ml-2">(Level {gap.currentLevel}/5)</span>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-primary block mb-0.5">TARGET REQUIRED LEVEL</span>
-                  <span className="text-primary font-bold">{gap.requiredLevelText}</span>
-                  <span className="text-[11px] text-primary/80 ml-2">(Level {gap.requiredLevel}/5)</span>
+                  <span className="text-[11px] text-indigo-400 block mb-0.5">TARGET REQUIRED LEVEL</span>
+                  <span className="text-indigo-400 font-bold">{gap.requiredLevelText}</span>
+                  <span className="text-[11px] text-indigo-400/80 ml-2">(Level {gap.requiredLevel}/5)</span>
                 </div>
               </div>
 
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                <strong className="text-on-surface font-semibold">Tier-1 Rationale:</strong> {gap.reason}
+              <p className="text-xs text-slate-300 leading-relaxed">
+                <strong className="text-white font-bold">Tier-1 Rationale:</strong> {gap.reason}
               </p>
 
               <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <span className="text-xs text-tertiary font-medium">Suggested Action: {gap.suggestedAction}</span>
+                <span className="text-xs text-emerald-400 font-medium">Suggested Action: {gap.suggestedAction}</span>
                 <button
                   onClick={() => {
                     if (gap.actionLabel.includes('Roadmap') || gap.actionLabel.includes('Tasks')) {
@@ -259,7 +259,7 @@ export const SkillGapsPage = () => {
                     }
                     navigate(gap.actionRoute);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-on-primary hover:bg-primary-fixed-dim transition-all shadow-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-1.5 self-start sm:self-auto"
                 >
                   <span>{gap.actionLabel}</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -270,81 +270,81 @@ export const SkillGapsPage = () => {
         </div>
       </div>
 
-      {/* 2x2 Skill Priority Matrix: Impact vs Effort */}
-      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/50">
+      {/* 6. 2X2 SKILL PRIORITY MATRIX: IMPACT VS EFFORT */}
+      <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
+        <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
           <div>
-            <h3 className="font-semibold text-on-surface text-base flex items-center gap-2">
-              <Grid className="w-5 h-5 text-secondary" />
+            <h3 className="font-bold text-white text-base flex items-center gap-2">
+              <Grid className="w-5 h-5 text-purple-400" />
               2x2 Skill Priority Matrix: Impact vs. Effort
             </h3>
-            <p className="text-xs text-on-surface-variant">Prioritize skills based on hiring ROI vs study effort</p>
+            <p className="text-xs text-slate-400">Prioritize skills based on hiring ROI vs study effort</p>
           </div>
-          <span className="text-xs font-mono text-tertiary bg-tertiary-container/20 px-2.5 py-1 rounded border border-tertiary/30">
+          <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
             Strategic Grid
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
           {/* Quick Wins */}
-          <div className="p-4 rounded-xl bg-tertiary-container/10 border border-tertiary/30 space-y-2">
-            <div className="flex items-center justify-between text-tertiary font-bold">
+          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+            <div className="flex items-center justify-between text-emerald-400 font-bold">
               <span>QUICK WINS (High Impact, Low Effort)</span>
-              <span className="text-[10px] bg-tertiary-container/30 px-2 py-0.5 rounded">Priority 1</span>
+              <span className="text-[10px] bg-emerald-500/20 px-2 py-0.5 rounded">Priority 1</span>
             </div>
             <div className="space-y-1.5 pt-1">
               {data.matrix2x2.quickWins.map((item, idx) => (
-                <div key={idx} className="p-2 rounded bg-surface-container border border-outline-variant/30 flex items-center justify-between text-on-surface">
+                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-white font-semibold">
                   <span>{item.skill}</span>
-                  <span className="text-[10px] text-tertiary">{item.category}</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">{item.category}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Major Projects */}
-          <div className="p-4 rounded-xl bg-primary-container/10 border border-primary/30 space-y-2">
-            <div className="flex items-center justify-between text-primary font-bold">
+          <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 space-y-2">
+            <div className="flex items-center justify-between text-indigo-400 font-bold">
               <span>MAJOR PROJECTS (High Impact, High Effort)</span>
-              <span className="text-[10px] bg-primary-container/30 px-2 py-0.5 rounded">Priority 2</span>
+              <span className="text-[10px] bg-indigo-500/20 px-2 py-0.5 rounded">Priority 2</span>
             </div>
             <div className="space-y-1.5 pt-1">
               {data.matrix2x2.majorProjects.map((item, idx) => (
-                <div key={idx} className="p-2 rounded bg-surface-container border border-outline-variant/30 flex items-center justify-between text-on-surface">
+                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-white font-semibold">
                   <span>{item.skill}</span>
-                  <span className="text-[10px] text-primary">{item.category}</span>
+                  <span className="text-[10px] text-indigo-400 font-mono">{item.category}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Fill-ins */}
-          <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/50 space-y-2">
-            <div className="flex items-center justify-between text-on-surface font-bold">
+          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2">
+            <div className="flex items-center justify-between text-slate-300 font-bold">
               <span>FILL-INS (Low Impact, Low Effort)</span>
-              <span className="text-[10px] text-on-surface-variant">Priority 3</span>
+              <span className="text-[10px] text-slate-400">Priority 3</span>
             </div>
             <div className="space-y-1.5 pt-1">
               {data.matrix2x2.fillIns.map((item, idx) => (
-                <div key={idx} className="p-2 rounded bg-surface-container-low border border-outline-variant/30 flex items-center justify-between text-on-surface-variant">
+                <div key={idx} className="p-2 rounded-lg bg-[#121624] border border-[#232b3e] flex items-center justify-between text-slate-300">
                   <span>{item.skill}</span>
-                  <span className="text-[10px]">{item.category}</span>
+                  <span className="text-[10px] font-mono">{item.category}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Hard Long-term */}
-          <div className="p-4 rounded-xl bg-secondary-container/10 border border-secondary/30 space-y-2">
-            <div className="flex items-center justify-between text-secondary font-bold">
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+            <div className="flex items-center justify-between text-amber-400 font-bold">
               <span>LONG TERM (Low Impact, High Effort)</span>
-              <span className="text-[10px] text-secondary">Priority 4</span>
+              <span className="text-[10px] text-amber-400">Priority 4</span>
             </div>
             <div className="space-y-1.5 pt-1">
               {data.matrix2x2.hardLongTerm.map((item, idx) => (
-                <div key={idx} className="p-2 rounded bg-surface-container border border-outline-variant/30 flex items-center justify-between text-on-surface-variant">
+                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-slate-300">
                   <span>{item.skill}</span>
-                  <span className="text-[10px] text-secondary">{item.category}</span>
+                  <span className="text-[10px] text-amber-400 font-mono">{item.category}</span>
                 </div>
               ))}
             </div>
@@ -352,36 +352,36 @@ export const SkillGapsPage = () => {
         </div>
       </div>
 
-      {/* AI Learning Recommendations Banner */}
-      <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant/60 space-y-4">
-        <h3 className="font-semibold text-on-surface text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-secondary" />
+      {/* 7. AI LEARNING RECOMMENDATIONS BANNER */}
+      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
+        <h3 className="font-bold text-white text-base flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-purple-400" />
           Copilot Skill Gap Roadmap Strategy
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/50 space-y-2">
-            <h4 className="font-semibold text-sm text-on-surface">Target 90-Day Adaptive Roadmap</h4>
-            <p className="text-xs text-on-surface-variant leading-relaxed">
+          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
+            <h4 className="font-bold text-sm text-white">Target 90-Day Adaptive Roadmap</h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
               Incorporate Redis Caching and 2D DP problem sets into your active 90-day placement sprint schedule.
             </p>
             <button
               onClick={() => navigate('/roadmap')}
-              className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 pt-1"
+              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
             >
               <span>View 90-Day Roadmap</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="p-4 rounded-xl bg-surface-container border border-outline-variant/50 space-y-2">
-            <h4 className="font-semibold text-sm text-on-surface">Execute Daily Practice Tasks</h4>
-            <p className="text-xs text-on-surface-variant leading-relaxed">
+          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
+            <h4 className="font-bold text-sm text-white">Execute Daily Practice Tasks</h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
               Start with Today's Action Plan tasks focusing on Course Schedule II and Course Schedule III.
             </p>
             <button
               onClick={() => navigate('/tasks')}
-              className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 pt-1"
+              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
             >
               <span>View Today's Tasks</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
