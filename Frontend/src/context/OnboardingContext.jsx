@@ -145,4 +145,21 @@ export const OnboardingProvider = ({ children }) => {
   );
 };
 
-export const useOnboarding = () => useContext(OnboardingContext);
+export const useOnboarding = () => {
+  const context = useContext(OnboardingContext);
+  if (!context) {
+    return {
+      onboardingData: defaultState,
+      updateProfile: () => {},
+      updateCareer: () => {},
+      updateSkills: () => {},
+      updateIntegrations: () => {},
+      updatePreferences: () => {},
+      updateGoals: () => {},
+      completeStep: () => {},
+      markOnboardingComplete: () => {},
+      isOnboardingComplete: () => false
+    };
+  }
+  return context;
+};
