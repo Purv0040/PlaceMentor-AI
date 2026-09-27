@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { usePlanning } from '../../context/PlanningContext';
 import { initialSkillGapData } from '../../data/skillGapData';
-import { aiService } from '../../services/aiService';
+import { skillGapService } from '../../services/skillGapService';
 import {
   Zap,
   RefreshCw,
@@ -30,15 +30,18 @@ export const SkillGapsPage = () => {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
 
   // Derive target role from UserContext if available
-  const displayTargetRole = user?.targetRole || user?.career?.targetRole || 'Backend SDE-1 (Tier-1 Parity)';
+  const displayTargetRole = user?.targetRole || user?.career?.targetRole || 'Backend Developer';
+
+  useEffect(() => {
+    skillGapService.getLatestSkillGaps().then((res) => {
+      if (res) setData(res);
+    });
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    const updated = await aiService.analyzeSkillGaps(displayTargetRole);
-    setData((prev) => ({
-      ...prev,
-      lastCalibrated: 'Just now (Automated)',
-    }));
+    const updated = await skillGapService.analyzeSkillGaps(displayTargetRole);
+    if (updated) setData(updated);
     setIsRefreshing(false);
   };
 

@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: placementor-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: placementor-ai
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - ENVIRONMENT=production
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_API_KEY=${LLM_API_KEY}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: placementor-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=AI Placement Copilot
+      - APP_ENV=production
+      - DEBUG=false
+      - MONGODB_URL=${MONGODB_URL}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-placementor}
+      - REDIS_URL=redis://redis:6379
+      - AI_SERVICE_URL=http://ai:8001
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change_this_in_production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost", "http://localhost:5173"]}
+    depends_on:
+      redis:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=/api/v1
+    container_name: placementor-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

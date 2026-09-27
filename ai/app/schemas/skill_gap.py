@@ -29,6 +29,10 @@ class RoleSkillRequirement(BaseModel):
     )
 
 
+# Alias for role requirements registry
+RoleRequirement = RoleSkillRequirement
+
+
 class SkillGapItem(BaseModel):
     """Individual skill gap calculation result."""
     skill: str = Field(..., description="Canonical skill name")

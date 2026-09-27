@@ -1,5 +1,6 @@
-// Achievement Service deriving dynamic completion stats from existing application state
+// Achievement Service aggregating real Backend API endpoints with local fallback support
 
+import { apiRequest } from './api';
 import { defaultAchievements } from '../data/achievementData';
 import { initialResumeData } from '../data/resumeData';
 import { initialGithubData } from '../data/githubData';
@@ -8,10 +9,22 @@ import { getStoredProjects } from '../data/projectData';
 import { defaultInterviewHistory } from '../data/interviewData';
 import { defaultCommunicationHistory } from '../data/communicationData';
 
-const ACHIEVEMENTS_STORAGE_KEY = 'placementCopilotAchievements';
 const DAILY_XP_KEY = 'placementCopilotDailyXpClaimedDate';
 
 export const achievementService = {
+  // Fetch achievements & stats from Backend API or derive locally if offline
+  fetchAchievements: async () => {
+    try {
+      const res = await apiRequest('/achievements');
+      if (res && res.achievements) {
+        return res;
+      }
+    } catch (e) {
+      console.warn('Backend unavailable for fetchAchievements, falling back to local derivation.', e);
+    }
+    return null;
+  },
+
   // Derive achievements dynamically based on real state
   getAchievements: (planningState = null) => {
     const projects = getStoredProjects();
@@ -73,7 +86,7 @@ export const achievementService = {
   getStats: (achievementsList) => {
     const unlockedCount = achievementsList.filter(a => a.unlocked).length;
     const totalCount = achievementsList.length;
-    const earnedXp = achievementsList.filter(a => a.unlocked).reduce((sum, a) => sum + a.xp, 0);
+    const earnedXp = achievementsList.filter(a => a.unlocked).reduce((sum, a) => sum + (a.xp || a.points || 100), 0);
     const totalXp = 3000;
     const level = Math.floor(earnedXp / 300) + 1;
     const levelTitle = level >= 8 ? 'Consistent Builder' : level >= 5 ? 'Active Competitor' : 'Initiate';
@@ -89,8 +102,16 @@ export const achievementService = {
       levelTitle,
       xpInCurrentLevel,
       xpRemaining,
-      completionPercentage: Math.round((unlockedCount / totalCount) * 100)
+      completionPercentage: Math.round((unlockedCount / Math.max(1, totalCount)) * 100)
     };
+  },
+
+  checkAchievements: async () => {
+    try {
+      return await apiRequest('/achievements/check', { method: 'POST' });
+    } catch (e) {
+      return { newly_unlocked: [], total_unlocked: 0 };
+    }
   },
 
   // Daily XP Claim status

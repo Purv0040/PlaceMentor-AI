@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, ArrowRight, Github, Chrome, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 import { Input } from '../../components/common/Input';
 import { PasswordInput } from '../../components/common/PasswordInput';
 import { FormError } from '../../components/common/FormError';
@@ -11,9 +12,10 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { updateUserProfile } = useUser();
 
-  const [email, setEmail] = useState('alex.patel@charusat.edu.in');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -47,9 +49,19 @@ export const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      await login({ email, password });
+      const res = await login({ email, password });
+      const currentUser = res.user;
+      updateUserProfile(currentUser);
+
       setIsLoading(false);
-      navigate(from, { replace: true });
+      const isOnboarded = currentUser?.is_onboarded || localStorage.getItem('placementCopilotOnboardingComplete') === 'true';
+
+      if (isOnboarded) {
+        const destination = from === '/login' ? '/dashboard' : from;
+        navigate(destination, { replace: true });
+      } else {
+        navigate('/onboarding/profile', { replace: true });
+      }
     } catch (err) {
       setIsLoading(false);
       setFormError(err.message || 'Invalid email or password. Please try again.');
@@ -104,7 +116,7 @@ export const LoginPage = () => {
             onChange={(e) => setEmail(e.target.value)}
             error={fieldErrors.email}
             icon={Mail}
-            placeholder="alex.patel@charusat.edu.in"
+            placeholder="e.g. ddsavaliya2006@gmail.com"
             required
           />
 
@@ -114,6 +126,7 @@ export const LoginPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
+            placeholder="Enter password"
             required
           />
 

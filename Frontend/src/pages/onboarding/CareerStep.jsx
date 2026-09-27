@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, ArrowRight, ArrowLeft, CheckCircle2, Server, Layout, Cpu, Code } from 'lucide-react';
+import { Target, ArrowRight, ArrowLeft, CheckCircle2, Cloud, ShieldCheck, Cpu, Code } from 'lucide-react';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { Button } from '../../components/common/Button';
 
@@ -8,15 +8,15 @@ export const CareerStep = () => {
   const navigate = useNavigate();
   const { onboardingData, updateCareer, completeStep } = useOnboarding();
 
-  const [targetRole, setTargetRole] = useState(onboardingData.career.targetRole || 'Backend Developer');
-  const [secondaryRole, setSecondaryRole] = useState(onboardingData.career.secondaryRole || 'AI/ML Engineer');
+  const [targetRole, setTargetRole] = useState(onboardingData.career.targetRole || 'Full Stack Engineer');
+  const [secondaryRole, setSecondaryRole] = useState(onboardingData.career.secondaryRole || 'Cybersecurity Analyst & Engineer');
   const [companyTier, setCompanyTier] = useState(onboardingData.career.companyTier || 'Tier-1 Product (MAANG / Unicorns)');
 
   const roles = [
-    { id: 'Backend Developer', label: 'Backend Developer', sub: 'Java / Python / Node / Microservices', icon: Server },
     { id: 'Full Stack Engineer', label: 'Full Stack Engineer', sub: 'React / Node / Postgres / REST', icon: Code },
     { id: 'AI/ML Engineer', label: 'AI/ML Engineer', sub: 'Python / PyTorch / LLMs / MLOps', icon: Cpu },
-    { id: 'Frontend Engineer', label: 'Frontend Engineer', sub: 'React / TypeScript / Tailwind / Next.js', icon: Layout },
+    { id: 'AWS / DevOps & Cloud Engineer', label: 'AWS / DevOps & Cloud', sub: 'AWS / Terraform / Docker / K8s / CI-CD', icon: Cloud },
+    { id: 'Cybersecurity Analyst & Engineer', label: 'Cybersecurity Engineer', sub: 'Network Security / PenTesting / SIEM / OWASP', icon: ShieldCheck },
   ];
 
   const tiers = [
@@ -84,9 +84,10 @@ export const CareerStep = () => {
             onChange={(e) => setSecondaryRole(e.target.value)}
             className="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white focus:outline-none focus:border-brand-500 text-xs transition-colors"
           >
+            <option value="Cybersecurity Analyst & Engineer">Cybersecurity Analyst & Engineer</option>
+            <option value="AWS / DevOps & Cloud Engineer">AWS / DevOps & Cloud Engineer</option>
             <option value="AI/ML Engineer">AI/ML Engineer</option>
             <option value="Full Stack Engineer">Full Stack Engineer</option>
-            <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
             <option value="Data Engineer">Data Engineer</option>
           </select>
         </div>

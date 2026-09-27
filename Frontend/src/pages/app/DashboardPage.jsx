@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Sparkles,
@@ -20,11 +20,43 @@ import {
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { dashboardData } from '../../data/dashboardData';
+import { readinessService } from '../../services/readinessService';
+import { skillGapService } from '../../services/skillGapService';
 import { TelemetryChart } from '../../components/dashboard/TelemetryChart';
 import { ActionPlanList } from '../../components/dashboard/ActionPlanList';
 
 export const DashboardPage = () => {
   const { user } = useUser();
+  const [readinessScore, setReadinessScore] = useState(user?.overallReadinessScore || dashboardData.readinessScore);
+  const [readinessLabel, setReadinessLabel] = useState(dashboardData.readinessTrend);
+  const [aiInsights, setAiInsights] = useState(dashboardData.aiInsights);
+
+  useEffect(() => {
+    if (user?.overallReadinessScore) {
+      setReadinessScore(user.overallReadinessScore);
+    }
+    readinessService.getSummary().then((summary) => {
+      if (summary && typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
+        setReadinessScore(Math.round(summary.overall_score));
+        if (summary.readiness_label) {
+          setReadinessLabel(summary.readiness_label);
+        }
+      }
+    });
+
+    skillGapService.getSummary().then((gapSummary) => {
+      if (gapSummary && gapSummary.top_priority_gaps && gapSummary.top_priority_gaps.length > 0) {
+        const dynamicInsights = gapSummary.top_priority_gaps.map((g, idx) => ({
+          id: `dyn-gap-${idx}`,
+          title: `Prioritize ${g.skill} (${g.category})`,
+          description: g.reason || g.suggested_action,
+          priority: g.priority || 'High',
+          route: '/skill-gaps'
+        }));
+        setAiInsights(dynamicInsights);
+      }
+    });
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -35,11 +67,11 @@ export const DashboardPage = () => {
             <Sparkles className="w-3.5 h-3.5" /> Day {dashboardData.sprintDay} of {dashboardData.totalSprintDays}-Day Placement Sprint
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Good Morning, {user?.name || 'Alex'} 👋
+            Good Morning, {user?.name || user?.full_name || 'Candidate'} 👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Target: <span className="text-white font-semibold">{user?.targetRole || 'Backend Developer'}</span> • Readiness Baseline:{' '}
-            <span className="text-indigo-400 font-mono font-bold">{dashboardData.readinessScore}%</span> ({dashboardData.readinessTrend})
+            Target: <span className="text-white font-semibold">{user?.targetRole || 'Software Engineer'}</span> • Readiness Baseline:{' '}
+            <span className="text-indigo-400 font-mono font-bold">{readinessScore}%</span> ({readinessLabel})
           </p>
         </div>
 
@@ -59,11 +91,11 @@ export const DashboardPage = () => {
             <Sparkles className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">{dashboardData.readinessScore}%</span>
-            <span className="text-xs text-emerald-400 font-mono font-semibold">{dashboardData.readinessTrend}</span>
+            <span className="text-2xl font-bold text-white font-mono">{readinessScore}%</span>
+            <span className="text-xs text-emerald-400 font-mono font-semibold">{readinessLabel}</span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${dashboardData.readinessScore}%` }} />
+            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${readinessScore}%` }} />
           </div>
         </div>
 
@@ -73,11 +105,18 @@ export const DashboardPage = () => {
             <Flame className="w-4 h-4 text-amber-400" />
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">{user?.streakDays || 14} Days</span>
-            <span className="text-xs text-amber-400 font-mono font-semibold">🔥 Active Sprint</span>
+            <span className="text-2xl font-bold text-white font-mono">
+              {(user?.streakDays !== undefined && user?.streakDays !== null) ? user.streakDays : 0} Days
+            </span>
+            <span className="text-xs text-amber-400 font-mono font-semibold">
+              {(user?.streakDays || 0) > 0 ? '🔥 Active Sprint' : '⚡ Day 1 Sprint'}
+            </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-amber-500" style={{ width: `70%` }} />
+            <div
+              className="h-full rounded-full bg-amber-500"
+              style={{ width: `${Math.min(100, Math.max(5, (((user?.streakDays || 0)) / 30) * 100))}%` }}
+            />
           </div>
         </div>
 
@@ -87,11 +126,18 @@ export const DashboardPage = () => {
             <Code2 className="w-4 h-4 text-purple-400" />
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">248</span>
-            <span className="text-xs text-purple-400 font-mono">148 Med / 32 Hard</span>
+            <span className="text-2xl font-bold text-white font-mono">
+              {user?.leetcodeHandle ? (user?.leetcodeSolved || 248) : 0}
+            </span>
+            <span className="text-xs text-purple-400 font-mono">
+              {user?.leetcodeHandle ? (user?.leetcodeBreakdown || '148 Med / 32 Hard') : 'Not Connected'}
+            </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-purple-500" style={{ width: `65%` }} />
+            <div
+              className="h-full rounded-full bg-purple-500"
+              style={{ width: user?.leetcodeHandle ? `${Math.min(100, ((user?.leetcodeSolved || 248) / 400) * 100)}%` : '0%' }}
+            />
           </div>
         </div>
 
@@ -101,11 +147,11 @@ export const DashboardPage = () => {
             <Target className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-white truncate">Tier-1 SDE</span>
-            <span className="text-xs text-emerald-400 font-mono font-semibold">MAANG Target</span>
+            <span className="text-xl font-bold text-white truncate">{user?.targetRole || 'Full Stack Engineer'}</span>
+            <span className="text-xs text-emerald-400 font-mono font-semibold">{user?.companyTier ? user.companyTier.split('(')[0].trim() : 'Tier-1 Target'}</span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-emerald-500" style={{ width: `78%` }} />
+            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${readinessScore}%` }} />
           </div>
         </div>
       </div>
@@ -186,7 +232,7 @@ export const DashboardPage = () => {
             </h3>
 
             <div className="space-y-3">
-              {dashboardData.aiInsights.map((ins) => (
+              {aiInsights.map((ins) => (
                 <NavLink
                   key={ins.id}
                   to={ins.route}

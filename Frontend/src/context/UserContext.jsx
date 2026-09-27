@@ -1,22 +1,84 @@
-import React, { createContext, useContext, useState } from 'react';
-import { mockUser } from '../data/mockUser';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
+
+const USER_KEY = 'placementor_user_data';
 
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(mockUser);
+  const [user, setUser] = useState(() => {
+    const activeUser = authService.getCurrentUser() || {};
+    let savedUser = {};
+    let savedOnboarding = {};
+    try {
+      const sU = localStorage.getItem(USER_KEY);
+      if (sU) savedUser = JSON.parse(sU);
+      const sO = localStorage.getItem('placementCopilotOnboarding');
+      if (sO) savedOnboarding = JSON.parse(sO);
+    } catch (e) {}
+
+    const profile = savedOnboarding.profile || {};
+    const career = savedOnboarding.career || {};
+    const skills = savedOnboarding.skills || {};
+    const integrations = savedOnboarding.integrations || {};
+    const preferences = savedOnboarding.preferences || {};
+    const goals = savedOnboarding.goals || {};
+
+    return {
+      ...activeUser,
+      ...savedUser,
+      name: savedUser.name || profile.name || activeUser.name || activeUser.full_name || 'digisha savaliya',
+      college: savedUser.college || profile.college || 'CSPIT',
+      degree: savedUser.degree || profile.degree || 'B.Tech IT',
+      graduationYear: savedUser.graduationYear || profile.graduationYear || '2028',
+      targetRole: savedUser.targetRole || career.targetRole || 'AI/ML Engineer',
+      secondaryRole: savedUser.secondaryRole || career.secondaryRole || 'Cybersecurity Analyst & Engineer',
+      companyTier: savedUser.companyTier || career.companyTier || 'Tier-1 Product (MAANG / Unicorns)',
+      githubHandle: savedUser.githubHandle || integrations.githubHandle || '',
+      leetcodeHandle: savedUser.leetcodeHandle || integrations.leetcodeHandle || '',
+      resumeFileName: savedUser.resumeFileName || integrations.resumeFileName || '',
+      overallReadinessScore: savedUser.overallReadinessScore || 78,
+      dsaLevel: savedUser.dsaLevel || skills.dsaLevel || 'Beginner',
+      selectedSkills: savedUser.selectedSkills || skills.selectedSkills || ['Java', 'Spring Boot', 'Data Structures', 'SQL'],
+      mentorTone: savedUser.mentorTone || preferences.mentorTone || 'Socratic Coach',
+      dailyGoalMinutes: savedUser.dailyGoalMinutes || preferences.dailyGoalMinutes || '90',
+      targetDrive: savedUser.targetDrive || goals.targetDrive || 'August 2026',
+      targetCtc: savedUser.targetCtc || goals.targetCtc || '14 - 24 LPA (Product Tier)',
+      streakDays: savedUser.streakDays !== undefined ? savedUser.streakDays : 0
+    };
+  });
+
+  useEffect(() => {
+    const activeUser = authService.getCurrentUser();
+    if (activeUser) {
+      setUser(prev => ({
+        ...prev,
+        ...activeUser,
+        name: prev.name || activeUser.name || activeUser.full_name || 'digisha savaliya'
+      }));
+    }
+  }, []);
 
   const updateUserProfile = (newDetails) => {
-    setUser(prev => ({
-      ...prev,
-      ...newDetails,
-      // Merge nested objects cleanly
-      preferences: { ...prev.preferences, ...(newDetails.preferences || {}) }
-    }));
+    setUser(prev => {
+      const base = prev || {};
+      const updated = {
+        ...base,
+        ...newDetails,
+        name: newDetails.name || newDetails.full_name || base.name || base.full_name,
+        preferences: { ...(base.preferences || {}), ...(newDetails.preferences || {}) }
+      };
+      try {
+        localStorage.setItem(USER_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save user profile:', e);
+      }
+      return updated;
+    });
   };
 
   return (
-    <UserContext.Provider value={{ user, updateUserProfile }}>
+    <UserContext.Provider value={{ user, setUser, updateUserProfile }}>
       {children}
     </UserContext.Provider>
   );

@@ -340,20 +340,130 @@ export const aiService = {
   analyzeStudentProfile: async (onboardingData) => {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const profile = onboardingData?.profile || {};
+        const career = onboardingData?.career || {};
+        const skills = onboardingData?.skills || {};
+        const integrations = onboardingData?.integrations || {};
+        const preferences = onboardingData?.preferences || {};
+        const goals = onboardingData?.goals || {};
+
+        const role = career.targetRole || 'Full Stack Engineer';
+        const companyTier = career.companyTier || 'Tier-1 Product (MAANG / Unicorns)';
+        const targetCtc = goals.targetCtc || '14 - 24 LPA (Product Tier)';
+        const selectedTechList = skills.selectedSkills || [];
+
+        // 1. Calculate dynamic baseline score across all 6 steps
+        let score = 55;
+
+        // Step 1: Academic Profile completeness (+10 max)
+        if (profile.name && profile.college && profile.degree) score += 10;
+        else if (profile.name) score += 5;
+
+        // Step 2 & 3: Target Role vs Self-Reported Skill Levels (+15 max)
+        if (skills.dsaLevel?.includes('Advanced')) score += 6;
+        else if (skills.dsaLevel?.includes('Intermediate')) score += 4;
+        else score += 2;
+
+        if (skills.frameworkLevel?.includes('Advanced') || skills.sysDesignLevel?.includes('Advanced')) score += 5;
+        else if (skills.frameworkLevel?.includes('Intermediate') || skills.sysDesignLevel?.includes('Intermediate')) score += 3;
+        else score += 1;
+
+        if (selectedTechList.length >= 5) score += 4;
+        else if (selectedTechList.length >= 2) score += 2;
+
+        // Step 4: Telemetry & Resume Integrations (+15 max)
+        if (integrations.githubConnected || integrations.githubHandle) score += 5;
+        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 5;
+        if (integrations.resumeUploaded || integrations.resumeFileName) score += 5;
+
+        // Step 5 & 6: Commitment & Placement Goal alignment (+5 max)
+        if (parseInt(preferences.dailyGoalMinutes || '0', 10) >= 90) score += 3;
+        if (goals.targetDrive) score += 2;
+
+        // Cap score logically between 62 and 94
+        score = Math.min(94, Math.max(62, score));
+
+        // 2. Synthesize Role & Skill-based Day 1 Roadmap Task
+        let day1Task = 'LC 207: Course Schedule (Graph Cycle Detection)';
+        const primarySkill = selectedTechList[0] || '';
+
+        if (role.includes('AI/ML') || role.includes('Machine Learning')) {
+          day1Task = `LC 207: Course Schedule & ${primarySkill || 'PyTorch'} Tensor Math`;
+        } else if (role.includes('DevOps') || role.includes('Cloud') || role.includes('AWS')) {
+          day1Task = `Docker Container Setup & LC 207 (Network Graph Routing)`;
+        } else if (role.includes('Cybersecurity') || role.includes('Security')) {
+          day1Task = `OWASP Security Audit & LC 207 (Dependency Graphs)`;
+        } else if (role.includes('Data')) {
+          day1Task = `SQL Query Optimization & LC 207 (DAG Pipeline Scheduling)`;
+        } else {
+          day1Task = `LC 207: Course Schedule & ${primarySkill || 'React/Node'} REST Integration`;
+        }
+
+        // 3. Generate Tailored Key AI Recommendations from ALL 6 STEPS
+        const aiRecommendations = [];
+
+        // Skill level gap recommendation (Step 3)
+        const dsaLevelStr = skills.dsaLevel || 'Intermediate';
+        if (dsaLevelStr.includes('Beginner')) {
+          aiRecommendations.push(`Upgrade DSA mastery from Beginner to Intermediate with daily ${preferences.dailyGoalMinutes || 90}-min Graph & Tree problem sets.`);
+        } else {
+          aiRecommendations.push(`Calibrate ${dsaLevelStr.split('(')[0].trim()} DSA proficiency for ${companyTier.split('(')[0].trim()} technical screening rounds.`);
+        }
+
+        // Integration / Telemetry recommendation (Step 4)
+        const missingIntegrations = [];
+        if (!integrations.githubHandle) missingIntegrations.push('GitHub');
+        if (!integrations.leetcodeHandle) missingIntegrations.push('LeetCode');
+        if (!integrations.resumeUploaded && !integrations.resumeFileName) missingIntegrations.push('ATS Resume');
+
+        if (missingIntegrations.length > 0) {
+          aiRecommendations.push(`Connect remaining telemetry (${missingIntegrations.join(', ')}) in Settings for real-time AST code auditing & ATS scoring.`);
+        } else {
+          aiRecommendations.push(`Telemetry active: GitHub (@${integrations.githubHandle}), LeetCode (@${integrations.leetcodeHandle}), & ATS Resume synced for automated audits.`);
+        }
+
+        // Role Specialization recommendation (Step 2 & 3)
+        const topSkillsStr = selectedTechList.slice(0, 3).join(', ') || 'Core Technologies';
+        if (role.includes('AI/ML')) {
+          aiRecommendations.push(`Construct production LLM / Neural Network pipeline using ${topSkillsStr} targeting ${targetCtc.split('(')[0].trim()} roles.`);
+        } else if (role.includes('DevOps') || role.includes('Cloud')) {
+          aiRecommendations.push(`Construct multi-stage Docker & Terraform IaC pipeline using ${topSkillsStr} for cloud infrastructure readiness.`);
+        } else if (role.includes('Cybersecurity')) {
+          aiRecommendations.push(`Execute hands-on Penetration Testing & SIEM logging drills with ${topSkillsStr} for security compliance.`);
+        } else {
+          aiRecommendations.push(`Engineer scalable REST microservices architecture using ${topSkillsStr} to meet ${companyTier.split('(')[0].trim()} expectations.`);
+        }
+
+        // Timeline & Cadence recommendation (Step 5 & 6)
+        if (goals.targetDrive) {
+          aiRecommendations.push(`Execute daily ${preferences.dailyGoalMinutes || 90}-min study cadence to peak before ${goals.targetDrive.split('(')[0].trim()} campus placement drives.`);
+        }
+
         resolve({
-          baselineScore: 78,
-          targetRole: onboardingData.career?.targetRole || 'Backend Developer',
-          targetTier: onboardingData.career?.companyTier || 'Tier-1 Product (MAANG / Unicorns)',
+          baselineScore: score,
+          candidateName: profile.name || 'Candidate',
+          college: profile.college || 'Engineering College',
+          degree: profile.degree || 'Computer Science',
+          graduationYear: profile.graduationYear || '2026',
+          targetRole: role,
+          secondaryRole: career.secondaryRole || '',
+          targetTier: companyTier,
+          targetCtc: targetCtc,
+          targetDrive: goals.targetDrive || 'Upcoming Campus Phase',
+          mentorTone: preferences.mentorTone || 'Socratic Coach (Probing Questions)',
+          dailyCommitment: preferences.dailyGoalMinutes || '90',
+          selectedSkills: selectedTechList,
+          dsaLevel: skills.dsaLevel || 'Intermediate',
+          githubHandle: integrations.githubHandle || '',
+          leetcodeHandle: integrations.leetcodeHandle || '',
+          resumeFileName: integrations.resumeFileName || '',
+          day1RoadmapTask: day1Task,
           recommendedPhases: [
-            { phase: 1, name: 'Core DSA & CS Fundamentals', duration: 'Days 1-30' },
-            { phase: 2, name: 'Advanced Microservices & Distributed Systems', duration: 'Days 31-60' },
-            { phase: 3, name: 'Company-Specific Mocks & Behavioral Polish', duration: 'Days 61-90' }
+            { phase: 1, name: 'Core DSA & Foundations', duration: 'Days 1-30' },
+            { phase: 2, name: `Advanced ${role.split(' ')[0]} Architecture`, duration: 'Days 31-60' },
+            { phase: 3, name: 'Mock Interviews & Placement Polish', duration: 'Days 61-90' }
           ],
-          aiRecommendations: [
-            'Prioritize Graph Algorithms (BFS/DFS, Topological Sort)',
-            'Implement Redis Caching in portfolio projects',
-            'Conduct weekly Socratic Mock Interviews on Spring Boot REST API design'
-          ]
+          aiRecommendations
         });
       }, 1200);
     });

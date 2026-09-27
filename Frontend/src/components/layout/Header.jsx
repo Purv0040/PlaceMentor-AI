@@ -2,11 +2,15 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, Bell, Search, Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useUser } from '../../context/UserContext';
 import { UserMenuDropdown } from '../common/UserMenuDropdown';
 import { dashboardData } from '../../data/dashboardData';
 
 export const Header = () => {
   const { toggleSidebar, activeNotificationCount } = useApp();
+  const { user } = useUser();
+
+  const score = user?.overallReadinessScore || dashboardData.readinessScore;
 
   return (
     <header className="h-16 bg-[#0f131d]/90 backdrop-blur-md border-b border-[#232b3e] sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between">
@@ -39,7 +43,7 @@ export const Header = () => {
         >
           <Sparkles className="w-4 h-4 text-indigo-400" />
           <span className="text-slate-300 font-medium">Readiness:</span>
-          <span className="font-bold text-indigo-400 font-mono">{dashboardData.readinessScore} / 100</span>
+          <span className="font-bold text-indigo-400 font-mono">{score} / 100</span>
         </NavLink>
 
         {/* Notifications */}

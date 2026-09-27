@@ -1,38 +1,110 @@
-// Mock service for LeetCode Intelligence
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-import { initialLeetcodeData } from "../data/leetcodeData";
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
 
 export const leetcodeService = {
+  connect: async (username) => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/connect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ username }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'Failed to connect LeetCode account');
+    }
+    return await response.json();
+  },
+
   getProfile: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(initialLeetcodeData);
-      }, 300);
+    const response = await fetch(`${API_BASE_URL}/leetcode`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) return null;
+    return await response.json();
   },
 
-  syncProfile: async (handle) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          ...initialLeetcodeData,
-          handle: handle || initialLeetcodeData.handle,
-          lastSynced: "Just now",
-          metrics: {
-            ...initialLeetcodeData.metrics,
-            totalSolved: initialLeetcodeData.metrics.totalSolved + 1,
-            currentStreakDays: initialLeetcodeData.metrics.currentStreakDays + 1
-          }
-        });
-      }, 900);
+  syncProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'LeetCode sync failed');
+    }
+    return await response.json();
   },
 
-  toggleConnection: async (currentState) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(!currentState);
-      }, 400);
+  getStatistics: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/statistics`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  getActivity: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/activity`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  analyzeProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'LeetCode AI analysis failed');
+    }
+    return await response.json();
+  },
+
+  getAnalysis: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/analysis`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  disconnect: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
   }
 };

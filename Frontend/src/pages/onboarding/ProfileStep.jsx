@@ -2,23 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, School, GraduationCap, ArrowRight } from 'lucide-react';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useUser } from '../../context/UserContext';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 
 export const ProfileStep = () => {
   const navigate = useNavigate();
   const { onboardingData, updateProfile, completeStep } = useOnboarding();
+  const { user, updateUserProfile } = useUser();
 
-  const [name, setName] = useState(onboardingData.profile.name || 'Alex Patel');
-  const [college, setCollege] = useState(onboardingData.profile.college || 'CSPIT');
-  const [degree, setDegree] = useState(onboardingData.profile.degree || 'B.Tech IT');
-  const [graduationYear, setGraduationYear] = useState(onboardingData.profile.graduationYear || '2027');
+  const [name, setName] = useState(user?.name || user?.full_name || onboardingData.profile.name || '');
+  const [college, setCollege] = useState(onboardingData.profile.college || '');
+  const [degree, setDegree] = useState(onboardingData.profile.degree || '');
+  const [graduationYear, setGraduationYear] = useState(onboardingData.profile.graduationYear || '2026');
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const errs = {};
     if (!name.trim()) errs.name = 'Full name is required.';
-    if (!college.trim()) errs.college = 'College name is required.';
+    if (!college.trim()) errs.college = 'College / University name is required.';
     if (!degree.trim()) errs.degree = 'Degree & branch is required.';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -29,6 +31,7 @@ export const ProfileStep = () => {
     if (!validate()) return;
 
     updateProfile({ name, college, degree, graduationYear });
+    updateUserProfile({ name, college, degree, graduationYear });
     completeStep(1);
     navigate('/onboarding/career');
   };
@@ -48,7 +51,7 @@ export const ProfileStep = () => {
           onChange={(e) => setName(e.target.value)}
           error={errors.name}
           icon={User}
-          placeholder="Alex Patel"
+          placeholder="e.g. DD Savaliya"
           required
         />
 
@@ -60,7 +63,7 @@ export const ProfileStep = () => {
             onChange={(e) => setCollege(e.target.value)}
             error={errors.college}
             icon={School}
-            placeholder="CSPIT"
+            placeholder="e.g. CHARUSAT / CSPIT"
             required
           />
 
@@ -71,7 +74,7 @@ export const ProfileStep = () => {
             onChange={(e) => setDegree(e.target.value)}
             error={errors.degree}
             icon={GraduationCap}
-            placeholder="B.Tech IT"
+            placeholder="e.g. B.Tech Computer Engineering"
             required
           />
         </div>

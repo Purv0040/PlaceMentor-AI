@@ -1,37 +1,99 @@
-// Mock service for GitHub Intelligence
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-import { initialGithubData } from "../data/githubData";
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
 
 export const githubService = {
+  connect: async (username) => {
+    const response = await fetch(`${API_BASE_URL}/github/connect`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ github_username: username }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'Failed to connect GitHub account');
+    }
+    return await response.json();
+  },
+
   getProfile: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(initialGithubData);
-      }, 300);
+    const response = await fetch(`${API_BASE_URL}/github`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) return null;
+    return await response.json();
   },
 
-  syncProfile: async (handle) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          ...initialGithubData,
-          handle: handle || initialGithubData.handle,
-          lastSynced: "Just now",
-          metrics: {
-            ...initialGithubData.metrics,
-            totalCommits: initialGithubData.metrics.totalCommits + 5,
-          }
-        });
-      }, 900);
+  syncProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/github/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'GitHub sync failed');
+    }
+    return await response.json();
   },
 
-  toggleConnection: async (currentState) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(!currentState);
-      }, 400);
+  getRepositories: async (page = 1, limit = 50) => {
+    const response = await fetch(`${API_BASE_URL}/github/repositories?page=${page}&limit=${limit}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
     });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  analyzeProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/github/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'GitHub AI analysis failed');
+    }
+    return await response.json();
+  },
+
+  getAnalysis: async () => {
+    const response = await fetch(`${API_BASE_URL}/github/analysis`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  disconnect: async () => {
+    const response = await fetch(`${API_BASE_URL}/github`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
   }
 };

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initialResumeData } from '../../data/resumeData';
 import { aiService } from '../../services/aiService';
+import { resumeService } from '../../services/resumeService';
 import { FileUploadModal } from '../../components/common/FileUploadModal';
 import {
   FileText,
@@ -29,22 +30,99 @@ export const ResumePage = () => {
   const [copiedBulletId, setCopiedBulletId] = useState(null);
   const [fixingBulletId, setFixingBulletId] = useState(null);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [userResumes, setUserResumes] = useState([]);
+  const [currentResumeId, setCurrentResumeId] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleUploadSuccess = async (fileMetadata) => {
-    const aiAnalysis = await aiService.analyzeResume(fileMetadata.fileName);
+  const fetchResumes = async () => {
+    try {
+      const res = await resumeService.getResumes();
+      if (res && res.success && res.data && res.data.items) {
+        setUserResumes(res.data.items);
+        const active = res.data.items.find(r => r.is_active) || res.data.items[0];
+        if (active) {
+          setCurrentResumeId(active.id);
+          setResumeData(prev => ({
+            ...prev,
+            fileName: active.filename,
+            fileSize: `${(active.size / (1024 * 1024)).toFixed(1)} MB`,
+            status: active.status === 'completed' ? 'Verified Pass' : active.status
+          }));
+          if (active.has_analysis) {
+            loadAnalysis(active.id);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch resumes:", e);
+    }
+  };
+
+  const loadAnalysis = async (resumeId) => {
+    try {
+      const res = await resumeService.getResumeAnalysis(resumeId);
+      if (res && res.success && res.data && res.data.analysis) {
+        applyAnalysisData(res.data.analysis);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch analysis:", e);
+    }
+  };
+
+  const applyAnalysisData = (analysis) => {
+    const overall = analysis.overall_score || 85;
     setResumeData((prev) => ({
       ...prev,
-      fileName: fileMetadata.fileName,
-      fileSize: fileMetadata.fileSize,
-      lastAnalyzed: 'Just now',
-      overallScore: aiAnalysis.atsScore,
-      scoreChange: '+4% vs previous upload',
+      overallScore: overall,
       metrics: {
         ...prev.metrics,
-        atsScore: aiAnalysis.atsScore,
-        sectionCompleteness: aiAnalysis.sectionScore,
-      }
+        atsScore: analysis.ats_score?.score || overall,
+        sectionCompleteness: analysis.formatting_score?.score || 92,
+        bulletActionability: analysis.experience_score?.score || 88,
+        keywordMatch: analysis.skills_score?.score || 84,
+      },
+      aiInsights: (analysis.suggestions || []).map((s, idx) => ({
+        type: idx === 0 ? 'critical' : 'recommendation',
+        title: `AI Observation ${idx + 1}`,
+        description: typeof s === 'string' ? s : s.text || JSON.stringify(s),
+        actionLabel: 'Review Bullet Audit',
+        actionTab: 'bullets'
+      }))
     }));
+  };
+
+  useEffect(() => {
+    fetchResumes();
+  }, []);
+
+  const handleUploadSuccess = async (uploadedDoc) => {
+    await fetchResumes();
+    const targetId = uploadedDoc?.id;
+    if (targetId) {
+      setCurrentResumeId(targetId);
+      setIsAnalyzing(true);
+      try {
+        const analyzeRes = await resumeService.analyzeResume(targetId);
+        setIsAnalyzing(false);
+        if (analyzeRes && analyzeRes.success && analyzeRes.data && analyzeRes.data.analysis) {
+          applyAnalysisData(analyzeRes.data.analysis);
+        }
+      } catch (err) {
+        setIsAnalyzing(false);
+        console.warn("Analysis error:", err);
+      }
+    }
+  };
+
+  const handleActivateResume = async (resumeId) => {
+    try {
+      const res = await resumeService.activateResume(resumeId);
+      if (res && res.success) {
+        await fetchResumes();
+      }
+    } catch (err) {
+      console.warn("Activate resume error:", err);
+    }
   };
 
   const handleCopyBullet = (id, text) => {
@@ -500,26 +578,45 @@ export const ResumePage = () => {
                 Close
               </button>
             </div>
-            <div className="space-y-2.5 font-mono text-xs">
-              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between">
-                <div>
-                  <span className="text-white font-bold">V4.2 (Current)</span>
-                  <p className="text-[11px] text-slate-400">Uploaded Today · Score 84</p>
-                </div>
-                <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Active</span>
-              </div>
-              <div className="p-3.5 rounded-xl bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-slate-400">
-                <div>
-                  <span className="font-semibold text-slate-200">V4.1</span>
-                  <p className="text-[11px] text-slate-400">Uploaded 1 week ago · Score 78</p>
-                </div>
-                <button
-                  onClick={() => setHistoryModalOpen(false)}
-                  className="text-indigo-400 hover:underline text-[11px] font-semibold"
-                >
-                  View Audit
-                </button>
-              </div>
+            <div className="space-y-2.5 font-mono text-xs max-h-60 overflow-y-auto pr-1">
+              {userResumes.length === 0 ? (
+                <p className="text-slate-400 italic text-center py-4">No resumes uploaded yet.</p>
+              ) : (
+                userResumes.map((resItem) => (
+                  <div
+                    key={resItem.id}
+                    className={`p-3.5 rounded-xl border flex items-center justify-between transition-colors ${
+                      resItem.is_active
+                        ? 'bg-indigo-500/10 border-indigo-500/30 text-white'
+                        : 'bg-[#0f131d] border-[#232b3e] text-slate-300'
+                    }`}
+                  >
+                    <div className="truncate mr-2">
+                      <span className="font-bold truncate block">{resItem.filename}</span>
+                      <p className="text-[11px] text-slate-400 font-sans">
+                        Status: {resItem.status} · {(resItem.size / (1024 * 1024)).toFixed(1)} MB
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {resItem.is_active ? (
+                        <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          Active
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            handleActivateResume(resItem.id);
+                            setHistoryModalOpen(false);
+                          }}
+                          className="px-2.5 py-1 rounded bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-white border border-[#232b3e] transition-colors"
+                        >
+                          Make Active
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

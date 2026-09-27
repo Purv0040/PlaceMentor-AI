@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { User, Mail, ArrowRight, Sparkles, Github, Chrome } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
+import { useOnboarding } from '../../context/OnboardingContext';
 import { Input } from '../../components/common/Input';
 import { PasswordInput } from '../../components/common/PasswordInput';
 import { FormError } from '../../components/common/FormError';
@@ -10,11 +12,13 @@ import { Button } from '../../components/common/Button';
 export const SignupPage = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
+  const { updateUserProfile } = useUser();
+  const { updateProfile } = useOnboarding();
 
-  const [name, setName] = useState('Alex Patel');
-  const [email, setEmail] = useState('alex.patel@charusat.edu.in');
-  const [password, setPassword] = useState('PlacementCopilot2026!');
-  const [terms, setTerms] = useState(true);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [terms, setTerms] = useState(false);
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -53,9 +57,11 @@ export const SignupPage = () => {
 
     setIsLoading(true);
     try {
-      await signup({ name, email, password });
+      const res = await signup({ name, email, password });
+      updateUserProfile({ name, email });
+      updateProfile({ name, email });
       setIsLoading(false);
-      navigate('/onboarding');
+      navigate('/onboarding/profile');
     } catch (err) {
       setIsLoading(false);
       setFormError(err.message || 'Failed to create account. Please try again.');
@@ -78,14 +84,14 @@ export const SignupPage = () => {
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => navigate('/onboarding')}
+            onClick={() => navigate('/onboarding/profile')}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0f131d] border border-[#232b3e] text-slate-300 hover:text-white hover:bg-[#1a2030] text-xs font-semibold transition-colors"
           >
             <Github className="w-4 h-4 text-white" /> GitHub
           </button>
           <button
             type="button"
-            onClick={() => navigate('/onboarding')}
+            onClick={() => navigate('/onboarding/profile')}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0f131d] border border-[#232b3e] text-slate-300 hover:text-white hover:bg-[#1a2030] text-xs font-semibold transition-colors"
           >
             <Chrome className="w-4 h-4 text-rose-400" /> Google
@@ -110,7 +116,7 @@ export const SignupPage = () => {
             onChange={(e) => setName(e.target.value)}
             error={fieldErrors.name}
             icon={User}
-            placeholder="Alex Patel"
+            placeholder="e.g. DD Savaliya"
             required
           />
 
@@ -122,7 +128,7 @@ export const SignupPage = () => {
             onChange={(e) => setEmail(e.target.value)}
             error={fieldErrors.email}
             icon={Mail}
-            placeholder="alex.patel@charusat.edu.in"
+            placeholder="e.g. ddsavaliya2006@gmail.com"
             required
           />
 
@@ -132,6 +138,7 @@ export const SignupPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={fieldErrors.password}
+            placeholder="Create password (min. 6 characters)"
             required
           />
 

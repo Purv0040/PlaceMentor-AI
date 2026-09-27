@@ -158,11 +158,11 @@ export const Sidebar = () => {
         <div className="p-3 border-t border-[#232b3e] bg-[#0b0e17] shrink-0">
           <div className="p-2.5 rounded-xl bg-[#121624] border border-[#232b3e] flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-400 font-mono">
-              {user?.name ? user.name.split(' ').map(n=>n[0]).join('') : 'AP'}
+              {(user?.name || user?.full_name || 'Candidate').split(' ').map(n=>n[0]).join('').slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user?.name || 'Alex Patel'}</p>
-              <p className="text-[10px] text-slate-400 truncate">{user?.targetRole || 'Backend Developer'}</p>
+              <p className="text-xs font-semibold text-white truncate">{user?.name || user?.full_name || 'Candidate'}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user?.targetRole || 'Software Engineer'}</p>
             </div>
           </div>
         </div>

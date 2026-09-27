@@ -28,9 +28,14 @@ export const UserMenuDropdown = () => {
     navigate('/login', { replace: true });
   };
 
-  const initials = user?.name
-    ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
-    : 'AP';
+  const displayName = user?.name || user?.full_name || 'Candidate';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -43,8 +48,8 @@ export const UserMenuDropdown = () => {
           {initials}
         </div>
         <div className="hidden md:block text-left">
-          <p className="text-xs font-semibold text-white leading-tight">{user?.name || 'Alex Patel'}</p>
-          <p className="text-[10px] text-slate-400 font-mono leading-tight">{user?.college || 'CSPIT'}</p>
+          <p className="text-xs font-semibold text-white leading-tight">{displayName}</p>
+          <p className="text-[10px] text-slate-400 font-mono leading-tight">{user?.college || 'Candidate'}</p>
         </div>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -53,8 +58,8 @@ export const UserMenuDropdown = () => {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-2xl py-2 z-50 animate-fadeIn space-y-1">
           <div className="px-4 py-2 border-b border-[#232b3e]">
-            <p className="text-xs font-bold text-white">{user?.name || 'Alex Patel'}</p>
-            <p className="text-[11px] text-indigo-400 font-mono">{user?.targetRole || 'Backend Developer'}</p>
+            <p className="text-xs font-bold text-white">{displayName}</p>
+            <p className="text-[11px] text-indigo-400 font-mono">{user?.targetRole || 'Software Engineer'}</p>
           </div>
 
           <NavLink

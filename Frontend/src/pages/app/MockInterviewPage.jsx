@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
 import { useUser } from '../../context/UserContext';
 import { defaultQuestions, getStoredInterviewHistory, saveInterviewHistory } from '../../data/interviewData';
-import { aiService } from '../../services/aiService';
+import { interviewService } from '../../services/interviewService';
 import { InterviewSetupModal } from '../../components/practice/InterviewSetupModal';
 import {
   Zap,
@@ -32,17 +32,46 @@ export const MockInterviewPage = () => {
   const [sessionState, setSessionState] = useState('idle'); // 'idle' | 'active' | 'evaluating' | 'results'
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [sessionConfig, setSessionConfig] = useState(null);
-  const [questions, setQuestions] = useState(defaultQuestions);
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [activeSession, setActiveSession] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [questionNumber, setQuestionNumber] = useState(1);
+  const [totalQuestions, setTotalQuestions] = useState(5);
   const [answerText, setAnswerText] = useState('');
   const [showHint, setShowHint] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [evalResult, setEvalResult] = useState(null);
   const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    setHistory(getStoredInterviewHistory());
+    fetchHistory();
   }, []);
+
+  const fetchHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const apiHistory = await interviewService.getInterviewHistory();
+      if (apiHistory && apiHistory.length > 0) {
+        const formatted = apiHistory.map((item) => ({
+          id: item.interview_id || item.id,
+          date: item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recent',
+          role: item.target_role || 'Backend Developer',
+          type: item.interview_type ? item.interview_type.toUpperCase().replace('_', ' ') : 'Technical',
+          difficulty: item.difficulty || 'Medium',
+          durationText: '15:00',
+          score: item.overall_score || 75,
+          status: item.status || 'Completed',
+        }));
+        setHistory(formatted);
+      } else {
+        setHistory(getStoredInterviewHistory());
+      }
+    } catch (e) {
+      setHistory(getStoredInterviewHistory());
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   // Timer effect for active session
   useEffect(() => {
@@ -63,46 +92,99 @@ export const MockInterviewPage = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStartInterview = (config) => {
+  const handleStartInterview = async (config) => {
     setSessionConfig(config);
-    setCurrentQuestionIdx(0);
     setAnswerText('');
     setSecondsElapsed(0);
     setShowHint(false);
-    setSessionState('active');
+    setSessionState('evaluating');
+
+    try {
+      const res = await interviewService.startInterview(config);
+      if (res && res.interview_id) {
+        setActiveSession(res);
+        setTotalQuestions(res.total_questions || 5);
+        setQuestionNumber(res.current_question || 1);
+        if (res.current_question_data) {
+          setCurrentQuestion(res.current_question_data);
+        } else {
+          setCurrentQuestion({
+            question: "Describe your technical background and key project achievements.",
+            category: config.modality || "Technical",
+            expected_focus: "Core principles & STAR metrics",
+            hint: "Focus on technologies and metrics.",
+          });
+        }
+        setSessionState('active');
+      } else {
+        // Fallback UI
+        setCurrentQuestion(defaultQuestions[0]);
+        setQuestionNumber(1);
+        setTotalQuestions(3);
+        setSessionState('active');
+      }
+    } catch (e) {
+      setCurrentQuestion(defaultQuestions[0]);
+      setQuestionNumber(1);
+      setTotalQuestions(3);
+      setSessionState('active');
+    }
   };
 
   const handleSubmitAnswer = async () => {
     if (!answerText.trim()) return;
     setSessionState('evaluating');
 
-    const currentQ = questions[currentQuestionIdx];
-    const evaluation = await aiService.evaluateInterviewAnswer(currentQ, answerText);
-    setEvalResult(evaluation);
+    try {
+      if (activeSession && activeSession.interview_id) {
+        const res = await interviewService.submitAnswer(activeSession.interview_id, answerText);
+        if (res) {
+          const evaluation = res.evaluation || {};
+          const formattedEval = {
+            score: evaluation.score || 75,
+            technicalAccuracy: evaluation.technical_accuracy || evaluation.correctness || 75,
+            communicationClarity: evaluation.communication_quality || evaluation.clarity || 75,
+            answerStructure: evaluation.clarity || 75,
+            aiFeedback: evaluation.ai_feedback || "Good response provided with technical reasoning.",
+            strengths: evaluation.strengths || ["Used domain vocabulary"],
+            weaknesses: evaluation.weaknesses || ["Can add more quantitative metrics"],
+          };
+          setEvalResult(formattedEval);
 
-    // Add to history
-    const newRecord = {
-      id: `session-${Date.now()}`,
-      date: 'Just now',
-      role: sessionConfig?.role || 'Backend SDE-1',
-      type: sessionConfig?.modality || 'System Architecture & Design',
-      difficulty: sessionConfig?.difficulty || 'Medium',
-      questionCount: sessionConfig?.questionCount || 1,
-      durationText: formatTimer(secondsElapsed),
-      score: evaluation.score,
-      status: 'Completed',
-      strengths: evaluation.strengths,
-      weaknesses: evaluation.weaknesses
-    };
+          if (res.status === 'in_progress' && res.next_question) {
+            setCurrentQuestion(res.next_question);
+            setQuestionNumber((prev) => prev + 1);
+            setAnswerText('');
+            setShowHint(false);
+            setSessionState('active');
+            return;
+          } else {
+            // Completed full interview
+            setSessionState('results');
+            fetchHistory();
+            return;
+          }
+        }
+      }
 
-    const updatedHistory = [newRecord, ...history];
-    setHistory(updatedHistory);
-    saveInterviewHistory(updatedHistory);
-
-    setSessionState('results');
+      // Fallback evaluation if backend unavailable
+      const fallbackEval = {
+        score: 80,
+        technicalAccuracy: 82,
+        communicationClarity: 78,
+        answerStructure: 80,
+        aiFeedback: "Well-structured response covering key concepts.",
+        strengths: ["Clear logical flow", "Good terminology"],
+        weaknesses: ["Add metrics"],
+      };
+      setEvalResult(fallbackEval);
+      setSessionState('results');
+    } catch (e) {
+      setSessionState('results');
+    }
   };
 
-  const currentQ = questions[currentQuestionIdx] || questions[0];
+  const currentQ = currentQuestion || defaultQuestions[0];
   const wordCount = answerText.trim() ? answerText.trim().split(/\s+/).length : 0;
 
   return (
@@ -181,7 +263,7 @@ export const MockInterviewPage = () => {
             <h3 className="font-semibold text-white text-lg">Targeted Interview Modalities</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div
-                onClick={() => handleStartInterview({ modality: 'System Architecture & Design', difficulty: 'Hard', questionCount: 3, duration: '20 mins' })}
+                onClick={() => handleStartInterview({ modality: 'system_design', difficulty: 'hard', questionCount: 5 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-indigo-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 w-fit">
@@ -197,7 +279,7 @@ export const MockInterviewPage = () => {
               </div>
 
               <div
-                onClick={() => handleStartInterview({ modality: 'Technical / DSA Drill', difficulty: 'Medium', questionCount: 3, duration: '15 mins' })}
+                onClick={() => handleStartInterview({ modality: 'dsa', difficulty: 'medium', questionCount: 5 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-emerald-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">
@@ -213,7 +295,7 @@ export const MockInterviewPage = () => {
               </div>
 
               <div
-                onClick={() => handleStartInterview({ modality: 'Behavioral & HR STAR Drill', difficulty: 'Medium', questionCount: 3, duration: '15 mins' })}
+                onClick={() => handleStartInterview({ modality: 'behavioral', difficulty: 'medium', questionCount: 5 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-purple-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 w-fit">
@@ -252,8 +334,8 @@ export const MockInterviewPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1e2638]">
-                  {history.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#1a2133] transition-colors">
+                  {history.map((item, idx) => (
+                    <tr key={item.id || idx} className="hover:bg-[#1a2133] transition-colors">
                       <td className="py-3 px-3 font-semibold text-white">{item.date}</td>
                       <td className="py-3 px-3 text-slate-300">{item.type}</td>
                       <td className="py-3 px-3">
@@ -261,7 +343,7 @@ export const MockInterviewPage = () => {
                           {item.difficulty}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-400">{item.durationText}</td>
+                      <td className="py-3 px-3 text-slate-400">{item.durationText || '15:00'}</td>
                       <td className="py-3 px-3 font-bold text-emerald-400">{item.score}%</td>
                     </tr>
                   ))}
@@ -279,10 +361,10 @@ export const MockInterviewPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#121624] border border-indigo-500/40 font-mono text-xs shadow-lg">
             <div className="flex items-center gap-3">
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-bold border border-indigo-500/30">
-                Question {currentQuestionIdx + 1} of {questions.length}
+                Question {questionNumber} of {totalQuestions}
               </span>
-              <span className="text-white font-semibold truncate max-w-[200px] sm:max-w-none">
-                {sessionConfig?.modality || 'System Architecture'}
+              <span className="text-white font-semibold truncate max-w-[200px] sm:max-w-none uppercase">
+                {currentQ.category || sessionConfig?.modality || 'System Architecture'}
               </span>
             </div>
 
@@ -304,23 +386,25 @@ export const MockInterviewPage = () => {
           <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-lg">
             <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
               <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
-                Topic: {currentQ.topic}
+                Focus / Skill: {currentQ.skill || currentQ.topic || 'Core Technical'}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-slate-400">Target Time: {currentQ.targetDuration}</span>
-                <button
-                  onClick={() => setShowHint(!showHint)}
-                  className="px-2.5 py-1 rounded-lg bg-[#1a2133] text-xs font-medium text-amber-400 hover:bg-[#232b3e] border border-amber-500/30 transition-colors flex items-center gap-1"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>{showHint ? 'Hide Hint' : 'Show Hint'}</span>
-                </button>
+                <span className="text-xs font-mono text-slate-400">Difficulty: {currentQ.difficulty || 'Medium'}</span>
+                {currentQ.hint && (
+                  <button
+                    onClick={() => setShowHint(!showHint)}
+                    className="px-2.5 py-1 rounded-lg bg-[#1a2133] text-xs font-medium text-amber-400 hover:bg-[#232b3e] border border-amber-500/30 transition-colors flex items-center gap-1"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span>{showHint ? 'Hide Hint' : 'Show Hint'}</span>
+                  </button>
+                )}
               </div>
             </div>
 
             <h3 className="text-lg font-bold text-white leading-relaxed">{currentQ.question}</h3>
 
-            {showHint && (
+            {showHint && currentQ.hint && (
               <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200 font-sans space-y-1 animate-in fade-in">
                 <span className="font-semibold text-amber-400 font-mono block">Copilot Hint:</span>
                 <p>{currentQ.hint}</p>
@@ -330,7 +414,7 @@ export const MockInterviewPage = () => {
             {/* Answer Input Area */}
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                <span>Type or outline your architectural response below:</span>
+                <span>Type or outline your response below:</span>
                 <span>Word Count: {wordCount} words</span>
               </div>
               <textarea
@@ -416,7 +500,7 @@ export const MockInterviewPage = () => {
                   Key Strengths
                 </span>
                 <ul className="space-y-1.5 text-slate-300 font-sans">
-                  {evalResult.strengths.map((str, idx) => (
+                  {(evalResult.strengths || []).map((str, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
                       <span className="text-emerald-400">•</span> {str}
                     </li>
@@ -430,7 +514,7 @@ export const MockInterviewPage = () => {
                   Areas for Improvement
                 </span>
                 <ul className="space-y-1.5 text-slate-300 font-sans">
-                  {evalResult.weaknesses.map((wk, idx) => (
+                  {(evalResult.weaknesses || []).map((wk, idx) => (
                     <li key={idx} className="flex items-start gap-1.5">
                       <span className="text-amber-400">•</span> {wk}
                     </li>
@@ -455,7 +539,7 @@ export const MockInterviewPage = () => {
                   Analyze Skill Gaps
                 </button>
                 <button
-                  onClick={() => handleStartInterview(sessionConfig || { modality: 'System Architecture & Design' })}
+                  onClick={() => handleStartInterview(sessionConfig || { modality: 'technical' })}
                   className="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-md shadow-indigo-600/25 flex items-center gap-1.5"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />

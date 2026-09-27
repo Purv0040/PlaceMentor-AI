@@ -45,9 +45,17 @@ export const AnalysisStep = () => {
       graduationYear: onboardingData.profile.graduationYear,
       targetRole: onboardingData.career.targetRole,
       secondaryRole: onboardingData.career.secondaryRole,
+      companyTier: onboardingData.career.companyTier,
       githubHandle: onboardingData.integrations.githubHandle,
       leetcodeHandle: onboardingData.integrations.leetcodeHandle,
-      overallReadinessScore: analysisResult?.baselineScore || 78
+      resumeFileName: onboardingData.integrations.resumeFileName,
+      overallReadinessScore: analysisResult?.baselineScore || 78,
+      dsaLevel: onboardingData.skills?.dsaLevel,
+      selectedSkills: onboardingData.skills?.selectedSkills,
+      mentorTone: onboardingData.preferences?.mentorTone,
+      dailyGoalMinutes: onboardingData.preferences?.dailyGoalMinutes,
+      targetDrive: onboardingData.goals?.targetDrive,
+      targetCtc: onboardingData.goals?.targetCtc
     });
 
     markOnboardingComplete();
@@ -149,17 +157,23 @@ export const AnalysisStep = () => {
           <div className="grid sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight space-y-1">
               <span className="text-[10px] text-slate-400 font-mono">TARGET ROLE</span>
-              <p className="font-bold text-white truncate">{onboardingData.career.targetRole}</p>
+              <p className="font-bold text-white truncate">{onboardingData?.career?.targetRole || 'Full Stack Engineer'}</p>
             </div>
             <div className="p-3.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight space-y-1">
               <span className="text-[10px] text-slate-400 font-mono">DAY 1 ROADMAP TASK</span>
-              <p className="font-bold text-brand-400 truncate">LC 207: Course Schedule</p>
+              <p className="font-bold text-brand-400 truncate">{analysisResult?.day1RoadmapTask || 'LC 207: Course Schedule'}</p>
             </div>
             <div className="p-3.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight space-y-1">
               <span className="text-[10px] text-slate-400 font-mono">AI MENTOR PERSONA</span>
-              <p className="font-bold text-ai-400 truncate">{onboardingData.preferences.mentorTone.split('(')[0]}</p>
+              <p className="font-bold text-ai-400 truncate">
+                {onboardingData?.preferences?.mentorTone
+                  ? onboardingData.preferences.mentorTone.split('(')[0].trim()
+                  : 'Socratic Coach'}
+              </p>
             </div>
           </div>
+
+
 
           <div className="space-y-2 pt-2">
             <h4 className="text-xs font-bold text-white flex items-center gap-1.5">

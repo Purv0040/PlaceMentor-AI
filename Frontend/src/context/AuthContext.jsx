@@ -4,16 +4,19 @@ import { authService } from '../services/authService';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Default true for seamless dev flow
+  const [user, setUser] = useState(() => authService.getCurrentUser());
+  const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const existingUser = authService.getCurrentUser();
-    if (existingUser) {
-      setUser(existingUser);
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
       setIsAuthenticated(true);
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
     }
   }, []);
 
@@ -73,6 +76,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         isAuthenticated,
         isLoading,
         error,

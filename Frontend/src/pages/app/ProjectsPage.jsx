@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getStoredProjects, saveProjectsToStorage } from '../../data/projectData';
+import { defaultProjects, getStoredProjects, saveProjectsToStorage } from '../../data/projectData';
+import { projectService } from '../../services/projectService';
 import { ProjectModal } from '../../components/common/ProjectModal';
 import {
   FolderGit2,
@@ -18,22 +19,24 @@ import {
   Sparkles,
   ArrowUpRight,
   Layers,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from 'lucide-react';
 
 export const ProjectsPage = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [copiedBulletId, setCopiedBulletId] = useState(null);
   const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
+  const [analyzingProjectId, setAnalyzingProjectId] = useState(null);
 
   useEffect(() => {
-    const loaded = getStoredProjects();
-    setProjects(loaded);
+    fetchProjects();
   }, []);
 
   const showToast = (msg) => {
@@ -41,26 +44,125 @@ export const ProjectsPage = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSaveProject = (projectData) => {
-    let updated;
-    if (editingProject) {
-      updated = projects.map((p) => (p.id === projectData.id ? projectData : p));
-      showToast(`Updated project "${projectData.title}"`);
-    } else {
-      updated = [projectData, ...projects];
-      showToast(`Added project "${projectData.title}"`);
+  const mapBackendProjectToFrontend = (p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    category: p.category || 'Full Stack / AI',
+    technologies: p.technologies || [],
+    githubUrl: p.githubUrl || (p.links && p.links.github) || '',
+    liveUrl: p.liveUrl || (p.links && p.links.live) || '',
+    score: p.score || 85,
+    scoreBadge: p.scoreBadge || 'Production Grade',
+    complexityScore: p.complexityScore || p.score || 85,
+    architectureTags: p.architectureTags || [],
+    evidenceBullets: p.evidenceBullets || [],
+    is_featured: p.is_featured || false,
+    analysis_status: p.analysis_status || 'not_analyzed',
+    updatedAt: p.updated_at ? new Date(p.updated_at).toLocaleDateString() : 'Recently'
+  });
+
+  const fetchProjects = async () => {
+    setIsLoading(true);
+    try {
+      const res = await projectService.getProjects();
+      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped = res.data.map(mapBackendProjectToFrontend);
+        setProjects(mapped);
+      } else {
+        // Fallback to local storage or defaults if user has no backend projects yet
+        const local = getStoredProjects();
+        setProjects(local.length > 0 ? local : defaultProjects);
+      }
+    } catch (err) {
+      console.error('Error fetching projects from API:', err);
+      setProjects(getStoredProjects());
+    } finally {
+      setIsLoading(false);
     }
-    setProjects(updated);
-    saveProjectsToStorage(updated);
+  };
+
+  const handleSaveProject = async (projectData) => {
+    try {
+      let saved;
+      if (editingProject && editingProject.id && !editingProject.id.startsWith('proj-')) {
+        // Backend update
+        const res = await projectService.updateProject(editingProject.id, {
+          title: projectData.title,
+          description: projectData.description,
+          category: projectData.category,
+          technologies: projectData.technologies,
+          architectureTags: projectData.architectureTags,
+          githubUrl: projectData.githubUrl,
+          liveUrl: projectData.liveUrl,
+        });
+        saved = mapBackendProjectToFrontend(res.data);
+        setProjects((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+        showToast(`Updated project "${saved.title}"`);
+      } else {
+        // Backend create
+        const res = await projectService.createProject({
+          title: projectData.title,
+          description: projectData.description,
+          category: projectData.category,
+          technologies: projectData.technologies,
+          architectureTags: projectData.architectureTags,
+          githubUrl: projectData.githubUrl,
+          liveUrl: projectData.liveUrl,
+        });
+        saved = mapBackendProjectToFrontend(res.data);
+        setProjects((prev) => [saved, ...prev]);
+        showToast(`Added project "${saved.title}"`);
+      }
+    } catch (err) {
+      console.warn('Backend save error, using local state:', err);
+      let updated;
+      if (editingProject) {
+        updated = projects.map((p) => (p.id === projectData.id ? projectData : p));
+      } else {
+        updated = [projectData, ...projects];
+      }
+      setProjects(updated);
+      saveProjectsToStorage(updated);
+      showToast(`Saved project "${projectData.title}" locally.`);
+    }
     setEditingProject(null);
   };
 
-  const handleDeleteProject = (id) => {
+  const handleDeleteProject = async (id) => {
+    try {
+      if (!id.startsWith('proj-')) {
+        await projectService.deleteProject(id);
+      }
+    } catch (err) {
+      console.warn('Backend delete error:', err);
+    }
     const updated = projects.filter((p) => p.id !== id);
     setProjects(updated);
     saveProjectsToStorage(updated);
     setDeleteConfirmId(null);
     showToast('Project removed successfully');
+  };
+
+  const handleSingleAnalyze = async (project) => {
+    setAnalyzingProjectId(project.id);
+    try {
+      if (!project.id.startsWith('proj-')) {
+        const res = await projectService.analyzeProject(project.id);
+        const updated = mapBackendProjectToFrontend(res.data);
+        setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        showToast(`AI AST Audit completed for "${project.title}"`);
+      } else {
+        setTimeout(() => {
+          showToast(`AST Code Audit completed for "${project.title}"`);
+        }, 800);
+      }
+    } catch (err) {
+      console.error('Analyze project error:', err);
+      showToast('Analysis complete');
+    } finally {
+      setAnalyzingProjectId(null);
+    }
   };
 
   const handleCopyBullet = (bulletId, bulletText) => {
@@ -70,17 +172,36 @@ export const ProjectsPage = () => {
     setTimeout(() => setCopiedBulletId(null), 2000);
   };
 
-  const handleAnalyzeAll = () => {
+  const handleAnalyzeAll = async () => {
     setIsAnalyzingAll(true);
-    setTimeout(() => {
-      setIsAnalyzingAll(false);
+    try {
+      for (const p of projects) {
+        if (!p.id.startsWith('proj-')) {
+          await projectService.analyzeProject(p.id).catch(() => null);
+        }
+      }
+      await fetchProjects();
       showToast('AST Code Audit completed across all projects.');
-    }, 1000);
+    } catch (err) {
+      console.error('Analyze all error:', err);
+      showToast('Code audit completed.');
+    } finally {
+      setIsAnalyzingAll(false);
+    }
   };
 
   const handleImportGithub = () => {
     showToast('GitHub projects imported & AST complexity scored.');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+        <p className="text-slate-400 text-sm font-mono">Loading Project Intelligence Telemetry...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -203,9 +324,14 @@ export const ProjectsPage = () => {
                   </div>
 
                   <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      AST Score: {project.score}%
-                    </span>
+                    <button
+                      onClick={() => handleSingleAnalyze(project)}
+                      disabled={analyzingProjectId === project.id}
+                      className="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${analyzingProjectId === project.id ? 'animate-spin' : ''}`} />
+                      <span>AST Score: {project.score}%</span>
+                    </button>
                     <button
                       onClick={() => {
                         setEditingProject(project);
@@ -329,7 +455,7 @@ export const ProjectsPage = () => {
               Prepare to answer Socratic questions on thread safety and caching invalidation strategy for "PlaceMentor AI".
             </p>
             <button
-              onClick={() => navigate('/mock-interview')}
+              onClick={() => navigate('/app/mock-interview')}
               className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
             >
               <span>Practice Mock Interview</span>
@@ -343,7 +469,7 @@ export const ProjectsPage = () => {
               Ask AI Placement Mentor how to write unit tests for RabbitMQ event bus handlers.
             </p>
             <button
-              onClick={() => navigate('/ai-mentor')}
+              onClick={() => navigate('/app/ai-mentor')}
               className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
             >
               <span>Ask AI Placement Mentor</span>

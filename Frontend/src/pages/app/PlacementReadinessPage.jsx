@@ -26,7 +26,9 @@ export const PlacementReadinessPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    readinessService.calculateReadiness().then((res) => setData(res));
+    readinessService.getLatestReadiness().then((res) => {
+      if (res) setData(res);
+    });
   }, []);
 
   const handleRefresh = async () => {

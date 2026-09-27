@@ -17,25 +17,25 @@ export const profileService = {
     const onboarding = onboardingData || {};
 
     return {
-      name: user.name || onboarding.profile?.name || 'Alex Patel',
-      email: user.email || 'alex.patel@cspit.ac.in',
-      college: user.college || onboarding.profile?.college || 'CSPIT',
-      degree: user.degree || onboarding.profile?.degree || 'B.Tech IT',
-      branch: user.branch || 'Information Technology',
-      graduationYear: user.graduationYear || onboarding.profile?.graduationYear || '2027',
-      targetRole: user.targetRole || onboarding.career?.targetRole || 'Backend Developer',
-      secondaryRole: user.secondaryRole || onboarding.career?.secondaryRole || 'AI/ML Engineer',
+      name: user.name || user.full_name || onboarding.profile?.name || 'Student Candidate',
+      email: user.email || onboarding.profile?.email || '',
+      college: user.college || onboarding.profile?.college || 'University Student',
+      degree: user.degree || onboarding.profile?.degree || 'B.Tech / B.E.',
+      branch: user.branch || 'Computer Engineering',
+      graduationYear: user.graduationYear || onboarding.profile?.graduationYear || '2026',
+      targetRole: user.targetRole || onboarding.career?.targetRole || 'Full Stack Engineer',
+      secondaryRole: user.secondaryRole || onboarding.career?.secondaryRole || 'Cybersecurity Analyst & Engineer',
       companyTier: user.companyTier || onboarding.career?.companyTier || 'Tier-1 Product (MAANG / Unicorns)',
-      targetCtc: user.targetCtc || onboarding.goals?.targetCtc || '14 - 24 LPA (Product Tier)',
+      targetCtc: user.targetCtc || onboarding.goals?.targetCtc || '12 - 20 LPA (Product Tier)',
       targetDrive: user.targetDrive || onboarding.goals?.targetDrive || 'August 2026 (Campus Phase 1)',
       dsaLevel: user.dsaLevel || onboarding.skills?.dsaLevel || 'Intermediate',
       sysDesignLevel: user.sysDesignLevel || onboarding.skills?.sysDesignLevel || 'Beginner',
-      githubHandle: user.githubHandle || onboarding.integrations?.githubHandle || 'alexpatel-dev',
-      leetcodeHandle: user.leetcodeHandle || onboarding.integrations?.leetcodeHandle || 'alex_patel99',
-      resumeFileName: user.resumeFileName || onboarding.integrations?.resumeFileName || 'Alex_Patel_Backend_Resume.pdf',
+      githubHandle: user.githubHandle || onboarding.integrations?.githubHandle || '',
+      leetcodeHandle: user.leetcodeHandle || onboarding.integrations?.leetcodeHandle || '',
+      resumeFileName: user.resumeFileName || onboarding.integrations?.resumeFileName || '',
       dailyGoalMinutes: user.preferences?.dailyGoalMinutes || onboarding.preferences?.dailyGoalMinutes || '90',
       mentorTone: user.preferences?.mentorTone || onboarding.preferences?.mentorTone || 'Socratic Coach (Probing Questions)',
-      skills: onboarding.skills?.selectedSkills || ['Java', 'Spring Boot', 'Data Structures', 'SQL', 'Git', 'Docker']
+      skills: onboarding.skills?.selectedSkills || ['Data Structures', 'Python', 'Git', 'SQL']
     };
   },
 
@@ -47,18 +47,20 @@ export const profileService = {
     }
   },
 
-  calculateProfileCompletion: (profile) => {
-    if (!profile) return 80;
+  calculateCompletion: (profile) => {
+    if (!profile) return 0;
+    const fields = [
+      profile.name,
+      profile.email,
+      profile.college,
+      profile.degree,
+      profile.targetRole,
+      profile.githubHandle,
+      profile.leetcodeHandle,
+      profile.resumeFileName
+    ];
 
-    let score = 0;
-    if (profile.name && profile.email) score += 15;
-    if (profile.college && profile.degree) score += 15;
-    if (profile.targetRole) score += 15;
-    if (profile.githubHandle) score += 15;
-    if (profile.leetcodeHandle) score += 15;
-    if (profile.resumeFileName) score += 15;
-    if (profile.dailyGoalMinutes) score += 10;
-
-    return Math.min(score, 100);
+    const filledCount = fields.filter(f => f && String(f).trim().length > 0).length;
+    return Math.round((filledCount / fields.length) * 100);
   }
 };

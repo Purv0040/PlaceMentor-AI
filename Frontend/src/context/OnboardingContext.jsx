@@ -1,47 +1,55 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
 const ONBOARDING_STORAGE_KEY = 'placementCopilotOnboarding';
 export const ONBOARDING_COMPLETE_KEY = 'placementCopilotOnboardingComplete';
 
-const defaultState = {
-  profile: {
-    name: 'Alex Patel',
-    college: 'CSPIT',
-    degree: 'B.Tech IT',
-    graduationYear: '2027'
-  },
-  career: {
-    targetRole: 'Backend Developer',
-    secondaryRole: 'AI/ML Engineer',
-    companyTier: 'Tier-1 Product (MAANG / Unicorns)'
-  },
-  skills: {
-    dsaLevel: 'Intermediate',
-    sysDesignLevel: 'Beginner',
-    databaseLevel: 'Intermediate',
-    frameworkLevel: 'Advanced',
-    selectedSkills: ['Java', 'Spring Boot', 'Data Structures', 'SQL', 'Git']
-  },
-  integrations: {
-    githubConnected: true,
-    githubHandle: 'alexpatel-dev',
-    leetcodeConnected: true,
-    leetcodeHandle: 'alex_patel99',
-    resumeUploaded: true,
-    resumeFileName: 'Alex_Patel_Backend_Resume.pdf'
-  },
-  preferences: {
-    dailyGoalMinutes: '90',
-    mentorTone: 'Socratic Coach (Probing Questions)',
-    studyCadence: 'Daily Evening Sprint'
-  },
-  goals: {
-    targetDrive: 'August 2026 (Campus Phase 1)',
-    targetCtc: '14 - 24 LPA (Product Tier)',
-    primaryGoal: 'Master Graph Algorithms & System Microservices'
-  },
-  currentStep: 1,
-  completedSteps: [1]
+const buildInitialState = () => {
+  const activeUser = authService.getCurrentUser();
+  const name = activeUser?.name || activeUser?.full_name || '';
+  const email = activeUser?.email || '';
+
+  return {
+    profile: {
+      name: name,
+      email: email,
+      college: '',
+      degree: '',
+      graduationYear: '2026'
+    },
+    career: {
+      targetRole: 'Software Engineer',
+      secondaryRole: 'Full Stack Developer',
+      companyTier: 'Tier-1 Product (MAANG / Unicorns)'
+    },
+    skills: {
+      dsaLevel: 'Intermediate',
+      sysDesignLevel: 'Beginner',
+      databaseLevel: 'Intermediate',
+      frameworkLevel: 'Intermediate',
+      selectedSkills: ['Python', 'Java', 'Data Structures', 'SQL', 'Git']
+    },
+    integrations: {
+      githubConnected: false,
+      githubHandle: '',
+      leetcodeConnected: false,
+      leetcodeHandle: '',
+      resumeUploaded: false,
+      resumeFileName: ''
+    },
+    preferences: {
+      dailyGoalMinutes: '90',
+      mentorTone: 'Socratic Coach (Probing Questions)',
+      studyCadence: 'Daily Evening Sprint'
+    },
+    goals: {
+      targetDrive: 'August 2026 (Campus Phase 1)',
+      targetCtc: '12 - 20 LPA (Product Tier)',
+      primaryGoal: 'Master Data Structures, Algorithms & System Architecture'
+    },
+    currentStep: 1,
+    completedSteps: [1]
+  };
 };
 
 const OnboardingContext = createContext(null);
@@ -50,9 +58,17 @@ export const OnboardingProvider = ({ children }) => {
   const [onboardingData, setOnboardingData] = useState(() => {
     try {
       const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : defaultState;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const activeUser = authService.getCurrentUser();
+        if (activeUser?.name && (!parsed.profile?.name || parsed.profile?.name === 'Alex Patel')) {
+          parsed.profile = { ...parsed.profile, name: activeUser.name, email: activeUser.email };
+        }
+        return parsed;
+      }
+      return buildInitialState();
     } catch (e) {
-      return defaultState;
+      return buildInitialState();
     }
   });
 
@@ -148,8 +164,9 @@ export const OnboardingProvider = ({ children }) => {
 export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
   if (!context) {
+    const initialState = buildInitialState();
     return {
-      onboardingData: defaultState,
+      onboardingData: initialState,
       updateProfile: () => {},
       updateCareer: () => {},
       updateSkills: () => {},

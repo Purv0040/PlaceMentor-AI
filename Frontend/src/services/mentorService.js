@@ -1,5 +1,4 @@
-// Centralized Mentor Service to build normalized student context and handle conversation persistence
-
+import { apiRequest } from './api';
 import { aiService } from './aiService';
 import { initialReadinessData } from '../data/readinessData';
 import { initialResumeData } from '../data/resumeData';
@@ -94,6 +93,49 @@ export const mentorService = {
     };
   },
 
+  // Backend API methods
+  createConversation: async (title = 'New Placement Session') => {
+    try {
+      const res = await apiRequest('/mentor/conversations', {
+        method: 'POST',
+        body: JSON.stringify({ title })
+      });
+      return res || { conversation_id: `local_conv_${Date.now()}`, title, status: 'active' };
+    } catch (e) {
+      console.warn('Backend unavailable for createConversation, using local session.', e);
+      return { conversation_id: `local_conv_${Date.now()}`, title, status: 'active' };
+    }
+  },
+
+  getConversations: async () => {
+    try {
+      const res = await apiRequest('/mentor/conversations');
+      return Array.isArray(res) ? res : [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  getConversationDetail: async (conversationId) => {
+    try {
+      return await apiRequest(`/mentor/conversations/${conversationId}`);
+    } catch (e) {
+      return null;
+    }
+  },
+
+  askMentor: async (message, conversationId = null) => {
+    try {
+      return await apiRequest('/mentor/ask', {
+        method: 'POST',
+        body: JSON.stringify({ message, conversation_id: conversationId })
+      });
+    } catch (e) {
+      console.warn('Backend unavailable for askMentor, using client fallback.', e);
+      return null;
+    }
+  },
+
   // Retrieve stored conversation from localStorage
   getStoredChat: () => {
     try {
@@ -110,7 +152,6 @@ export const mentorService = {
     return null;
   },
 
-  // Save conversation array to localStorage
   saveChat: (messages) => {
     try {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
@@ -119,7 +160,6 @@ export const mentorService = {
     }
   },
 
-  // Clear conversation state and localStorage
   clearChat: () => {
     try {
       localStorage.removeItem(CHAT_STORAGE_KEY);
@@ -128,7 +168,6 @@ export const mentorService = {
     }
   },
 
-  // Generate initial greeting message tailored to student context
   getInitialGreeting: (context) => {
     const name = context.user.name || 'Candidate';
     const role = context.user.targetRole || 'Backend Developer';
@@ -162,8 +201,21 @@ export const mentorService = {
     ];
   },
 
-  // Main wrapper for response generation
   generateMentorResponse: async (userMessage, mentorContext, persona = 'tech') => {
+    // Try real backend API first
+    const apiRes = await mentorService.askMentor(userMessage);
+    if (apiRes && apiRes.answer) {
+      return {
+        text: apiRes.answer,
+        verified: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        actions: (apiRes.suggested_actions || []).map(a => ({
+          label: a.label || a.title || "View Details",
+          route: a.route || "/dashboard"
+        }))
+      };
+    }
+    // Fallback to local AI service synthesizer if backend offline
     return await aiService.generateMentorResponse(userMessage, mentorContext, persona);
   }
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { resumeService } from '../../services/resumeService';
 
 export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
   const [file, setFile] = useState(null);
@@ -61,30 +62,26 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
     }
   };
 
-  const handleStartUpload = () => {
+  const handleStartUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    setProgress(10);
+    setProgress(20);
+    setError('');
     
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsUploading(false);
-            onUploadSuccess({
-              fileName: file.name,
-              fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-              pageCount: 2,
-              lastAnalyzed: 'Just now'
-            });
-            onClose();
-          }, 400);
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 200);
+    try {
+      const res = await resumeService.uploadResume(file);
+      setProgress(100);
+      setIsUploading(false);
+      if (res && res.success && res.data) {
+        onUploadSuccess(res.data);
+        onClose();
+      } else {
+        setError(res?.message || 'Upload failed');
+      }
+    } catch (err) {
+      setIsUploading(false);
+      setError(err.message || 'Upload failed. Please try again.');
+    }
   };
 
   const formatFileSize = (bytes) => {
