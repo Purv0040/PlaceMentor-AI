@@ -98,4 +98,10 @@ class AuthService:
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
             "token_type": "bearer",
+            "user": {
+                "id": user_id,
+                "email": user["email"],
+                "full_name": user["full_name"],
+                "is_onboarded": user.get("is_onboarded", False),
+            },
         }

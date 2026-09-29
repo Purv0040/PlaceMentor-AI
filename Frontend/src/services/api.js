@@ -1,6 +1,8 @@
+import { authService } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-export const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
   const defaultHeaders = {
     'Content-Type': 'application/json',
@@ -17,8 +19,16 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+    if (response.status === 401 && !isRetry) {
+      const newToken = await authService.refreshToken();
+      if (newToken) {
+        return await apiRequest(endpoint, options, true);
+      }
+    }
+
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     return await response.json();
   } catch (error) {

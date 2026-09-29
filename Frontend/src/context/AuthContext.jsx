@@ -6,18 +6,50 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => authService.getCurrentUser());
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    } else {
-      setUser(null);
-      setIsAuthenticated(false);
-    }
+    let isMounted = true;
+
+    const verify = async () => {
+      if (!authService.isAuthenticated()) {
+        if (isMounted) {
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const verifiedUser = await authService.verifySession();
+        if (isMounted) {
+          if (verifiedUser) {
+            setUser(verifiedUser);
+            setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setUser(authService.getCurrentUser());
+          setIsAuthenticated(authService.isAuthenticated());
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    verify();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = async (credentials) => {

@@ -8,7 +8,7 @@ import { Button } from '../../components/common/Button';
 
 export const ForgotPasswordPage = () => {
   const { resetPassword } = useAuth();
-  const [email, setEmail] = useState('alex.patel@charusat.edu.in');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);

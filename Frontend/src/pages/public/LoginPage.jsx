@@ -54,7 +54,7 @@ export const LoginPage = () => {
       updateUserProfile(currentUser);
 
       setIsLoading(false);
-      const isOnboarded = currentUser?.is_onboarded || localStorage.getItem('placementCopilotOnboardingComplete') === 'true';
+      const isOnboarded = currentUser?.is_onboarded === true || (currentUser?.is_onboarded !== false && localStorage.getItem('placementCopilotOnboardingComplete') === 'true');
 
       if (isOnboarded) {
         const destination = from === '/login' ? '/dashboard' : from;

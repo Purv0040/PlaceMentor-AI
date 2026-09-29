@@ -79,6 +79,15 @@ async def get_me(current_user: Dict[str, Any] = Depends(get_current_user)) -> Di
     }
 
 
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    """Logout current user session."""
+    return {
+        "success": True,
+        "message": "Successfully logged out.",
+    }
+
+
 @router.get("/test")
 async def test_auth_route() -> dict:
     """Placeholder test endpoint for auth router."""

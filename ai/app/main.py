@@ -95,8 +95,18 @@ pipeline_orchestrator = EndToEndPipelineOrchestrator(llm_service=llm_service)
 
 
 # ---------------------------------------------------------------------------
-# Health
+# Health & Root
 # ---------------------------------------------------------------------------
+
+@app.get("/")
+async def root():
+    """Root application status endpoint."""
+    return {
+        "message": "AI Placement Copilot - AI Microservice",
+        "status": "running",
+        "docs": "/docs",
+    }
+
 
 @app.get("/health")
 async def health_check():

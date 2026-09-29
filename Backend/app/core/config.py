@@ -1,11 +1,12 @@
 import json
-from typing import List, Union, Optional
+from typing import List, Optional, Union
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Centralized application settings loaded from environment variables or .env file."""
+    """Centralized application settings."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -14,60 +15,128 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
 
-    # Application settings
+    # ========================================================
+    # APPLICATION
+    # ========================================================
+
     APP_NAME: str = "AI Placement Copilot"
     APP_ENV: str = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
-    
 
-    # Database settings - supports both MONGODB_URL and MONGODB_URI
+    # ========================================================
+    # MONGODB
+    # ========================================================
+
     MONGODB_URL: Optional[str] = None
-    MONGODB_URI: str = "mongodb://localhost:27017/placementor"
+
+    MONGODB_URI: str = (
+        "mongodb://localhost:27017/placementor"
+    )
+
     MONGODB_DATABASE: str = "placementor"
 
-    # Cache settings
+    # ========================================================
+    # REDIS
+    # ========================================================
+
     REDIS_URL: str = "redis://localhost:6379"
 
-    # External AI microservice
+    # ========================================================
+    # AI SERVICE
+    # ========================================================
+
     AI_SERVICE_URL: str = "http://localhost:8001"
 
-    # GitHub API Configuration
+    # ========================================================
+    # GITHUB
+    # ========================================================
+
     GITHUB_API_URL: str = "https://api.github.com"
     GITHUB_TOKEN: Optional[str] = None
 
-    # LeetCode API Configuration
-    LEETCODE_API_URL: str = "https://leetcode.com/graphql"
+    # ========================================================
+    # LEETCODE
+    # ========================================================
 
-    # Security & JWT settings
-    JWT_SECRET_KEY: str = "change_this_to_a_secure_local_secret_key_1234567890"
+    LEETCODE_API_URL: str = (
+        "https://leetcode.com/graphql"
+    )
+
+    # ========================================================
+    # JWT
+    # ========================================================
+
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # File uploads
+    # ========================================================
+    # UPLOADS
+    # ========================================================
+
     UPLOAD_DIR: str = "uploads"
     MAX_RESUME_SIZE_MB: int = 5
 
-    # CORS origins
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173"]
+    # ========================================================
+    # CORS
+    # ========================================================
+
+    CORS_ORIGINS: Union[List[str], str] = [
+        "http://localhost:5173"
+    ]
+
+    # ========================================================
+    # MONGODB URI
+    # ========================================================
 
     def get_mongo_uri(self) -> str:
-        """Returns the effective MongoDB connection string (preferring MONGODB_URL)."""
+        """
+        Return the effective MongoDB URI.
+
+        MONGODB_URL takes priority when provided.
+        """
         return self.MONGODB_URL or self.MONGODB_URI
 
-    @field_validator("CORS_ORIGINS", mode="before")
+    # ========================================================
+    # CORS VALIDATOR
+    # ========================================================
+
+    @field_validator(
+        "CORS_ORIGINS",
+        mode="before",
+    )
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str):
-            if v.startswith("[") and v.endswith("]"):
+    def assemble_cors_origins(
+        cls,
+        value: Union[str, List[str]],
+    ) -> List[str]:
+
+        if isinstance(value, list):
+            return value
+
+        if isinstance(value, str):
+
+            value = value.strip()
+
+            if value.startswith("[") and value.endswith("]"):
                 try:
-                    return json.loads(v)
-                except Exception:
+                    parsed = json.loads(value)
+
+                    if isinstance(parsed, list):
+                        return parsed
+
+                except json.JSONDecodeError:
                     pass
-            return [i.strip() for i in v.split(",") if i.strip()]
-        elif isinstance(v, list):
-            return v
+
+            return [
+                item.strip()
+                for item in value.split(",")
+                if item.strip()
+            ]
+
         return ["http://localhost:5173"]
 
 
