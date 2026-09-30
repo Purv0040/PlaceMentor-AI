@@ -12,7 +12,8 @@ import {
   FolderGit2,
   Target,
   Map,
-  Activity
+  Activity,
+  Bot
 } from 'lucide-react';
 
 export const LandingPage = () => {
