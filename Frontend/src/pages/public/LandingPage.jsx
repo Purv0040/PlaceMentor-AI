@@ -12,9 +12,6 @@ import {
   FolderGit2,
   Target,
   Map,
-  Video,
-  MessageSquare,
-  Bot,
   Activity
 } from 'lucide-react';
 
@@ -224,23 +221,6 @@ export const LandingPage = () => {
             <p className="text-xs text-slate-400">Dynamic 3-phase curriculum with telemetry-driven missed day recovery.</p>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-emerald-500/40 transition-colors">
-            <Video className="w-6 h-6 text-emerald-400" />
-            <h4 className="font-bold text-white text-base">AI Mock Interview</h4>
-            <p className="text-xs text-slate-400">Targeted technical and behavioral simulations with real-time feedback.</p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-purple-500/40 transition-colors">
-            <MessageSquare className="w-6 h-6 text-purple-400" />
-            <h4 className="font-bold text-white text-base">Communication Coach</h4>
-            <p className="text-xs text-slate-400">Verbal clarity, speaking pace (WPM), and technical explanation scoring.</p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-indigo-500/40 transition-colors">
-            <Bot className="w-6 h-6 text-indigo-400" />
-            <h4 className="font-bold text-white text-base">AI Placement Mentor</h4>
-            <p className="text-xs text-slate-400">Socratic conversational mentor providing code hints and conceptual drills.</p>
-          </div>
         </div>
       </section>
 

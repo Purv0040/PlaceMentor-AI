@@ -47,10 +47,10 @@ export const dashboardData = {
     {
       id: "ins-3",
       type: "suggestion",
-      title: "Upcoming Mock Drill: Spring Boot & Microservices",
-      description: "Scheduled diagnostic simulation based on your target Tier-1 Backend Developer role.",
+      title: "Review your highest-impact skill gap",
+      description: "Use the skill gap analysis to prioritize your next focused study session.",
       priority: "Medium",
-      route: "/mock-interview"
+      route: "/skill-gaps"
     }
   ],
 
@@ -59,7 +59,7 @@ export const dashboardData = {
     { id: "act-1", title: "GitHub Sync", desc: "Pushed 4 commits to backend-microservices repo", time: "2 hours ago", type: "github" },
     { id: "act-2", title: "LeetCode Drill", desc: "Solved LC 207: Course Schedule (Medium Graph)", time: " Yesterday", type: "leetcode" },
     { id: "act-3", title: "ATS Resume Audit", desc: "Scored 84/100 for Backend Developer alignment", time: "2 days ago", type: "resume" },
-    { id: "act-4", title: "AI Mock Interview", desc: "Completed System Design & REST API drill", time: "3 days ago", type: "mock" }
+    { id: "act-4", title: "Roadmap Review", desc: "Reviewed the next milestone in your placement roadmap", time: "3 days ago", type: "roadmap" }
   ],
 
   // Quick Action Shortcuts
@@ -67,7 +67,6 @@ export const dashboardData = {
     { label: "Resume Audit", path: "/resume", color: "indigo" },
     { label: "GitHub Telemetry", path: "/github", color: "purple" },
     { label: "LeetCode Analytics", path: "/leetcode", color: "amber" },
-    { label: "Projects Audit", path: "/projects", color: "emerald" },
-    { label: "Launch AI Mock", path: "/mock-interview", color: "rose" }
+    { label: "Projects Audit", path: "/projects", color: "emerald" }
   ]
 };

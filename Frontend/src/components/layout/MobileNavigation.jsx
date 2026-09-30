@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Target, Map, Mic, User } from 'lucide-react';
+import { LayoutDashboard, Target, Map, User } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export const MobileNavigation = () => {
@@ -10,7 +10,6 @@ export const MobileNavigation = () => {
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Skill Gaps', path: '/skill-gaps', icon: Target },
     { label: 'Roadmap', path: '/roadmap', icon: Map },
-    { label: 'AI Mock', path: '/mock-interview', icon: Mic },
     { label: 'Profile', path: '/profile', icon: User },
   ];
 

@@ -95,9 +95,9 @@ export const initialSkillGapData = {
       requiredLevelText: "Advanced (CAP Theorem, Latency SLAs)",
       priority: "Low",
       reason: "Important for senior interviewer architectural evaluation.",
-      suggestedAction: "Practice mock System Design interview drill.",
-      actionLabel: "Practice Mock",
-      actionRoute: "/mock-interview"
+      suggestedAction: "Add a System Design trade-off drill to your roadmap.",
+      actionLabel: "Add to Roadmap",
+      actionRoute: "/roadmap"
     }
   ],
 

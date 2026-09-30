@@ -441,44 +441,6 @@ export const ProjectsPage = () => {
         )}
       </div>
 
-      {/* 4. AI RECOMMENDATIONS BANNER */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-white text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          Copilot Project System Design Recommendations
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Mock Interview Drill Recommended</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Prepare to answer Socratic questions on thread safety and caching invalidation strategy for "PlaceMentor AI".
-            </p>
-            <button
-              onClick={() => navigate('/app/mock-interview')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>Practice Mock Interview</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Consult AI Mentor for System Tuning</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Ask AI Placement Mentor how to write unit tests for RabbitMQ event bus handlers.
-            </p>
-            <button
-              onClick={() => navigate('/app/ai-mentor')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>Ask AI Placement Mentor</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Add / Edit Project Modal */}
       <ProjectModal
         isOpen={isModalOpen}

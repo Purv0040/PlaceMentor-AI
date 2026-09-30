@@ -34,9 +34,6 @@ import { SkillGapsPage } from '../pages/app/SkillGapsPage';
 import { RoadmapPage } from '../pages/app/RoadmapPage';
 import { TasksPage } from '../pages/app/TasksPage';
 import { ProgressPage } from '../pages/app/ProgressPage';
-import { MockInterviewPage } from '../pages/app/MockInterviewPage';
-import { CommunicationPage } from '../pages/app/CommunicationPage';
-import { AIMentorPage } from '../pages/app/AIMentorPage';
 import { AchievementsPage } from '../pages/app/AchievementsPage';
 import { ProfilePage } from '../pages/app/ProfilePage';
 import { SettingsPage } from '../pages/app/SettingsPage';
@@ -78,9 +75,6 @@ export const AppRoutes = () => {
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/mock-interview" element={<MockInterviewPage />} />
-          <Route path="/communication" element={<CommunicationPage />} />
-          <Route path="/ai-mentor" element={<AIMentorPage />} />
           <Route path="/achievements" element={<AchievementsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />

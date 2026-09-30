@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Trophy, Calendar, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Trophy, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { Button } from '../../components/common/Button';
 
@@ -8,15 +8,7 @@ export const GoalsStep = () => {
   const navigate = useNavigate();
   const { onboardingData, updateGoals, completeStep } = useOnboarding();
 
-  const [targetDrive, setTargetDrive] = useState(onboardingData.goals.targetDrive || 'August 2026 (Campus Phase 1)');
   const [targetCtc, setTargetCtc] = useState(onboardingData.goals.targetCtc || '14 - 24 LPA (Product Tier)');
-  const [primaryGoal, setPrimaryGoal] = useState(onboardingData.goals.primaryGoal || 'Master Graph Algorithms & System Microservices');
-
-  const driveOptions = [
-    'August 2026 (Campus Phase 1)',
-    'November 2026 (Campus Phase 2)',
-    'Immediate Off-Campus / Referral Drive'
-  ];
 
   const ctcOptions = [
     { id: '6 - 12 LPA (Solid Foundation)', title: '6 - 12 LPA', desc: 'Solid Foundation (Services / High Growth Startups)' },
@@ -26,7 +18,7 @@ export const GoalsStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updateGoals({ targetDrive, targetCtc, primaryGoal });
+    updateGoals({ targetCtc });
     completeStep(6);
     navigate('/onboarding/analysis');
   };
@@ -34,27 +26,11 @@ export const GoalsStep = () => {
   return (
     <div className="space-y-6 max-w-3xl mx-auto w-full">
       <div className="space-y-1">
-        <h2 className="text-2xl font-extrabold text-white">Placement Timeline & CTC Targets</h2>
-        <p className="text-xs text-slate-400">Step 6 of 7 — Define your target timeline and desired compensation bracket</p>
+        <h2 className="text-2xl font-extrabold text-white">Placement CTC Target</h2>
+        <p className="text-xs text-slate-400">Step 6 of 7 — Define your desired compensation bracket</p>
       </div>
 
       <form onSubmit={handleNext} className="p-6 sm:p-8 rounded-2xl bg-obsidian-card border border-obsidian-borderLight shadow-xl space-y-6">
-        {/* Drive Season */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-brand-400" /> Target Placement Drive Season
-          </label>
-          <select
-            value={targetDrive}
-            onChange={(e) => setTargetDrive(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white focus:outline-none focus:border-brand-500 text-xs transition-colors"
-          >
-            {driveOptions.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        </div>
-
         {/* Target CTC Bracket */}
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-slate-200 flex items-center gap-1.5">
@@ -82,20 +58,6 @@ export const GoalsStep = () => {
               );
             })}
           </div>
-        </div>
-
-        {/* Primary Goal Text */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-200">
-            Primary Prep Objective (Optional)
-          </label>
-          <input
-            type="text"
-            value={primaryGoal}
-            onChange={(e) => setPrimaryGoal(e.target.value)}
-            placeholder="e.g., Master Graph Algorithms & Spring Boot Microservices"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-xs transition-colors"
-          />
         </div>
 
         <div className="flex items-center justify-between pt-4">

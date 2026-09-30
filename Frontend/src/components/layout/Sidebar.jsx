@@ -11,8 +11,6 @@ import {
   Map,
   CheckSquare,
   TrendingUp,
-  Mic,
-  MessageCircle,
   Sparkles,
   Trophy,
   User,
@@ -55,19 +53,6 @@ export const Sidebar = () => {
         { label: '90-Day Roadmap', path: '/roadmap', icon: Map },
         { label: "Today's Tasks", path: '/tasks', icon: CheckSquare },
         { label: 'Progress Telemetry', path: '/progress', icon: TrendingUp }
-      ]
-    },
-    {
-      title: 'Practice',
-      items: [
-        { label: 'AI Mock Interview', path: '/mock-interview', icon: Mic },
-        { label: 'Communication Lab', path: '/communication', icon: MessageCircle }
-      ]
-    },
-    {
-      title: 'AI Copilot',
-      items: [
-        { label: 'AI Placement Mentor', path: '/ai-mentor', icon: Sparkles, badge: 'AI' }
       ]
     },
     {

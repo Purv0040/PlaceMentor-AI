@@ -13,7 +13,6 @@ import {
   Github,
   Code2,
   FolderKanban,
-  Mic,
   Activity,
   CheckCircle2,
   Bot
@@ -313,13 +312,6 @@ export const DashboardPage = () => {
             <p className="text-xs font-bold text-white">Projects Audit</p>
           </NavLink>
 
-          <NavLink
-            to="/mock-interview"
-            className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-purple-500/40 text-center space-y-2 transition-all hover:-translate-y-0.5 col-span-2 sm:col-span-1"
-          >
-            <Mic className="w-5 h-5 text-purple-400 mx-auto" />
-            <p className="text-xs font-bold text-white">Launch AI Mock</p>
-          </NavLink>
         </div>
       </div>
     </div>

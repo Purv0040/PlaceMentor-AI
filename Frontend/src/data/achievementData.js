@@ -107,36 +107,6 @@ export const defaultAchievements = [
     actionLabel: "Practice Graphs"
   },
   {
-    id: "ach-8",
-    title: "Mock Interview Standard Passed",
-    description: "Completed an AI Mock Interview session with technical accuracy score > 80%.",
-    category: "Interview & STAR",
-    icon: "videocam",
-    color: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-    xp: 250,
-    requiredCount: 80,
-    currentCount: 82,
-    unlocked: true,
-    unlockedAt: "2 days ago",
-    route: "/mock-interview",
-    actionLabel: "Start Mock Interview"
-  },
-  {
-    id: "ach-9",
-    title: "Optimal Interview Cadence (145 WPM)",
-    description: "Achieved optimal speech pace and verbal clarity (>80%) in Communication Lab.",
-    category: "Interview & STAR",
-    icon: "mic",
-    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    xp: 150,
-    requiredCount: 80,
-    currentCount: 82,
-    unlocked: true,
-    unlockedAt: "Yesterday",
-    route: "/communication",
-    actionLabel: "Communication Lab"
-  },
-  {
     id: "ach-10",
     title: "Redis Distributed Caching Master",
     description: "Implement Redis distributed caching invalidation pattern to close #1 critical gap.",

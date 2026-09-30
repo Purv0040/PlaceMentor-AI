@@ -83,17 +83,15 @@ export const ProfileStep = () => {
           <label htmlFor="graduation-year" className="block text-xs font-medium text-slate-300">
             Graduation Year <span className="text-rose-400">*</span>
           </label>
-          <select
+          <input
             id="graduation-year"
+            type="text"
             value={graduationYear}
             onChange={(e) => setGraduationYear(e.target.value)}
+            inputMode="numeric"
+            placeholder="e.g. 2027"
             className="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-surface border border-obsidian-borderLight text-white focus:outline-none focus:border-brand-500 text-xs transition-colors"
-          >
-            <option value="2025">2025 (Final Year)</option>
-            <option value="2026">2026 (Pre-Final Year)</option>
-            <option value="2027">2027 (2nd Year)</option>
-            <option value="2028">2028 (1st Year)</option>
-          </select>
+          />
         </div>
 
         <div className="flex justify-end pt-4">
