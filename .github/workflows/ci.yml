@@ -24,9 +24,14 @@ jobs:
           pip install -r Backend/requirements.txt
 
       - name: Run Backend Tests
+        env:
+          PYTHONPATH: .
+          JWT_SECRET_KEY: "default_secret_key_for_development_and_ci_testing_32bytes"
+          MONGODB_URI: "mongodb://localhost:27017/placementor_test"
+          APP_ENV: "testing"
         run: |
           cd Backend
-          pytest tests/ -v
+          python -m pytest tests/ -v
 
   ai-tests:
     name: AI Service Pytest Suite
@@ -45,9 +50,11 @@ jobs:
           pip install -r ai/requirements.txt
 
       - name: Run AI Microservice Tests
+        env:
+          PYTHONPATH: .
         run: |
           cd ai
-          pytest tests/ -v
+          python -m pytest tests/ -v
 
   frontend-build:
     name: Frontend Build & Lint Check

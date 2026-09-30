@@ -67,7 +67,9 @@ class Settings(BaseSettings):
     # JWT
     # ========================================================
 
-    JWT_SECRET_KEY: str
+    JWT_SECRET_KEY: str = (
+        "default_secret_key_for_development_and_ci_testing_32bytes"
+    )
     JWT_ALGORITHM: str = "HS256"
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
