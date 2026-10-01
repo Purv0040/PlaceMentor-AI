@@ -58,9 +58,9 @@ export const DashboardPage = () => {
   }, [user]);
 
   return (
-    <div className="space-y-6">
+    <div className="dashboard-page space-y-6">
       {/* 1. WELCOME HERO BANNER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+      <div className="dashboard-hero p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-mono font-semibold">
             <Sparkles className="w-3.5 h-3.5" /> Day {dashboardData.sprintDay} of {dashboardData.totalSprintDays}-Day Placement Sprint
@@ -93,7 +93,7 @@ export const DashboardPage = () => {
             <span className="text-2xl font-bold text-white font-mono">{readinessScore}%</span>
             <span className="text-xs text-emerald-400 font-mono font-semibold">{readinessLabel}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
+          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
             <div className="h-full rounded-full bg-indigo-500" style={{ width: `${readinessScore}%` }} />
           </div>
         </div>
@@ -111,7 +111,7 @@ export const DashboardPage = () => {
               {(user?.streakDays || 0) > 0 ? '🔥 Active Sprint' : '⚡ Day 1 Sprint'}
             </span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
+          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
             <div
               className="h-full rounded-full bg-amber-500"
               style={{ width: `${Math.min(100, Math.max(5, (((user?.streakDays || 0)) / 30) * 100))}%` }}
@@ -132,7 +132,7 @@ export const DashboardPage = () => {
               {user?.leetcodeHandle ? (user?.leetcodeBreakdown || '148 Med / 32 Hard') : 'Not Connected'}
             </span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
+          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
             <div
               className="h-full rounded-full bg-purple-500"
               style={{ width: user?.leetcodeHandle ? `${Math.min(100, ((user?.leetcodeSolved || 248) / 400) * 100)}%` : '0%' }}
@@ -149,7 +149,7 @@ export const DashboardPage = () => {
             <span className="text-xl font-bold text-white truncate">{user?.targetRole || 'Full Stack Engineer'}</span>
             <span className="text-xs text-emerald-400 font-mono font-semibold">{user?.companyTier ? user.companyTier.split('(')[0].trim() : 'Tier-1 Target'}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
+          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
             <div className="h-full rounded-full bg-emerald-500" style={{ width: `${readinessScore}%` }} />
           </div>
         </div>
@@ -199,7 +199,7 @@ export const DashboardPage = () => {
                       {v.score}% <span className="text-slate-500 font-normal">/ {v.target}% Target</span>
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-[#0f131d] overflow-hidden">
+                  <div className="progress-track w-full h-2 rounded-full bg-[#0f131d] overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${v.score}%`, backgroundColor: v.color }}

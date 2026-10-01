@@ -1,19 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, Bell, Search, Sparkles } from 'lucide-react';
+import { Menu, Bell, Search, Sparkles, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useUser } from '../../context/UserContext';
 import { UserMenuDropdown } from '../common/UserMenuDropdown';
 import { dashboardData } from '../../data/dashboardData';
 
 export const Header = () => {
-  const { toggleSidebar, activeNotificationCount } = useApp();
+  const { toggleSidebar, activeNotificationCount, theme, toggleTheme } = useApp();
   const { user } = useUser();
 
   const score = user?.overallReadinessScore || dashboardData.readinessScore;
 
   return (
-    <header className="h-16 bg-[#0f131d]/90 backdrop-blur-md border-b border-[#232b3e] sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between">
+    <header className="app-header h-16 bg-[#0f131d]/90 backdrop-blur-md border-b border-[#232b3e] sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between">
       {/* Left: Mobile Sidebar Toggle & Search Bar */}
       <div className="flex items-center gap-3">
         <button
@@ -45,6 +45,16 @@ export const Header = () => {
           <span className="text-slate-300 font-medium">Readiness:</span>
           <span className="font-bold text-indigo-400 font-mono">{score} / 100</span>
         </NavLink>
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-[#121624] border border-[#232b3e] text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        >
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
 
         {/* Notifications */}
         <button

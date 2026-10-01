@@ -6,7 +6,7 @@ import { MobileNavigation } from './MobileNavigation';
 
 export const AppLayout = () => {
   return (
-    <div className="min-h-screen bg-[#0b0e17] text-slate-100 flex">
+    <div className="app-shell min-h-screen bg-[#0b0e17] text-slate-100 flex">
       {/* Sidebar Navigation */}
       <Sidebar />
 

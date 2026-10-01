@@ -11,9 +11,9 @@ export const ActionPlanList = () => {
       {tasks.map((task) => (
         <div
           key={task.id}
-          className={`p-3.5 rounded-xl border transition-all ${
+          className={`action-plan-task p-3.5 rounded-xl border transition-all ${
             task.completed
-              ? 'bg-[#0f131d]/60 border-[#232b3e]/60 opacity-60'
+              ? 'action-plan-task-completed bg-[#0f131d]/60 border-[#232b3e]/60 opacity-60'
               : 'bg-[#0f131d] border-[#232b3e] hover:border-indigo-500/40'
           } flex items-center justify-between gap-3`}
         >

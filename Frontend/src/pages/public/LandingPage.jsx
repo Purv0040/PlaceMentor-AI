@@ -18,7 +18,7 @@ import {
 
 export const LandingPage = () => {
   return (
-    <div className="space-y-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="landing-page space-y-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* 1. HERO SECTION */}
       <section id="hero" className="text-center space-y-8 pt-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-mono text-indigo-400">
@@ -114,7 +114,7 @@ export const LandingPage = () => {
             </ul>
           </div>
 
-          <div className="p-6 rounded-2xl bg-gradient-to-tr from-[#121624] via-[#1a2030] to-indigo-950/20 border border-indigo-500/30 space-y-4">
+          <div className="landing-copilot-card p-6 rounded-2xl bg-gradient-to-tr from-[#121624] via-[#1a2030] to-indigo-950/20 border border-indigo-500/30 space-y-4">
             <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold text-xs">
               ✓
             </div>
@@ -275,7 +275,7 @@ export const LandingPage = () => {
       {/* 6. FAQ & EXPECTATIONS */}
       <section id="faq" className="space-y-8">
         <div className="text-center space-y-3">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+          <span className="landing-faq-label text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
             Clarity & Expectations
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">Frequently Asked Questions</h2>
@@ -313,7 +313,7 @@ export const LandingPage = () => {
       </section>
 
       {/* 7. BOTTOM CTA */}
-      <section className="p-8 sm:p-12 rounded-3xl bg-gradient-to-tr from-indigo-900/40 via-purple-900/30 to-[#121624] border border-indigo-500/30 text-center space-y-6 shadow-2xl">
+      <section className="landing-cta p-8 sm:p-12 rounded-3xl bg-gradient-to-tr from-indigo-900/40 via-purple-900/30 to-[#121624] border border-indigo-500/30 text-center space-y-6 shadow-2xl">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-white">
           Start building your placement readiness today.
         </h2>

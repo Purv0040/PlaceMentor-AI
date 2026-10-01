@@ -14,7 +14,7 @@ export const ProfilePage = () => {
     profileService.getProfile(user, onboardingData)
   );
 
-  const completionPercent = profileService.calculateProfileCompletion(profile);
+  const completionPercent = profileService.calculateCompletion(profile);
 
   const handleSaveProfile = (updatedData) => {
     setProfile(updatedData);
@@ -37,7 +37,7 @@ export const ProfilePage = () => {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
+    <div className="profile-page w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
       {/* 1. Profile Banner Header */}
       <ProfileHeader
         profile={profile}

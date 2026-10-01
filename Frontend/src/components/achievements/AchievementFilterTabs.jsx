@@ -18,9 +18,9 @@ export const AchievementFilterTabs = ({
   ];
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2">
+    <div className="achievements-filter-tabs flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2">
       {/* Category Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0a0e18] border border-[#232b3e]">
+      <div className="achievements-category-tabs flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0a0e18] border border-[#232b3e]">
         {categories.map((cat) => {
           const isActive = activeCategory === cat.id;
           return (

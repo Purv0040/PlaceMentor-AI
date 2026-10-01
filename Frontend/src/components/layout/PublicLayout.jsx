@@ -1,15 +1,17 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Sun, Moon } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 export const PublicLayout = () => {
   const location = useLocation();
   const isLanding = location.pathname === '/';
+  const { theme, toggleTheme } = useApp();
 
   return (
-    <div className="min-h-screen bg-[#0b0e17] text-slate-100 flex flex-col font-sans antialiased selection:bg-indigo-500/30 selection:text-white">
+    <div className="public-shell min-h-screen bg-[#0b0e17] text-slate-100 flex flex-col font-sans antialiased selection:bg-indigo-500/30 selection:text-white">
       {/* Top Header Navbar */}
-      <header className="h-16 border-b border-[#232b3e] bg-[#0f131d]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between">
+      <header className="public-header h-16 border-b border-[#232b3e] bg-[#0f131d]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between">
         <NavLink to="/" className="flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform">
             <Sparkles className="w-4.5 h-4.5 text-white" />
@@ -32,6 +34,15 @@ export const PublicLayout = () => {
 
         {/* Right CTA Actions */}
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="public-theme-toggle p-2 rounded-xl border border-[#232b3e] text-slate-400 hover:text-white hover:bg-[#121624] transition-colors"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <NavLink
             to="/login"
             className="px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white transition-colors"

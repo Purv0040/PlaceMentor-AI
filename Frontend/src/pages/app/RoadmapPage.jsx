@@ -214,9 +214,9 @@ export const RoadmapPage = () => {
           {day34Tasks.map((task) => (
             <div
               key={task.id}
-              className={`p-4 rounded-xl border transition-all ${
+              className={`roadmap-task-card p-4 rounded-xl border transition-all ${
                 task.completed
-                  ? 'bg-[#0f131d]/60 border-[#232b3e] opacity-75'
+                  ? 'roadmap-task-completed bg-[#0f131d]/60 border-[#232b3e] opacity-75'
                   : 'bg-[#0f131d] border-[#232b3e] hover:border-indigo-500/40'
               } flex items-center justify-between gap-3`}
             >

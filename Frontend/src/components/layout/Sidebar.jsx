@@ -77,7 +77,7 @@ export const Sidebar = () => {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-[#0f131d] border-r border-[#232b3e] flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`app-sidebar fixed top-0 bottom-0 left-0 z-50 w-64 bg-[#0f131d] border-r border-[#232b3e] flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

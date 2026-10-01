@@ -108,7 +108,7 @@ export const ProfileForm = ({ profile, isEditing, onSave, onCancel }) => {
           </h3>
 
           <div className="grid sm:grid-cols-3 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
+            <div className="profile-account-card p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-slate-400">GitHub Profile</p>
                 <p className="font-mono font-semibold text-indigo-400">@{profile.githubHandle}</p>
@@ -116,7 +116,7 @@ export const ProfileForm = ({ profile, isEditing, onSave, onCancel }) => {
               <span className="text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10">Connected</span>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
+            <div className="profile-account-card p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-slate-400">LeetCode Profile</p>
                 <p className="font-mono font-semibold text-amber-400">@{profile.leetcodeHandle}</p>
@@ -124,7 +124,7 @@ export const ProfileForm = ({ profile, isEditing, onSave, onCancel }) => {
               <span className="text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10">Connected</span>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
+            <div className="profile-account-card p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-slate-400">Uploaded Resume</p>
                 <p className="font-semibold text-white truncate max-w-[120px]">{profile.resumeFileName}</p>

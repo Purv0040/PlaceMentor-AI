@@ -22,7 +22,7 @@ export const AchievementCard = ({ achievement }) => {
 
   return (
     <div
-      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
+      className={`achievement-card p-5 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
         unlocked
           ? 'bg-[#171b26] border-[#262a35] hover:border-purple-500/40 shadow-lg'
           : 'bg-[#121624]/60 border-[#232b3e]/60 opacity-75 hover:opacity-100'
@@ -43,7 +43,7 @@ export const AchievementCard = ({ achievement }) => {
                   <span className="material-symbols-outlined text-xs">check_circle</span> Unlocked
                 </span>
               ) : (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1">
+                <span className="achievement-locked-badge text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1">
                   <span className="material-symbols-outlined text-xs">lock</span> Locked
                 </span>
               )}

@@ -44,7 +44,7 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
+    <div className="settings-page w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
       {/* Header */}
       <SettingsHeader
         onSaveAll={handleSaveAll}

@@ -1,17 +1,19 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, Sun, Moon } from 'lucide-react';
 import { OnboardingProvider } from '../../context/OnboardingContext';
 import { StepIndicator } from '../common/StepIndicator';
+import { useApp } from '../../context/AppContext';
 
 export const OnboardingLayoutContent = () => {
   const location = useLocation();
   const isIntro = location.pathname === '/onboarding';
+  const { theme, toggleTheme } = useApp();
 
   return (
-    <div className="min-h-screen bg-obsidian-base text-slate-100 flex flex-col font-sans antialiased selection:bg-brand-500/30 selection:text-white">
+    <div className="onboarding-shell min-h-screen bg-obsidian-base text-slate-100 flex flex-col font-sans antialiased selection:bg-brand-500/30 selection:text-white">
       {/* Onboarding Header */}
-      <header className="border-b border-obsidian-border bg-obsidian-surface/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3">
+      <header className="onboarding-header border-b border-obsidian-border bg-obsidian-surface/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-8 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-ai-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
@@ -22,12 +24,17 @@ export const OnboardingLayoutContent = () => {
             </div>
           </NavLink>
 
-          <NavLink
-            to="/dashboard"
-            className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1 font-medium"
-          >
-            Skip Setup to Dashboard <ArrowRight className="w-3.5 h-3.5" />
-          </NavLink>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="onboarding-theme-toggle p-2 rounded-xl border border-obsidian-border text-slate-400 hover:text-white hover:bg-obsidian-card transition-colors"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         {/* Render Step Indicator unless on intro landing */}

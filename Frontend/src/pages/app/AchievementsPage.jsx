@@ -41,7 +41,7 @@ export const AchievementsPage = () => {
   const lockedList = filteredAchievements.filter(a => !a.unlocked);
 
   return (
-    <div className="w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
+    <div className="achievements-page w-full min-h-[calc(100vh-5rem)] bg-[#0f131d] text-slate-100 space-y-6 pb-12">
       {/* 1. Header & Level Progression Banner */}
       <AchievementHeader stats={stats} onClaimDailyXp={handleClaimDailyXp} />
 

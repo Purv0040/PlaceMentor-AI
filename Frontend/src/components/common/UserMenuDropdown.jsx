@@ -41,24 +41,24 @@ export const UserMenuDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#121624] border border-transparent hover:border-[#232b3e] transition-all"
+        className="user-menu-trigger flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#121624] border border-transparent hover:border-[#232b3e] transition-all"
         aria-label="User profile menu"
       >
         <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-xs text-white shadow-sm border border-indigo-400/30 font-mono">
           {initials}
         </div>
         <div className="hidden md:block text-left">
-          <p className="text-xs font-semibold text-white leading-tight">{displayName}</p>
-          <p className="text-[10px] text-slate-400 font-mono leading-tight">{user?.college || 'Candidate'}</p>
+          <p className="user-menu-name text-xs font-semibold text-white leading-tight">{displayName}</p>
+          <p className="user-menu-college text-[10px] text-slate-400 font-mono leading-tight">{user?.college || 'Candidate'}</p>
         </div>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-2xl py-2 z-50 animate-fadeIn space-y-1">
+        <div className="user-menu-dropdown absolute right-0 mt-2 w-56 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-2xl py-2 z-50 animate-fadeIn space-y-1">
           <div className="px-4 py-2 border-b border-[#232b3e]">
-            <p className="text-xs font-bold text-white">{displayName}</p>
+            <p className="user-menu-name text-xs font-bold text-white">{displayName}</p>
             <p className="text-[11px] text-indigo-400 font-mono">{user?.targetRole || 'Software Engineer'}</p>
           </div>
 

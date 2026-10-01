@@ -28,7 +28,7 @@ export const TasksPage = () => {
   const completionPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="tasks-page space-y-6 animate-in fade-in duration-300">
       {/* Toast Notification */}
       {toastNotification && (
         <div className="fixed bottom-10 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-[#121624] border border-indigo-500/40 text-white rounded-xl shadow-2xl font-mono text-xs animate-in slide-in-from-bottom duration-200">
@@ -77,7 +77,7 @@ export const TasksPage = () => {
           </span>
         </div>
 
-        <div className="w-full bg-[#0f131d] rounded-full h-3 overflow-hidden border border-[#232b3e]">
+        <div className="progress-track w-full bg-[#0f131d] rounded-full h-3 overflow-hidden border border-[#232b3e]">
           <div
             className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-sm"
             style={{ width: `${completionPercent}%` }}
@@ -126,9 +126,9 @@ export const TasksPage = () => {
             filteredTasks.map((task) => (
               <div
                 key={task.id}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`tasks-page-task p-4 rounded-2xl border transition-all ${
                   task.completed
-                    ? 'bg-[#0f131d]/60 border-[#232b3e] opacity-75'
+                    ? 'tasks-page-task-completed bg-[#0f131d]/60 border-[#232b3e] opacity-75'
                     : 'bg-[#121624] border-[#232b3e] hover:border-indigo-500/40'
                 } flex items-center justify-between gap-4 shadow-xl`}
               >

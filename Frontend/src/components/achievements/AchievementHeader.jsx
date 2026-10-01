@@ -33,16 +33,16 @@ export const AchievementHeader = ({ stats, onClaimDailyXp }) => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
+            <span className="achievement-telemetry-badge text-[10px] font-mono uppercase tracking-wider text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
               TELEMETRY V4.2 / ENGAGEMENT ENGINE
             </span>
             <span className="text-slate-600 font-mono text-xs">/</span>
-            <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1 bg-[#171b26] px-2 py-0.5 rounded border border-[#262a35]">
+            <span className="achievement-streak-badge text-[11px] font-mono text-emerald-400 flex items-center gap-1 bg-[#171b26] px-2 py-0.5 rounded border border-[#262a35]">
               <span className="material-symbols-outlined text-xs text-amber-400">local_fire_department</span>
               7-Day Active Streak
             </span>
             <span className="text-slate-600 font-mono text-xs">/</span>
-            <span className="text-[11px] font-mono text-indigo-300 flex items-center gap-1 bg-[#171b26] px-2 py-0.5 rounded border border-[#262a35]">
+            <span className="achievement-level-badge text-[11px] font-mono text-indigo-300 flex items-center gap-1 bg-[#171b26] px-2 py-0.5 rounded border border-[#262a35]">
               <span className="material-symbols-outlined text-xs">shield</span>
               Level {stats.level}: "{stats.levelTitle}"
             </span>

@@ -5,13 +5,13 @@ export const SettingsHeader = ({ onSaveAll, onDiscard, isSaved }) => {
     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#262a35]">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="w-7 h-7 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
+          <div className="settings-header-icon w-7 h-7 rounded bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300">
             <span className="material-symbols-outlined text-base">settings_suggest</span>
           </div>
-          <span className="text-[10px] font-mono text-purple-300 uppercase tracking-widest">
+          <span className="settings-suite-label text-[10px] font-mono text-purple-300 uppercase tracking-widest">
             Engineering Suite · Engine Config
           </span>
-          <span className="px-2 py-0.5 rounded bg-[#1c1f2a] border border-[#262a35] text-[10px] font-mono text-emerald-400">
+          <span className="settings-kernel-badge px-2 py-0.5 rounded bg-[#1c1f2a] border border-[#262a35] text-[10px] font-mono text-emerald-400">
             KERNEL v4.2-ACTIVE
           </span>
         </div>

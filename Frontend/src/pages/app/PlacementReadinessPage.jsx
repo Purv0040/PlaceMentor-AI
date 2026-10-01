@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { readinessService } from '../../services/readinessService';
 import { initialReadinessData } from '../../data/readinessData';
+import { useApp } from '../../context/AppContext';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from 'recharts';
 import {
   Zap,
@@ -22,8 +23,27 @@ import {
 
 export const PlacementReadinessPage = () => {
   const navigate = useNavigate();
+  const { theme } = useApp();
   const [data, setData] = useState(initialReadinessData);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const chartColors = theme === 'light'
+    ? {
+        grid: '#cbd5e1',
+        axis: '#334155',
+        radius: '#64748b',
+        tooltipBackground: '#ffffff',
+        tooltipBorder: '#cbd5e1',
+        tooltipText: '#172033'
+      }
+    : {
+        grid: '#232b3e',
+        axis: '#cbd5e1',
+        radius: '#64748b',
+        tooltipBackground: '#121624',
+        tooltipBorder: '#232b3e',
+        tooltipText: '#ffffff'
+      };
 
   useEffect(() => {
     readinessService.getLatestReadiness().then((res) => {
@@ -134,17 +154,17 @@ export const PlacementReadinessPage = () => {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data.radarData}>
-                <PolarGrid stroke="#232b3e" />
-                <PolarAngleAxis dataKey="vector" stroke="#cbd5e1" fontSize={11} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#64748b" fontSize={10} />
+                <PolarGrid stroke={chartColors.grid} />
+                <PolarAngleAxis dataKey="vector" stroke={chartColors.axis} fontSize={11} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke={chartColors.radius} fontSize={10} />
                 <Radar name="Candidate Score" dataKey="Score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
                 <Radar name="Tier-1 Benchmark" dataKey="Benchmark" stroke="#10b981" fill="#10b981" fillOpacity={0.15} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#121624',
-                    borderColor: '#232b3e',
+                    backgroundColor: chartColors.tooltipBackground,
+                    borderColor: chartColors.tooltipBorder,
                     borderRadius: '12px',
-                    color: '#ffffff',
+                    color: chartColors.tooltipText,
                     fontSize: '12px',
                   }}
                 />
@@ -252,7 +272,7 @@ export const PlacementReadinessPage = () => {
             </thead>
             <tbody className="divide-y divide-[#232b3e] text-xs font-mono">
               {data.tier1Benchmarks.map((item, idx) => (
-                <tr key={idx} className="hover:bg-[#0f131d] transition-colors">
+                <tr key={idx} className="benchmark-row hover:bg-[#0f131d] transition-colors">
                   <td className="py-3.5 px-4 font-bold text-white">{item.company}</td>
                   <td className="py-3.5 px-4 text-slate-300">{item.minReadiness}% Score</td>
                   <td className="py-3.5 px-4">

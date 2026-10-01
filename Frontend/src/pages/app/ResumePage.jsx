@@ -453,7 +453,7 @@ export const ResumePage = () => {
                 </div>
 
                 {/* AI Improved STAR Bullet */}
-                <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-[#121624] border border-indigo-500/40 space-y-2">
+                <div className="star-bullet-card p-4 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-[#121624] border border-indigo-500/40 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono uppercase text-indigo-400 font-bold flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-purple-400" />
@@ -461,7 +461,7 @@ export const ResumePage = () => {
                     </span>
                     <button
                       onClick={() => handleCopyBullet(bullet.id, bullet.improved)}
-                      className="text-xs font-semibold text-indigo-300 hover:text-white flex items-center gap-1 bg-[#1a2030] px-3 py-1 rounded-lg border border-indigo-500/30 transition-colors"
+                      className="star-bullet-copy-button text-xs font-semibold text-indigo-300 hover:text-white flex items-center gap-1 bg-[#1a2030] px-3 py-1 rounded-lg border border-indigo-500/30 transition-colors"
                     >
                       {copiedBulletId === bullet.id ? (
                         <>
