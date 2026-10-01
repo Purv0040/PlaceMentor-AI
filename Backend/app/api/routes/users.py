@@ -1,73 +1,39 @@
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, status
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.api.deps import get_db, get_current_user
-from app.repositories.profile_repository import ProfileRepository
-from app.services.profile_service import ProfileService
-from app.schemas.profile import ProfileUpdate
+from datetime import datetime, timezone
+from typing import Optional
 
-router = APIRouter()
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
-@router.get("/me/profile", status_code=status.HTTP_200_OK)
-async def get_my_profile(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
-) -> Dict[str, Any]:
-    """Retrieve profile of the authenticated student."""
-    user_id = current_user["id"]
-    service = ProfileService(ProfileRepository(db))
-    profile = await service.get_or_create_profile(
-        user_id=user_id,
-        user_email=current_user.get("email"),
-        user_name=current_user.get("full_name"),
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class UserModel(BaseModel):
+    """MongoDB user document model."""
+
+    model_config = ConfigDict(
+        populate_by_name=True
     )
-    return {
-        "success": True,
-        "data": profile,
-        "message": "Student profile retrieved successfully.",
-    }
 
+    id: Optional[str] = Field(
+        default=None,
+        alias="_id",
+    )
 
-@router.put("/me/profile", status_code=status.HTTP_200_OK)
-async def update_my_profile(
-    profile_update: ProfileUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
-) -> Dict[str, Any]:
-    """Replace/Update profile sections of the authenticated student."""
-    user_id = current_user["id"]
-    service = ProfileService(ProfileRepository(db))
-    updated = await service.update_profile(user_id, profile_update)
-    return {
-        "success": True,
-        "data": updated,
-        "message": "Student profile updated successfully.",
-    }
+    email: EmailStr
 
+    hashed_password: str
 
-@router.patch("/me/profile", status_code=status.HTTP_200_OK)
-async def patch_my_profile(
-    profile_update: ProfileUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
-) -> Dict[str, Any]:
-    """Partially update profile sections of the authenticated student."""
-    user_id = current_user["id"]
-    service = ProfileService(ProfileRepository(db))
-    updated = await service.update_profile(user_id, profile_update)
-    return {
-        "success": True,
-        "data": updated,
-        "message": "Student profile updated successfully.",
-    }
+    full_name: str
 
+    is_active: bool = True
 
-@router.get("/test")
-async def test_users_route() -> dict:
-    """Placeholder test endpoint for users router."""
-    return {
-        "status": "success",
-        "module": "users",
-        "message": "Users router operational",
-    }
+    is_onboarded: bool = False
+
+    created_at: datetime = Field(
+        default_factory=utc_now
+    )
+
+    updated_at: datetime = Field(
+        default_factory=utc_now
+    )

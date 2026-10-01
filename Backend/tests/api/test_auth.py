@@ -1,71 +1,150 @@
-import pytest
-from fastapi.testclient import TestClient
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional, Union
+
+import bcrypt
+import jwt
+
+from app.core.config import settings
+from app.core.exceptions import UnauthorizedException
 
 
-def test_auth_register_and_login_flow(client: TestClient) -> None:
-    # 1. Register new user
-    user_email = "newstudent@example.com"
-    user_password = "SecurePassword123!"
-    user_name = "New Student"
+def hash_password(password: str) -> str:
+    """
+    Hash a password using bcrypt.
 
-    reg_payload = {
-        "email": user_email,
-        "password": user_password,
-        "full_name": user_name,
+    bcrypt only supports passwords up to 72 bytes.
+    """
+
+    password_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+
+    hashed = bcrypt.hashpw(password_bytes, salt)
+
+    return hashed.decode("utf-8")
+
+
+def verify_password(
+    plain_password: str,
+    hashed_password: str,
+) -> bool:
+    """Verify a plain password against a bcrypt hash."""
+
+    try:
+        password_bytes = plain_password.encode("utf-8")[:72]
+        hashed_bytes = hashed_password.encode("utf-8")
+
+        return bcrypt.checkpw(
+            password_bytes,
+            hashed_bytes,
+        )
+
+    except (ValueError, TypeError):
+        return False
+
+
+def create_access_token(
+    subject: Union[str, Any],
+    expires_delta: Optional[timedelta] = None,
+    extra_claims: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Create a JWT access token."""
+
+    now = datetime.now(timezone.utc)
+
+    expire = (
+        now + expires_delta
+        if expires_delta
+        else now
+        + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+    )
+
+    payload: Dict[str, Any] = {
+        "sub": str(subject),
+        "iat": now,
+        "exp": expire,
+        "type": "access",
     }
-    reg_response = client.post("/api/v1/auth/register", json=reg_payload)
-    assert reg_response.status_code == 201
-    reg_data = reg_response.json()
-    assert reg_data["success"] is True
-    assert "access_token" in reg_data["data"]
-    assert "refresh_token" in reg_data["data"]
-    assert reg_data["data"]["user"]["email"] == user_email
-    assert reg_data["data"]["user"]["is_onboarded"] is False
 
-    # 2. Duplicate registration attempt should fail with 409
-    dup_response = client.post("/api/v1/auth/register", json=reg_payload)
-    assert dup_response.status_code == 409
+    if extra_claims:
+        payload.update(extra_claims)
 
-    # 3. Login with correct credentials
-    login_payload = {
-        "email": user_email,
-        "password": user_password,
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def create_refresh_token(
+    subject: Union[str, Any],
+    expires_delta: Optional[timedelta] = None,
+) -> str:
+    """Create a JWT refresh token."""
+
+    now = datetime.now(timezone.utc)
+
+    expire = (
+        now + expires_delta
+        if expires_delta
+        else now
+        + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+    )
+
+    payload: Dict[str, Any] = {
+        "sub": str(subject),
+        "iat": now,
+        "exp": expire,
+        "type": "refresh",
     }
-    login_response = client.post("/api/v1/auth/login", json=login_payload)
-    assert login_response.status_code == 200
-    login_data = login_response.json()
-    assert login_data["success"] is True
-    access_token = login_data["data"]["access_token"]
-    refresh_token = login_data["data"]["refresh_token"]
 
-    # 4. Login with invalid password
-    bad_login_response = client.post("/api/v1/auth/login", json={
-        "email": user_email,
-        "password": "WrongPassword123",
-    })
-    assert bad_login_response.status_code == 401
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
 
-    # 5. Access protected /me route
-    headers = {"Authorization": f"Bearer {access_token}"}
-    me_response = client.get("/api/v1/auth/me", headers=headers)
-    assert me_response.status_code == 200
-    me_data = me_response.json()
-    assert me_data["success"] is True
-    assert me_data["data"]["email"] == user_email
 
-    # 6. Reject refresh token passed as access token to /me
-    refresh_headers = {"Authorization": f"Bearer {refresh_token}"}
-    me_refresh_response = client.get("/api/v1/auth/me", headers=refresh_headers)
-    assert me_refresh_response.status_code == 401
+def decode_token(token: str) -> Dict[str, Any]:
+    """
+    Decode and validate a JWT.
 
-    # 7. Refresh access token using refresh token
-    ref_response = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
-    assert ref_response.status_code == 200
-    ref_data = ref_response.json()
-    assert ref_data["success"] is True
-    assert "access_token" in ref_data["data"]
-    assert "user" in ref_data["data"]
+    This validates:
+    - signature
+    - expiration
+    - token structure
 
-    # 8. Logout
-    logout_response = client.post("/api/v1/auth/logout", headers=headers)
-    assert logout_response.status_code == 200
+    Token type must be checked by the caller.
+    """
+
+    if not token:
+        raise UnauthorizedException(
+            "Authentication token is required."
+        )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+
+        if not payload.get("sub"):
+            raise UnauthorizedException(
+                "Invalid token payload."
+            )
+
+        return payload
+
+    except jwt.ExpiredSignatureError:
+        raise UnauthorizedException(
+            "Token has expired."
+        )
+
+    except jwt.InvalidTokenError:
+        raise UnauthorizedException(
+            "Could not validate credentials."
+        )

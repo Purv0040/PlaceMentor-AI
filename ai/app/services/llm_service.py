@@ -46,41 +46,9 @@ class MockLLMProvider(BaseLLMProvider):
             })
 
         if "LLMResumeExtraction" in prompt or "extract resume" in prompt.lower():
-            return json.dumps({
-                "skills": {
-                    "languages": ["Python", "C++", "SQL"],
-                    "frameworks": ["PyTorch", "FastAPI", "Scikit-Learn"],
-                    "tools": ["Docker", "Git", "Linux"],
-                    "other": ["Data Structures", "Algorithms"]
-                },
-                "education": [
-                    {"institution": "Synthetic Institute of Technology (DEMO)", "degree": "B.Tech Computer Science", "graduation_date": "2026", "gpa": "8.4"}
-                ],
-                "experience": [
-                    {
-                        "company": "Synthetic AI Labs (DEMO)",
-                        "role": "AI/ML Research Intern",
-                        "duration": "3 months",
-                        "bullets": ["Optimized computer vision inference latency by 25% using PyTorch."]
-                    }
-                ],
-                "projects": [
-                    {
-                        "name": "Neural Vision Classifier",
-                        "description": "CNN image classifier with FastAPI containerized with Docker",
-                        "technologies": ["Python", "PyTorch", "FastAPI", "Docker"],
-                        "bullets": ["Achieved 92% test accuracy and deployed API processing 150 req/sec"],
-                        "has_metrics": True
-                    }
-                ],
-                "certifications": ["Deep Learning Specialization"],
-                "achievements": ["Dean's List 2024"],
-                "missing_sections": [],
-                "weak_bullets": [],
-                "repeated_words": [],
-                "generic_phrases": [],
-                "keyword_gaps": ["Kubernetes"]
-            })
+            from app.services.dynamic_extractor import parse_resume_dynamically
+            extracted_data = parse_resume_dynamically(prompt)
+            return json.dumps(extracted_data)
 
         if "LLMGitHubInterpretation" in prompt or "github interpretation" in prompt.lower():
             return json.dumps({

@@ -117,7 +117,48 @@ class ResumeService:
 
         created = await self.repo.create_resume(resume_doc)
         logger.info("Created resume document %s for user %s", created["id"], user_id)
+        
+        # Sync student profile integrations status
+        await self._sync_student_profile(user_id)
+
         return created
+
+    async def _sync_student_profile(self, user_id: str) -> None:
+        """Keep student_profiles integrations block in sync with user's active resume."""
+        try:
+            active_resume = await self.repo.find_active_by_user(user_id)
+            if not active_resume:
+                all_resumes = await self.repo.find_all_by_user(user_id)
+                if all_resumes:
+                    active_resume = all_resumes[0]
+
+            if active_resume and active_resume.get("file"):
+                filename = active_resume["file"].get("filename", "")
+                await self.db["student_profiles"].update_one(
+                    {"user_id": str(user_id)},
+                    {
+                        "$set": {
+                            "integrations.resumeUploaded": True,
+                            "integrations.resumeFileName": filename,
+                            "updated_at": datetime.utcnow()
+                        }
+                    },
+                    upsert=False
+                )
+            else:
+                await self.db["student_profiles"].update_one(
+                    {"user_id": str(user_id)},
+                    {
+                        "$set": {
+                            "integrations.resumeUploaded": False,
+                            "integrations.resumeFileName": "",
+                            "updated_at": datetime.utcnow()
+                        }
+                    },
+                    upsert=False
+                )
+        except Exception as e:
+            logger.warning("Failed to sync student_profile resume integration state for user %s: %s", user_id, e)
 
     async def get_user_resumes(self, user_id: str) -> List[Dict[str, Any]]:
         """Retrieve all resumes owned by user_id."""
@@ -217,6 +258,7 @@ class ResumeService:
         """Set specified resume as active and deactivate all others for user."""
         resume = await self.get_resume_by_id(resume_id, user_id)
         await self.repo.set_active(resume_id, user_id)
+        await self._sync_student_profile(user_id)
         return await self.get_resume_by_id(resume_id, user_id)
 
     async def delete_resume(self, resume_id: str, user_id: str) -> bool:
@@ -240,5 +282,7 @@ class ResumeService:
             if remaining:
                 next_active_id = str(remaining[0]["id"])
                 await self.repo.set_active(next_active_id, user_id)
+
+        await self._sync_student_profile(user_id)
 
         return deleted

@@ -1,6 +1,6 @@
 import logging
-from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response, status
+from typing import List, Dict, Any, Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response, Query, status
 from fastapi.responses import Response, StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorGridFSBucket
 
@@ -99,6 +99,7 @@ async def list_resumes(
 @router.get("/{resume_id}", response_model=ResponseModel[ResumeDetailResponse])
 async def get_resume_detail(
     resume_id: str,
+    bucket_name: Optional[str] = Query("resumes"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service)
 ):
@@ -131,6 +132,7 @@ async def get_resume_detail(
 @router.get("/{resume_id}/file")
 async def download_resume_file(
     resume_id: str,
+    bucket_name: Optional[str] = Query("resumes"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service)
 ):
@@ -150,6 +152,7 @@ async def download_resume_file(
 @router.post("/{resume_id}/analyze", response_model=ResponseModel[ResumeAnalysisResponse])
 async def analyze_resume(
     resume_id: str,
+    bucket_name: Optional[str] = Query("resumes"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     service: ResumeService = Depends(get_resume_service)
 ):

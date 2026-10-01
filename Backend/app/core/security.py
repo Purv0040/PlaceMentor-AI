@@ -1,95 +1,228 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Union
-import jwt
+
 import bcrypt
+import jwt
+
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedException
 
 
+# ============================================================
+# PASSWORD HASHING
+# ============================================================
+
 def hash_password(password: str) -> str:
-    """Hash plain password using direct bcrypt (truncating to 72 bytes)."""
-    pwd_bytes = password.encode("utf-8")[:72]
+    """
+    Hash a plain-text password using bcrypt.
+
+    bcrypt only processes the first 72 bytes of a password,
+    so the password is explicitly truncated to 72 UTF-8 bytes.
+    """
+
+    if not password:
+        raise ValueError("Password cannot be empty.")
+
+    password_bytes = password.encode("utf-8")[:72]
+
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
+    hashed_password = bcrypt.hashpw(
+        password_bytes,
+        salt,
+    )
+
+    return hashed_password.decode("utf-8")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain password against hashed password."""
+# ============================================================
+# PASSWORD VERIFICATION
+# ============================================================
+
+def verify_password(
+    plain_password: str,
+    hashed_password: str,
+) -> bool:
+    """
+    Verify a plain-text password against a bcrypt hash.
+    """
+
     try:
-        pwd_bytes = plain_password.encode("utf-8")[:72]
-        hash_bytes = hashed_password.encode("utf-8")
-        return bcrypt.checkpw(pwd_bytes, hash_bytes)
-    except Exception:
+        if not plain_password or not hashed_password:
+            return False
+
+        password_bytes = plain_password.encode(
+            "utf-8"
+        )[:72]
+
+        hash_bytes = hashed_password.encode(
+            "utf-8"
+        )
+
+        return bcrypt.checkpw(
+            password_bytes,
+            hash_bytes,
+        )
+
+    except (ValueError, TypeError, Exception):
         return False
 
+
+# ============================================================
+# CREATE ACCESS TOKEN
+# ============================================================
 
 def create_access_token(
     subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None,
     extra_claims: Optional[Dict[str, Any]] = None,
 ) -> str:
-    """Generate JWT Access Token."""
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+    """
+    Generate a JWT access token.
+
+    Payload contains:
+    - sub   -> user ID
+    - iat   -> issued-at timestamp
+    - exp   -> expiration timestamp
+    - type  -> access
+    """
+
+    now = datetime.now(timezone.utc)
+
+    if expires_delta is not None:
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
+        expire = now + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
-    to_encode = {
+    payload: Dict[str, Any] = {
         "sub": str(subject),
+        "iat": now,
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
         "type": "access",
     }
-    if extra_claims:
-        to_encode.update(extra_claims)
 
-    encoded_jwt = jwt.encode(
-        to_encode,
+    if extra_claims:
+        payload.update(extra_claims)
+
+    return jwt.encode(
+        payload,
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
-    return encoded_jwt
 
+
+# ============================================================
+# CREATE REFRESH TOKEN
+# ============================================================
 
 def create_refresh_token(
     subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None,
 ) -> str:
-    """Generate JWT Refresh Token."""
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+    """
+    Generate a JWT refresh token.
+
+    Payload contains:
+    - sub   -> user ID
+    - iat   -> issued-at timestamp
+    - exp   -> expiration timestamp
+    - type  -> refresh
+    """
+
+    now = datetime.now(timezone.utc)
+
+    if expires_delta is not None:
+        expire = now + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
+        expire = now + timedelta(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
 
-    to_encode = {
+    payload: Dict[str, Any] = {
         "sub": str(subject),
+        "iat": now,
         "exp": expire,
-        "iat": datetime.now(timezone.utc),
         "type": "refresh",
     }
 
-    encoded_jwt = jwt.encode(
-        to_encode,
+    return jwt.encode(
+        payload,
         settings.JWT_SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
-    return encoded_jwt
 
 
-def decode_token(token: str) -> Dict[str, Any]:
-    """Decode and validate JWT Token."""
+# ============================================================
+# DECODE / VALIDATE JWT
+# ============================================================
+
+def decode_token(
+    token: str,
+) -> Dict[str, Any]:
+    """
+    Decode and validate a JWT.
+
+    This function validates:
+    - Token exists
+    - JWT signature
+    - JWT algorithm
+    - Token expiration
+    - Required subject claim
+    """
+
+    if not token or not token.strip():
+        raise UnauthorizedException(
+            "Authentication token required."
+        )
+
     try:
         payload = jwt.decode(
-            token,
+            token.strip(),
             settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM],
+            algorithms=[
+                settings.JWT_ALGORITHM
+            ],
         )
+
+        # ----------------------------------------------------
+        # Validate required subject
+        # ----------------------------------------------------
+        if not payload.get("sub"):
+            raise UnauthorizedException(
+                "Invalid token payload."
+            )
+
+        # ----------------------------------------------------
+        # Validate token type
+        # ----------------------------------------------------
+        if payload.get("type") not in {
+            "access",
+            "refresh",
+        }:
+            raise UnauthorizedException(
+                "Invalid token type."
+            )
+
         return payload
+
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedException("Token has expired.")
-    except jwt.PyJWTError:
-        raise UnauthorizedException("Could not validate credentials.")
+        raise UnauthorizedException(
+            "Token has expired."
+        )
+
+    except jwt.InvalidSignatureError:
+        raise UnauthorizedException(
+            "Invalid token signature."
+        )
+
+    except jwt.DecodeError:
+        raise UnauthorizedException(
+            "Could not decode token."
+        )
+
+    except jwt.InvalidTokenError:
+        raise UnauthorizedException(
+            "Could not validate credentials."
+        )
