@@ -26,9 +26,22 @@ class GitHubRepoRaw(BaseModel):
     updated_at: Optional[str] = None
     pushed_at: Optional[str] = None
     size: int = Field(default=0, description="Repo size in KB")
+    default_branch: Optional[str] = Field(default="main", alias="default_branch")
     file_signals: List[str] = Field(
         default_factory=list,
         description="Lightweight detected root files/directories e.g. Dockerfile, package.json, requirements.txt, .github/workflows"
+    )
+    dependency_signals: List[str] = Field(
+        default_factory=list,
+        description="Dependencies parsed from package.json, requirements.txt, etc."
+    )
+    readme_signals: List[str] = Field(
+        default_factory=list,
+        description="Technologies extracted from README"
+    )
+    code_signals: List[str] = Field(
+        default_factory=list,
+        description="Implementation evidence signals from code tree"
     )
 
     model_config = {"populate_by_name": True}

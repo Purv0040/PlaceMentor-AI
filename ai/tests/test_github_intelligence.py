@@ -442,4 +442,57 @@ class TestHallucinationPrevention:
         assert backend_cat.detected is False
         assert backend_cat.evidence == []
 
+    def test_11_raw_tree_evidence_extraction(self):
+        """TEST 11: Raw tree evidence extraction populates file, dependency, readme, and code signals."""
+        from app.services.github_service import GitHubService
+        from unittest.mock import MagicMock
+
+        service = GitHubService()
+        mock_client = MagicMock()
+
+        # Mock Git Trees response
+        tree_response = MagicMock()
+        tree_response.status_code = 200
+        tree_response.json.return_value = {
+            "tree": [
+                {"path": "README.md", "type": "blob"},
+                {"path": "package.json", "type": "blob"},
+                {"path": "src/App.jsx", "type": "blob"},
+                {"path": "src/components/Header.jsx", "type": "blob"},
+                {"path": ".github/workflows/deploy.yml", "type": "blob"}
+            ]
+        }
+
+        # Mock package.json response
+        pkg_response = MagicMock()
+        pkg_response.status_code = 200
+        pkg_response.json.return_value = {
+            "dependencies": {"react": "^18.0.0", "express": "^4.18.0"}
+        }
+
+        # Mock README.md response
+        readme_response = MagicMock()
+        readme_response.status_code = 200
+        readme_response.text = "This project uses React and Express."
+
+        mock_client.get.side_effect = lambda url, **kwargs: (
+            tree_response if "trees" in url
+            else pkg_response if "package.json" in url
+            else readme_response if "README.md" in url
+            else MagicMock(status_code=404)
+        )
+
+        repos = [_make_repo("full-stack-app", description="Full stack app")]
+        enriched = service._enrich_lightweight_evidence(mock_client, "testuser", repos)
+
+        r = enriched[0]
+        assert "package.json" in r.file_signals
+        assert ".github/workflows" in r.file_signals
+        assert "src/components" in r.file_signals
+        assert "react" in r.dependency_signals
+        assert "express" in r.dependency_signals
+        assert "React" in r.readme_signals
+        assert "Express" in r.readme_signals
+
+
 

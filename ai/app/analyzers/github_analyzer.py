@@ -115,6 +115,20 @@ def _repo_signals(repo: GitHubRepoRaw) -> List[str]:
         if "/" in f_lower or "." in f_lower or "-" in f_lower:
             tokens.extend([sub for sub in re.split(r'[/.\-_]', f_lower) if sub])
 
+    for d_sig in getattr(repo, "dependency_signals", []):
+        d_lower = d_sig.lower()
+        tokens.append(d_lower)
+        if "-" in d_lower or "_" in d_lower:
+            tokens.extend([sub for sub in re.split(r'[\-_]', d_lower) if sub])
+
+    for r_sig in getattr(repo, "readme_signals", []):
+        r_lower = r_sig.lower()
+        tokens.append(r_lower)
+
+    for c_sig in getattr(repo, "code_signals", []):
+        c_lower = c_sig.lower()
+        tokens.append(c_lower)
+
     return tokens
 
 
