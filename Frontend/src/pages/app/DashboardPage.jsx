@@ -58,14 +58,14 @@ export const DashboardPage = () => {
   }, [user]);
 
   return (
-    <div className="dashboard-page space-y-6">
+    <div className="dashboard-page space-y-4 sm:space-y-6">
       {/* 1. WELCOME HERO BANNER */}
-      <div className="dashboard-hero p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+      <div className="dashboard-hero p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 shadow-2xl">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs font-mono font-semibold">
-            <Sparkles className="w-3.5 h-3.5" /> Day {dashboardData.sprintDay} of {dashboardData.totalSprintDays}-Day Placement Sprint
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-[11px] sm:text-xs font-mono font-semibold">
+            <Sparkles className="w-3.5 h-3.5 shrink-0" /> Day {dashboardData.sprintDay} of {dashboardData.totalSprintDays}-Day Placement Sprint
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white">
             Good Morning, {user?.name || user?.full_name || 'Candidate'} 👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
@@ -76,15 +76,15 @@ export const DashboardPage = () => {
 
         <NavLink
           to="/tasks"
-          className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all shrink-0 self-start md:self-auto border border-indigo-400/30"
+          className="w-full sm:w-auto px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all shrink-0 border border-indigo-400/30 text-center"
         >
           <Zap className="w-4 h-4" /> Start Today's Action Plan <ArrowRight className="w-4 h-4" />
         </NavLink>
       </div>
 
       {/* 2. TOP METRICS STAT CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-indigo-500/40 transition-colors">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-indigo-500/40 transition-colors">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-400 font-medium">Overall Readiness</p>
             <Sparkles className="w-4 h-4 text-indigo-400" />

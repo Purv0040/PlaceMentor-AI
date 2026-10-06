@@ -18,16 +18,16 @@ import {
 
 export const LandingPage = () => {
   return (
-    <div className="landing-page space-y-24 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="landing-page space-y-16 sm:space-y-24 py-8 sm:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
       {/* 1. HERO SECTION */}
-      <section id="hero" className="text-center space-y-8 pt-8">
+      <section id="hero" className="text-center space-y-6 sm:space-y-8 pt-4 sm:pt-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-mono text-indigo-400">
-          <Sparkles className="w-3.5 h-3.5" />
+          <Sparkles className="w-3.5 h-3.5 shrink-0" />
           <span>AI-Powered Placement Preparation Copilot</span>
         </div>
 
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-tight max-w-5xl mx-auto">
-          Your AI Copilot for <br />
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-tight max-w-5xl mx-auto px-2">
+          Your AI Copilot for <br className="hidden sm:inline" />
           <span
             className="bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent inline-block"
             style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
@@ -36,27 +36,27 @@ export const LandingPage = () => {
           </span>
         </h1>
 
-        <p className="max-w-2xl mx-auto text-slate-400 text-sm sm:text-base leading-relaxed">
+        <p className="max-w-2xl mx-auto text-slate-400 text-xs sm:text-base leading-relaxed px-3">
           Connect your GitHub, LeetCode, Resume, and Coding activity into a unified AI Copilot that dynamically adapts your 90-day placement roadmap.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 px-4">
           <NavLink
             to="/signup"
-            className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-indigo-600/30 flex items-center gap-2 transition-all transform hover:-translate-y-0.5 border border-indigo-400/30"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 border border-indigo-400/30"
           >
             Start Free Placement Onboarding <ArrowRight className="w-4 h-4" />
           </NavLink>
           <NavLink
             to="/dashboard"
-            className="px-6 py-3.5 rounded-xl bg-[#121624] hover:bg-[#1a2030] border border-[#232b3e] text-slate-300 hover:text-white font-semibold text-xs sm:text-sm transition-all shadow-md"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#121624] hover:bg-[#1a2030] border border-[#232b3e] text-slate-300 hover:text-white font-semibold text-xs sm:text-sm transition-all shadow-md text-center"
           >
             Explore Demo Dashboard
           </NavLink>
         </div>
 
         {/* Hero Feature Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-12 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-8 sm:pt-12 text-left">
           <div className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2 hover:border-indigo-500/40 transition-colors">
             <ShieldCheck className="w-5 h-5 text-indigo-400" />
             <p className="font-bold text-xs text-white">7-Vector Audit</p>

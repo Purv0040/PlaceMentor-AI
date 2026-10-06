@@ -1,0 +1,5 @@
+2026-10-03 10:06:46 [INFO] [req_id:-] app.main: Starting up AI Placement Copilot Backend Application...
+2026-10-03 10:06:46 [INFO] [req_id:-] app.core.database: Connecting to MongoDB database: placementor
+2026-10-03 10:06:51 [INFO] [req_id:-] app.core.database: Successfully connected and pinged MongoDB.
+2026-10-03 10:06:51 [INFO] [req_id:-] app.core.redis: Connecting to Redis at: redis://localhost:6379
+2026-10-03 10:06:54 [WARNING] [req_id:-] app.core.redis: Redis connection initialization failed or Redis unavailable: TimeoutError
