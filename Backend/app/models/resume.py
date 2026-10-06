@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
+
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -24,19 +25,43 @@ class ResumeFileMetadata(BaseModel):
 class ResumeModel(BaseModel):
     """Domain model representing a student resume document in MongoDB."""
 
-    id: Optional[str] = Field(None, alias="_id")
+    id: Optional[str] = Field(
+        default=None,
+        alias="_id",
+    )
+
     user_id: str
+
     file: ResumeFileMetadata
+
     status: ResumeStatus = ResumeStatus.UPLOADED
+
     is_active: bool = False
-    parsed_data: Dict[str, Any] = Field(default_factory=dict)
-    analysis: Dict[str, Any] = Field(default_factory=dict)
+
+    parsed_data: Dict[str, Any] = Field(
+        default_factory=dict
+    )
+
+    analysis: Dict[str, Any] = Field(
+        default_factory=dict
+    )
+
     analysis_version: str = "1.0"
+
     error_message: Optional[str] = None
-    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+
+    uploaded_at: datetime = Field(
+        default_factory=datetime.utcnow
+    )
+
     analyzed_at: Optional[datetime] = None
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow
+    )
 
     class Config:
         populate_by_name = True
-        json_encoders = {datetime: lambda dt: dt.isoformat()}
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat()
+        }

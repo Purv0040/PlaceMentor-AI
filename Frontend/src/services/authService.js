@@ -116,6 +116,9 @@ export const authService = {
         }
         localStorage.setItem(USER_KEY, JSON.stringify(newUser));
         localStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+        localStorage.removeItem('placementCopilotProfile');
+        localStorage.removeItem('placementCopilotResumeName');
+        localStorage.removeItem('placementCopilotOnboarding');
 
         return { success: true, token, refreshToken, user: newUser };
       } else {
@@ -197,10 +200,6 @@ export const authService = {
     const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
     if (!token) return null;
 
-    if (token.startsWith('mock_')) {
-      return authService.getCurrentUser();
-    }
-
     try {
       const res = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
@@ -277,6 +276,8 @@ export const authService = {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(ONBOARDING_COMPLETE_KEY);
     localStorage.removeItem('placementCopilotOnboarding');
+    localStorage.removeItem('placementCopilotProfile');
+    localStorage.removeItem('placementCopilotResumeName');
     return { success: true };
   },
 

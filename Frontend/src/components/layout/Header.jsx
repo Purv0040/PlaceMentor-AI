@@ -1,16 +1,10 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, Bell, Search, Sparkles, Sun, Moon } from 'lucide-react';
+import { Menu, Bell, Search, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { useUser } from '../../context/UserContext';
 import { UserMenuDropdown } from '../common/UserMenuDropdown';
-import { dashboardData } from '../../data/dashboardData';
 
 export const Header = () => {
   const { toggleSidebar, activeNotificationCount, theme, toggleTheme } = useApp();
-  const { user } = useUser();
-
-  const score = user?.overallReadinessScore || dashboardData.readinessScore;
 
   return (
     <header className="app-header h-16 bg-[#0f131d]/90 backdrop-blur-md border-b border-[#232b3e] sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between">
@@ -34,17 +28,8 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Right: Telemetry Pill, Notifications & User Dropdown */}
+      {/* Right: Notifications & User Dropdown */}
       <div className="flex items-center gap-3">
-        {/* Readiness Score Pill */}
-        <NavLink
-          to="/placement-readiness"
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs hover:border-indigo-500/40 transition-colors"
-        >
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          <span className="text-slate-300 font-medium">Readiness:</span>
-          <span className="font-bold text-indigo-400 font-mono">{score} / 100</span>
-        </NavLink>
 
         <button
           type="button"

@@ -7,7 +7,8 @@ class ScoreDetail(BaseModel):
 
 class ExtractedSkills(BaseModel):
     languages: List[str] = Field(default_factory=list, description="Programming languages extracted from the resume")
-    frameworks: List[str] = Field(default_factory=list, description="Frameworks and libraries extracted from the resume")
+    frameworks: List[str] = Field(default_factory=list, description="Frameworks extracted from the resume")
+    libraries: List[str] = Field(default_factory=list, description="Libraries extracted from the resume")
     tools: List[str] = Field(default_factory=list, description="Tools and platforms extracted from the resume")
     other: List[str] = Field(default_factory=list, description="Other skills extracted from the resume")
 

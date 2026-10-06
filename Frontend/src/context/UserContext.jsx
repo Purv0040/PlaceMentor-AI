@@ -24,19 +24,21 @@ export const UserProvider = ({ children }) => {
     const preferences = savedOnboarding.preferences || {};
     const goals = savedOnboarding.goals || {};
 
+    const sResume = localStorage.getItem('placementCopilotResumeName');
+
     return {
       ...activeUser,
       ...savedUser,
-      name: savedUser.name || profile.name || activeUser.name || activeUser.full_name || 'digisha savaliya',
+      name: savedUser.name || profile.name || activeUser.name || activeUser.full_name || 'Student Candidate',
       college: savedUser.college || profile.college || 'CSPIT',
       degree: savedUser.degree || profile.degree || 'B.Tech IT',
       graduationYear: savedUser.graduationYear || profile.graduationYear || '2028',
-      targetRole: savedUser.targetRole || career.targetRole || 'AI/ML Engineer',
+      targetRole: savedUser.targetRole || career.targetRole || 'Backend SDE-1 (Tier 1)',
       secondaryRole: savedUser.secondaryRole || career.secondaryRole || 'Cybersecurity Analyst & Engineer',
       companyTier: savedUser.companyTier || career.companyTier || 'Tier-1 Product (MAANG / Unicorns)',
       githubHandle: savedUser.githubHandle || integrations.githubHandle || '',
       leetcodeHandle: savedUser.leetcodeHandle || integrations.leetcodeHandle || '',
-      resumeFileName: savedUser.resumeFileName || integrations.resumeFileName || '',
+      resumeFileName: savedUser.resumeFileName || integrations.resumeFileName || sResume || '',
       overallReadinessScore: savedUser.overallReadinessScore || 78,
       dsaLevel: savedUser.dsaLevel || skills.dsaLevel || 'Beginner',
       selectedSkills: savedUser.selectedSkills || skills.selectedSkills || ['Java', 'Spring Boot', 'Data Structures', 'SQL'],

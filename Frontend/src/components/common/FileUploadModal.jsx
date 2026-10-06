@@ -65,17 +65,32 @@ export const FileUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
   const handleStartUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    setProgress(20);
+    setProgress(15);
     setError('');
     
     try {
+      const progressTimer = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 85) {
+            clearInterval(progressTimer);
+            return 85;
+          }
+          return prev + 15;
+        });
+      }, 250);
+
       const res = await resumeService.uploadResume(file);
-      setProgress(100);
-      setIsUploading(false);
+      clearInterval(progressTimer);
+      
       if (res && res.success && res.data) {
-        onUploadSuccess(res.data);
-        onClose();
+        setProgress(100);
+        setTimeout(() => {
+          setIsUploading(false);
+          onUploadSuccess(res.data);
+          onClose();
+        }, 300);
       } else {
+        setIsUploading(false);
         setError(res?.message || 'Upload failed');
       }
     } catch (err) {

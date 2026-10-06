@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { onboardingService } from '../services/onboardingService';
 
 const ONBOARDING_STORAGE_KEY = 'placementCopilotOnboarding';
 export const ONBOARDING_COMPLETE_KEY = 'placementCopilotOnboardingComplete';
@@ -131,10 +132,12 @@ export const OnboardingProvider = ({ children }) => {
         completedSteps: Array.from(completed)
       };
     });
+    onboardingService.updateStep(stepNumber, onboardingData).catch(() => {});
   };
 
   const markOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    onboardingService.completeOnboarding().catch(() => {});
   };
 
   const isOnboardingComplete = () => {

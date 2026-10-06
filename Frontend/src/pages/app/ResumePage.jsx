@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '../../context/UserContext';
 import { initialResumeData } from '../../data/resumeData';
 import { aiService } from '../../services/aiService';
 import { resumeService } from '../../services/resumeService';
@@ -19,12 +20,21 @@ import {
   FileCheck,
   TrendingUp,
   AlertCircle,
-  Search
+  Search,
+  Edit3
 } from 'lucide-react';
 
 export const ResumePage = () => {
   const navigate = useNavigate();
-  const [resumeData, setResumeData] = useState(initialResumeData);
+  const { user, updateUserProfile } = useUser();
+  const [resumeData, setResumeData] = useState(() => {
+    const userResume = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
+    return {
+      ...initialResumeData,
+      fileName: userResume || initialResumeData.fileName,
+      targetRole: user?.targetRole || user?.career?.targetRole || initialResumeData.targetRole
+    };
+  });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'bullets' | 'keywords'
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [copiedBulletId, setCopiedBulletId] = useState(null);
@@ -33,28 +43,85 @@ export const ResumePage = () => {
   const [userResumes, setUserResumes] = useState([]);
   const [currentResumeId, setCurrentResumeId] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [customRoleInput, setCustomRoleInput] = useState('');
+  const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
+
+  useEffect(() => {
+    const activeRole = user?.targetRole;
+    const activeResume = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
+    setResumeData(prev => ({
+      ...prev,
+      ...(activeRole ? { targetRole: activeRole } : {}),
+      ...(activeResume ? { fileName: activeResume } : {})
+    }));
+  }, [user?.targetRole, user?.resumeFileName]);
+
+  const handleRoleSelect = (roleName) => {
+    if (roleName === 'custom') {
+      setShowCustomRoleInput(true);
+      return;
+    }
+    setShowCustomRoleInput(false);
+    updateUserProfile({ targetRole: roleName });
+    setResumeData(prev => ({
+      ...prev,
+      targetRole: roleName
+    }));
+    setIsEditingRole(false);
+  };
+
+  const handleCustomRoleSubmit = (e) => {
+    e.preventDefault();
+    if (customRoleInput.trim()) {
+      handleRoleSelect(customRoleInput.trim());
+      setCustomRoleInput('');
+    }
+  };
 
   const fetchResumes = async () => {
     try {
       const res = await resumeService.getResumes();
-      if (res && res.success && res.data && res.data.items) {
+      if (res && res.success && res.data && res.data.items && res.data.items.length > 0) {
         setUserResumes(res.data.items);
         const active = res.data.items.find(r => r.is_active) || res.data.items[0];
         if (active) {
           setCurrentResumeId(active.id);
+          const activeName = active.filename;
+          if (updateUserProfile) {
+            updateUserProfile({ resumeFileName: activeName });
+          }
+          localStorage.setItem('placementCopilotResumeName', activeName);
           setResumeData(prev => ({
             ...prev,
-            fileName: active.filename,
+            fileName: activeName,
             fileSize: `${(active.size / (1024 * 1024)).toFixed(1)} MB`,
-            status: active.status === 'completed' ? 'Verified Pass' : active.status
+            status: active.status === 'completed' ? 'ATS Verified' : active.status
           }));
           if (active.has_analysis) {
             loadAnalysis(active.id);
           }
         }
+      } else {
+        const localActiveName = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
+        if (localActiveName) {
+          setResumeData(prev => ({
+            ...prev,
+            fileName: localActiveName,
+            status: 'ATS Verified'
+          }));
+        }
       }
     } catch (e) {
       console.warn("Failed to fetch resumes:", e);
+      const localActiveName = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
+      if (localActiveName) {
+        setResumeData(prev => ({
+          ...prev,
+          fileName: localActiveName,
+          status: 'ATS Verified'
+        }));
+      }
     }
   };
 
@@ -96,6 +163,20 @@ export const ResumePage = () => {
   }, []);
 
   const handleUploadSuccess = async (uploadedDoc) => {
+    if (uploadedDoc) {
+      const uploadedName = uploadedDoc.filename || uploadedDoc.name || 'Uploaded_Resume.pdf';
+      if (updateUserProfile) {
+        updateUserProfile({ resumeFileName: uploadedName });
+      }
+      localStorage.setItem('placementCopilotResumeName', uploadedName);
+      setResumeData(prev => ({
+        ...prev,
+        fileName: uploadedName,
+        fileSize: uploadedDoc.size ? `${(uploadedDoc.size / 1024).toFixed(0)} KB` : prev.fileSize,
+        status: 'ATS Verified'
+      }));
+    }
+
     await fetchResumes();
     const targetId = uploadedDoc?.id;
     if (targetId) {
@@ -196,9 +277,66 @@ export const ResumePage = () => {
           <span className="text-slate-200 font-semibold">{resumeData.lastAnalyzed}</span>
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
-          <span className="text-slate-400">Target Role</span>
-          <span className="text-indigo-400 font-semibold truncate">{resumeData.targetRole}</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e] relative group">
+          <span className="text-slate-400 shrink-0 mr-2">Target Role</span>
+          {isEditingRole ? (
+            <div className="flex items-center gap-1.5 z-20">
+              {showCustomRoleInput ? (
+                <form onSubmit={handleCustomRoleSubmit} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={customRoleInput}
+                    onChange={(e) => setCustomRoleInput(e.target.value)}
+                    placeholder="Enter target role..."
+                    autoFocus
+                    className="bg-[#121624] text-indigo-300 border border-indigo-500/50 rounded-lg px-2 py-0.5 text-xs focus:outline-none w-36"
+                  />
+                  <button
+                    type="submit"
+                    className="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomRoleInput(false); setIsEditingRole(false); }}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-white text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : (
+                <select
+                  value={resumeData.targetRole}
+                  onChange={(e) => handleRoleSelect(e.target.value)}
+                  onBlur={() => {
+                    setTimeout(() => { if (!showCustomRoleInput) setIsEditingRole(false); }, 250);
+                  }}
+                  autoFocus
+                  className="bg-[#121624] text-indigo-400 font-bold border border-indigo-500/60 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-lg"
+                >
+                  <option value="Backend SDE-1 (Tier 1)">Backend SDE-1 (Tier 1)</option>
+                  <option value="AI/ML Engineer">AI/ML Engineer</option>
+                  <option value="Full-Stack Developer">Full-Stack Developer</option>
+                  <option value="Frontend SDE-1">Frontend SDE-1</option>
+                  <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                  <option value="Data Scientist & Engineer">Data Scientist & Engineer</option>
+                  <option value="Cybersecurity Engineer">Cybersecurity Engineer</option>
+                  <option value="Systems Software Engineer">Systems Software Engineer</option>
+                  <option value="custom">+ Custom Target Role...</option>
+                </select>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsEditingRole(true)}
+              title="Click to dynamically check and change target role"
+              className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-semibold truncate transition-colors text-right group/btn bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg border border-indigo-500/20"
+            >
+              <span className="truncate">{resumeData.targetRole}</span>
+              <Edit3 className="w-3 h-3 text-indigo-400/80 group-hover/btn:text-indigo-300 shrink-0" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">

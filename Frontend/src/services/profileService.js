@@ -32,7 +32,7 @@ export const profileService = {
       sysDesignLevel: user.sysDesignLevel || onboarding.skills?.sysDesignLevel || 'Beginner',
       githubHandle: user.githubHandle || onboarding.integrations?.githubHandle || '',
       leetcodeHandle: user.leetcodeHandle || onboarding.integrations?.leetcodeHandle || '',
-      resumeFileName: user.resumeFileName || onboarding.integrations?.resumeFileName || '',
+      resumeFileName: user.resumeFileName || onboarding.integrations?.resumeFileName || localStorage.getItem('placementCopilotResumeName') || '',
       dailyGoalMinutes: user.preferences?.dailyGoalMinutes || onboarding.preferences?.dailyGoalMinutes || '90',
       mentorTone: user.preferences?.mentorTone || onboarding.preferences?.mentorTone || 'Socratic Coach (Probing Questions)',
       skills: onboarding.skills?.selectedSkills || ['Data Structures', 'Python', 'Git', 'SQL']

@@ -127,9 +127,17 @@ export const ProfileForm = ({ profile, isEditing, onSave, onCancel }) => {
             <div className="profile-account-card p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex items-center justify-between">
               <div>
                 <p className="text-[11px] text-slate-400">Uploaded Resume</p>
-                <p className="font-semibold text-white truncate max-w-[120px]">{profile.resumeFileName}</p>
+                <p className="font-semibold text-white truncate max-w-[140px]">
+                  {profile.resumeFileName || 'No Resume Uploaded'}
+                </p>
               </div>
-              <span className="text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10">ATS Verified</span>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                profile.resumeFileName && profile.resumeFileName !== 'No Resume Uploaded'
+                  ? 'text-emerald-400 bg-emerald-500/10'
+                  : 'text-amber-400 bg-amber-500/10'
+              }`}>
+                {profile.resumeFileName && profile.resumeFileName !== 'No Resume Uploaded' ? 'ATS Verified' : 'Pending Upload'}
+              </span>
             </div>
           </div>
         </div>

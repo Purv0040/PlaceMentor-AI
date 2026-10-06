@@ -1,7 +1,12 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+
 from pydantic import BaseModel, Field
-from app.models.resume import ResumeStatus, ResumeFileMetadata
+
+from app.models.resume import (
+    ResumeStatus,
+    ResumeFileMetadata,
+)
 
 
 class ResumeUploadResponse(BaseModel):
@@ -40,12 +45,23 @@ class ResumeDetailResponse(BaseModel):
     file: ResumeFileMetadata
     status: ResumeStatus
     is_active: bool
-    parsed_data: Dict[str, Any] = Field(default_factory=dict)
-    analysis: Dict[str, Any] = Field(default_factory=dict)
+
+    parsed_data: Dict[str, Any] = Field(
+        default_factory=dict
+    )
+
+    analysis: Dict[str, Any] = Field(
+        default_factory=dict
+    )
+
     analysis_version: str = "1.0"
+
     error_message: Optional[str] = None
+
     uploaded_at: datetime
+
     analyzed_at: Optional[datetime] = None
+
     updated_at: datetime
 
 

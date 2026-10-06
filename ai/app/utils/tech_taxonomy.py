@@ -137,6 +137,9 @@ TECH_TAXONOMY: Dict[str, str] = {
     "SQLAlchemy": "databases",
 
     # 8. DevOps
+    "Git": "devops",
+    "GitHub": "devops",
+    "GitLab": "devops",
     "Docker": "devops",
     "Kubernetes": "devops",
     "CI/CD": "devops",
@@ -323,7 +326,8 @@ ALIAS_LOOKUP: Dict[str, str] = {
     "matplotlib": "Matplotlib",
     "seaborn": "Seaborn",
     "scipy": "SciPy",
-    "jupyter": "Jupyter",
+    "jupyter": "Jupyter Notebook",
+    "jupyter notebook": "Jupyter Notebook",
     "data analysis": "Data Analysis",
     "eda": "Exploratory Data Analysis",
     "tableau": "Tableau",
@@ -351,6 +355,10 @@ ALIAS_LOOKUP: Dict[str, str] = {
     "sqlalchemy": "SQLAlchemy",
 
     # DevOps
+    "git": "Git",
+    "github": "GitHub",
+    "git-hub": "GitHub",
+    "gitlab": "GitLab",
     "docker": "Docker",
     "k8s": "Kubernetes",
     "kubernetes": "Kubernetes",

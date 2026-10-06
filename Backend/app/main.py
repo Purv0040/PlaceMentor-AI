@@ -48,7 +48,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS middleware
+# Custom Middlewares
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(AuthMiddleware)
+app.add_middleware(RequestIDMiddleware)
+
+# Configure CORS middleware (Must be added last so it is the outermost middleware)
 cors_origins = (
     settings.CORS_ORIGINS
     if isinstance(settings.CORS_ORIGINS, list)
@@ -58,15 +63,11 @@ cors_origins = (
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Custom Middlewares
-app.add_middleware(RequestIDMiddleware)
-app.add_middleware(AuthMiddleware)
-app.add_middleware(RateLimitMiddleware)
 
 # Register Exception Handlers
 register_exception_handlers(app)

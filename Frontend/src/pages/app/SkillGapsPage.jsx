@@ -18,19 +18,45 @@ import {
   TrendingUp,
   BrainCircuit,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  Edit3
 } from 'lucide-react';
 
 export const SkillGapsPage = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, updateUserProfile } = useUser();
   const { addSkillToRoadmap, toastNotification } = usePlanning();
   const [data, setData] = useState(initialSkillGapData);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [customRoleInput, setCustomRoleInput] = useState('');
+  const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
 
   // Derive target role from UserContext if available
-  const displayTargetRole = user?.targetRole || user?.career?.targetRole || 'Backend Developer';
+  const displayTargetRole = user?.targetRole || user?.career?.targetRole || 'Backend SDE-1 (Tier 1)';
+
+  const handleRoleChange = async (newRole) => {
+    if (newRole === 'custom') {
+      setShowCustomRoleInput(true);
+      return;
+    }
+    setShowCustomRoleInput(false);
+    updateUserProfile({ targetRole: newRole });
+    setIsEditingRole(false);
+    setIsRefreshing(true);
+    const updated = await skillGapService.analyzeSkillGaps(newRole);
+    if (updated) setData(updated);
+    setIsRefreshing(false);
+  };
+
+  const handleCustomRoleSubmit = async (e) => {
+    e.preventDefault();
+    if (customRoleInput.trim()) {
+      await handleRoleChange(customRoleInput.trim());
+      setCustomRoleInput('');
+    }
+  };
 
   useEffect(() => {
     skillGapService.getLatestSkillGaps().then((res) => {
@@ -87,9 +113,66 @@ export const SkillGapsPage = () => {
 
       {/* 2. TARGET PROFILE & CALIBRATION BAR */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#121624] border border-[#232b3e] text-xs font-mono shadow-xl">
-        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
-          <span className="text-slate-400">Target Profile</span>
-          <span className="text-indigo-400 font-bold truncate max-w-[180px]">{displayTargetRole}</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e] relative group">
+          <span className="text-slate-400 shrink-0 mr-2">Target Profile</span>
+          {isEditingRole ? (
+            <div className="flex items-center gap-1.5 z-20">
+              {showCustomRoleInput ? (
+                <form onSubmit={handleCustomRoleSubmit} className="flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={customRoleInput}
+                    onChange={(e) => setCustomRoleInput(e.target.value)}
+                    placeholder="Enter target role..."
+                    autoFocus
+                    className="bg-[#121624] text-indigo-300 border border-indigo-500/50 rounded-lg px-2 py-0.5 text-xs focus:outline-none w-36"
+                  />
+                  <button
+                    type="submit"
+                    className="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomRoleInput(false); setIsEditingRole(false); }}
+                    className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-white text-xs font-bold"
+                  >
+                    ✕
+                  </button>
+                </form>
+              ) : (
+                <select
+                  value={displayTargetRole}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                  onBlur={() => {
+                    setTimeout(() => { if (!showCustomRoleInput) setIsEditingRole(false); }, 250);
+                  }}
+                  autoFocus
+                  className="bg-[#121624] text-indigo-400 font-bold border border-indigo-500/60 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-lg"
+                >
+                  <option value="Backend SDE-1 (Tier 1)">Backend SDE-1 (Tier 1)</option>
+                  <option value="AI/ML Engineer">AI/ML Engineer</option>
+                  <option value="Full-Stack Developer">Full-Stack Developer</option>
+                  <option value="Frontend SDE-1">Frontend SDE-1</option>
+                  <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                  <option value="Data Scientist & Engineer">Data Scientist & Engineer</option>
+                  <option value="Cybersecurity Engineer">Cybersecurity Engineer</option>
+                  <option value="Systems Software Engineer">Systems Software Engineer</option>
+                  <option value="custom">+ Custom Target Role...</option>
+                </select>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsEditingRole(true)}
+              title="Click to dynamically check and change target role"
+              className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-bold truncate transition-colors text-right group/btn bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-lg border border-indigo-500/20"
+            >
+              <span className="truncate max-w-[180px]">{displayTargetRole}</span>
+              <Edit3 className="w-3 h-3 text-indigo-400/80 group-hover/btn:text-indigo-300 shrink-0" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
