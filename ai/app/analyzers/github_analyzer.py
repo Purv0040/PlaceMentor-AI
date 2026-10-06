@@ -32,12 +32,13 @@ _CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     "Backend / Server": {
         "languages": [],  # Python, Java, C#, Go alone DO NOT prove backend development without server/framework signals
         "keywords": ["backend", "fastapi", "django", "flask",
-                     "express", "expressjs", "spring", "springboot", "rails", "gin", "actix", "nest", "nestjs",
-                     "server.js", "app.py", "manage.py", "uvicorn", "gunicorn", "@restcontroller", "routes", "controllers"],
+                     "express", "expressjs", "fastify", "spring", "springboot", "rails", "gin", "actix", "nest", "nestjs",
+                     "server.js", "uvicorn", "gunicorn", "@restcontroller", "routes/", "routes", "controllers/", "controllers"],
     },
     "REST API": {
         "languages": [],
-        "keywords": ["rest", "api", "restful", "openapi", "swagger", "graphql", "endpoint", "routes"],
+        "keywords": ["rest", "restful", "routes/", "routes", "controllers/", "controllers", "endpoints", "endpoint", "api route", "api routes",
+                     "rest api", "restful api", "openapi", "swagger", "fastapi", "express", "flask", "django-rest-framework"],
     },
     "Database": {
         "languages": ["SQL", "PLpgSQL"],
@@ -46,7 +47,7 @@ _CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     },
     "Authentication": {
         "languages": [],
-        "keywords": ["auth", "authentication", "authorization", "jwt", "oauth", "keycloak", "passportjs"],
+        "keywords": ["auth", "authentication", "authorization", "jwt", "oauth", "keycloak", "passportjs", "passport"],
     },
     "Machine Learning / AI": {
         "languages": ["Jupyter Notebook"],  # Note: Python alone is NOT an ML indicator unless explicit ML keywords exist!
@@ -63,7 +64,7 @@ _CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
         "languages": ["Shell", "Dockerfile", "HCL"],
         "keywords": ["devops", "ci-cd", "kubernetes", "k8s", "helm",
                      "terraform", "ansible", "heroku", "aws", "gcp", "azure",
-                     "github-actions", "cloud-pipeline"],
+                     "github-actions", ".github/workflows", "cloud-pipeline"],
     },
     "Docker / Containerization": {
         "languages": ["Dockerfile"],
@@ -71,7 +72,7 @@ _CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     },
     "Testing": {
         "languages": [],
-        "keywords": ["pytest", "unittest", "jest", "mocha", "cypress", "selenium", "tdd", "bdd", "code-coverage"],
+        "keywords": ["tests/", "test/", "tests", "test", "testing", "pytest", "unittest", "jest", "vitest", "mocha", "cypress", "selenium", "tdd", "bdd", "code-coverage", "automated test suite files detected"],
     },
     "Documentation": {
         "languages": ["Markdown"],
@@ -191,27 +192,39 @@ def detect_tech_categories(repos: List[GitHubRepoRaw]) -> List[TechCategory]:
 _COMPLEXITY_SIGNALS: List[tuple] = [
     ({"docker", "dockerfile", "container", "docker-compose", "compose"}, 2, "Uses Docker/containerisation"),
     ({"kubernetes", "k8s", "helm"}, 3, "Uses Kubernetes"),
-    ({"ci", "cd", "github-actions", "pipeline", "workflow"}, 2, "CI/CD integration"),
-    ({"auth", "authentication", "jwt", "oauth"}, 2, "Authentication system"),
-    ({"database", "sql", "postgresql", "mysql", "mongodb", "redis", "orm"}, 2, "Database integration"),
-    ({"rest", "api", "restful", "endpoint", "routes"}, 1, "REST API layer"),
-    ({"ml", "machine-learning", "tensorflow", "pytorch", "sklearn"}, 3, "Machine learning components"),
+    ({"ci", "cd", "github-actions", ".github/workflows", "pipeline", "workflow"}, 2, "CI/CD integration"),
+    ({"auth", "authentication", "jwt", "oauth", "passport"}, 2, "Authentication system"),
+    ({"database", "sql", "postgresql", "postgres", "mysql", "mongodb", "redis", "orm", "prisma", "sqlalchemy", "mongoose"}, 2, "Database integration"),
+    ({"routes/", "routes", "controllers/", "controllers", "endpoints", "rest", "openapi", "swagger"}, 2, "Structured API routing layer"),
+    ({"models/", "models", "schema", "schemas"}, 1, "Defined data models & schemas"),
+    ({"server.js", "app.py", "main.py", "fastapi", "express", "flask", "django", "nestjs", "springboot", "uvicorn", "gunicorn"}, 2, "Server application entry point"),
+    ({"src/components", "react", "vue", "angular", "svelte", "next", "vite", "jsx", "tsx"}, 2, "Structured frontend UI architecture"),
+    ({"ml", "machine-learning", "tensorflow", "pytorch", "sklearn", "scikit-learn"}, 3, "Machine learning components"),
     ({"microservice", "distributed", "kafka", "rabbitmq", "grpc"}, 3, "Distributed / microservice architecture"),
-    ({"test", "pytest", "jest", "coverage", "tdd"}, 1, "Has automated tests"),
+    ({"tests/", "test/", "test", "tests", "pytest", "unittest", "jest", "vitest", "cypress", "coverage", "tdd", "automated test suite files detected"}, 2, "Has automated test suite"),
+    ({"package.json", "requirements.txt", "pyproject.toml", "pipfile", "pom.xml", "build.gradle"}, 1, "Configured dependency management"),
+    ({"vite.config.js", "vite.config.ts", "webpack", "next.config.js", "tsconfig.json"}, 1, "Custom build/bundler configuration"),
     ({"docs", "documentation", "readme", "wiki"}, 1, "Has documentation"),
 ]
 
 
 def _score_repo(repo: GitHubRepoRaw) -> tuple:
-    """Return (total_points, evidence_list) for a single repo."""
+    """Return (total_points, evidence_list) for a single repo based on architecture & engineering evidence."""
     signals = set(_repo_signals(repo))
     total = 0
     evidence: List[str] = []
 
     for kw_set, points, label in _COMPLEXITY_SIGNALS:
-        if signals & kw_set:
+        if signals & kw_set or any(_signals_match_keywords(list(signals), {kw}) for kw in kw_set):
             total += points
             evidence.append(label)
+
+    # Bonus for full-stack frontend + backend architecture in the same repo
+    has_fe = _signals_match_keywords(list(signals), {"react", "vue", "angular", "svelte", "next", "vite", "src/components"})
+    has_be = _signals_match_keywords(list(signals), {"server.js", "express", "fastapi", "flask", "django", "routes", "controllers"})
+    if has_fe and has_be:
+        total += 2
+        evidence.append("Full-stack architecture (Frontend + Backend separation)")
 
     # Bonus for size
     if repo.size > 5000:
@@ -257,9 +270,9 @@ def estimate_complexity(repos: List[GitHubRepoRaw]) -> List[ComplexityAnalysis]:
         elif points >= 3:
             level = "intermediate"
             confidence = "high" if len(evidence) >= 2 else "medium"
-        elif is_explicit_beginner:
+        elif is_explicit_beginner or points >= 1:
             level = "beginner"
-            confidence = "medium"
+            confidence = "medium" if len(evidence) >= 1 else "low"
             if not evidence:
                 evidence = ["Single-script or basic tutorial/practice codebase"]
         else:
