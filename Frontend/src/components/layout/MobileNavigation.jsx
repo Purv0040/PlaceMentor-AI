@@ -14,8 +14,8 @@ export const MobileNavigation = () => {
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0f131d]/95 backdrop-blur-lg border-t border-[#232b3e] px-2 py-1.5 shadow-2xl">
-      <div className="flex items-center justify-around">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0f131d]/95 backdrop-blur-xl border-t border-[#232b3e] px-2 py-2 safe-bottom shadow-2xl">
+      <div className="flex items-center justify-around max-w-lg mx-auto">
         {quickNav.map((item) => {
           const Icon = item.icon;
           return (
@@ -24,17 +24,19 @@ export const MobileNavigation = () => {
               to={item.path}
               onClick={closeSidebar}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors ${
-                  isActive ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                `flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl transition-all ${
+                  isActive
+                    ? 'text-indigo-400 font-semibold bg-indigo-500/10'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`
               }
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
             </NavLink>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
