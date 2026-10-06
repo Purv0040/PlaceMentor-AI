@@ -5,6 +5,7 @@ These analyzers are fully deterministic — no LLM involved.
 Every conclusion is backed by observable evidence (language name, topic tag,
 description keyword) so results are transparent and reproducible.
 """
+import re
 from typing import Dict, List
 
 from app.schemas.github import (
@@ -24,89 +25,116 @@ from app.schemas.github import (
 # Each entry: category name → (languages, topics/description keywords)
 _CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     "Frontend": {
-        "languages": ["JavaScript", "TypeScript", "HTML", "CSS"],
-        "keywords": ["react", "vue", "angular", "svelte", "next", "nuxt",
-                     "frontend", "ui", "tailwind", "webpack", "vite"],
+        "languages": ["HTML"],  # Plain HTML/CSS app structure or explicit frontend frameworks/components
+        "keywords": ["react", "vue", "angular", "svelte", "next", "nuxt", "nextjs", "nuxtjs",
+                     "frontend", "portfolio", "tailwind", "webpack", "vite", "bootstrap", "jsx", "tsx", "src/components"],
     },
     "Backend / Server": {
-        "languages": ["Python", "Java", "Go", "Ruby", "PHP", "Rust", "C#", "Kotlin"],
-        "keywords": ["backend", "server", "api", "fastapi", "django", "flask",
-                     "express", "spring", "rails", "gin", "actix"],
+        "languages": [],  # Python, Java, C#, Go alone DO NOT prove backend development without server/framework signals
+        "keywords": ["backend", "fastapi", "django", "flask",
+                     "express", "expressjs", "spring", "springboot", "rails", "gin", "actix", "nest", "nestjs",
+                     "server.js", "app.py", "manage.py", "uvicorn", "gunicorn", "@restcontroller", "routes", "controllers"],
     },
     "REST API": {
         "languages": [],
-        "keywords": ["rest", "api", "restful", "openapi", "swagger", "graphql",
-                     "endpoint", "routes", "crud"],
+        "keywords": ["rest", "api", "restful", "openapi", "swagger", "graphql", "endpoint", "routes"],
     },
     "Database": {
         "languages": ["SQL", "PLpgSQL"],
-        "keywords": ["database", "sql", "postgresql", "mysql", "sqlite",
-                     "mongodb", "redis", "orm", "prisma", "sqlalchemy"],
+        "keywords": ["database", "sql", "postgresql", "postgres", "mysql", "sqlite",
+                     "mongodb", "mongo", "redis", "orm", "prisma", "sqlalchemy", "mongoose"],
     },
     "Authentication": {
         "languages": [],
-        "keywords": ["auth", "authentication", "authorization", "jwt", "oauth",
-                     "login", "session", "passportjs", "keycloak"],
+        "keywords": ["auth", "authentication", "authorization", "jwt", "oauth", "keycloak", "passportjs"],
     },
     "Machine Learning / AI": {
-        "languages": ["Jupyter Notebook", "Python"],
+        "languages": ["Jupyter Notebook"],  # Note: Python alone is NOT an ML indicator unless explicit ML keywords exist!
         "keywords": ["ml", "machine-learning", "deep-learning", "ai", "nlp",
-                     "neural", "sklearn", "tensorflow", "pytorch", "keras",
-                     "transformers", "llm", "gpt", "prediction", "classification"],
+                     "neural", "sklearn", "scikit-learn", "tensorflow", "pytorch", "keras",
+                     "transformers", "llm", "gpt"],
     },
     "Data Science": {
-        "languages": ["Jupyter Notebook", "R", "Python"],
+        "languages": ["Jupyter Notebook", "R"],
         "keywords": ["data-science", "analytics", "pandas", "numpy", "matplotlib",
                      "seaborn", "eda", "visualization", "dataset", "kaggle"],
     },
     "Deployment / DevOps": {
         "languages": ["Shell", "Dockerfile", "HCL"],
-        "keywords": ["deployment", "devops", "ci", "cd", "kubernetes", "helm",
+        "keywords": ["devops", "ci-cd", "kubernetes", "k8s", "helm",
                      "terraform", "ansible", "heroku", "aws", "gcp", "azure",
-                     "cloud", "pipeline"],
+                     "github-actions", "cloud-pipeline"],
     },
     "Docker / Containerization": {
-        "languages": [],
-        "keywords": ["docker", "dockerfile", "container", "docker-compose",
-                     "compose", "containerized"],
+        "languages": ["Dockerfile"],
+        "keywords": ["docker", "dockerfile", "container", "docker-compose", "containerized"],
     },
     "Testing": {
         "languages": [],
-        "keywords": ["test", "testing", "pytest", "unittest", "jest", "mocha",
-                     "cypress", "selenium", "tdd", "bdd", "coverage"],
+        "keywords": ["pytest", "unittest", "jest", "mocha", "cypress", "selenium", "tdd", "bdd", "code-coverage"],
     },
     "Documentation": {
         "languages": ["Markdown"],
-        "keywords": ["docs", "documentation", "readme", "wiki", "mkdocs",
-                     "sphinx", "javadoc"],
+        "keywords": ["documentation", "mkdocs", "sphinx", "javadoc"],
     },
 }
 
 
 def _repo_signals(repo: GitHubRepoRaw) -> List[str]:
-    """Collect all searchable text signals from a repository."""
-    signals: List[str] = []
+    """Collect all searchable text signals from a repository as normalized sub-tokens."""
+    tokens: List[str] = []
+
+    # Repo name tokens
+    if repo.name:
+        name_lower = repo.name.lower()
+        tokens.append(name_lower)
+        if "-" in name_lower or "_" in name_lower:
+            tokens.extend([t for t in re.split(r'[\-_]', name_lower) if t])
+
     if repo.language:
-        signals.append(repo.language)
-    signals.extend(repo.languages.keys())
-    signals.extend(repo.topics)
+        tokens.append(repo.language.lower())
+    for lang in repo.languages.keys():
+        tokens.append(lang.lower())
+
+    for topic in repo.topics:
+        topic_lower = topic.lower()
+        tokens.append(topic_lower)
+        if "-" in topic_lower or "_" in topic_lower:
+            tokens.extend([t for t in re.split(r'[\-_]', topic_lower) if t])
+
     if repo.description:
-        signals.extend(repo.description.lower().split())
-    return [s.lower() for s in signals]
+        desc_words = re.findall(r'[a-zA-Z0-9\-]+', repo.description.lower())
+        for word in desc_words:
+            tokens.append(word)
+            if "-" in word and len(word) > 1:
+                tokens.extend([w for w in word.split("-") if w])
+
+    for f_sig in repo.file_signals:
+        f_lower = f_sig.lower()
+        tokens.append(f_lower)
+        if "/" in f_lower or "." in f_lower or "-" in f_lower:
+            tokens.extend([sub for sub in re.split(r'[/.\-_]', f_lower) if sub])
+
+    return tokens
 
 
 def _signals_match_keywords(signals: List[str], kw_set: set) -> bool:
     """
-    Return True if any signal token is in the keyword set, OR
-    if any keyword appears as a substring inside any signal token.
-    This catches e.g. 'dockerized' matching keyword 'docker'.
+    Return True if any signal token matches a keyword in kw_set.
+    - Exact token match for any keyword.
+    - Substring match for keywords with len >= 4 (e.g. 'docker' in 'dockerized').
+    - Short keywords (len < 4 like 'ml', 'ai', 'ui', 'sql') require EXACT token matches
+      so 'html' does NOT match 'ml' and 'detail' does NOT match 'ai'.
     """
-    for signal in signals:
-        if signal in kw_set:
+    signal_set = set(signals)
+    for kw in kw_set:
+        kw_len = len(kw)
+        if kw in signal_set:
             return True
-        for kw in kw_set:
-            if kw in signal:
-                return True
+        if kw_len >= 4:
+            for signal in signals:
+                if kw in signal:
+                    return True
     return False
 
 
@@ -124,11 +152,10 @@ def detect_tech_categories(repos: List[GitHubRepoRaw]) -> List[TechCategory]:
 
         for repo in repos:
             signals = _repo_signals(repo)
-            matched = (
-                any(s in lang_set for s in signals)
-                or _signals_match_keywords(signals, kw_set)
-            )
-            if matched:
+            lang_match = any(s in lang_set for s in signals)
+            kw_match = _signals_match_keywords(signals, kw_set)
+
+            if lang_match or kw_match:
                 evidence.append(repo.name)
 
         categories.append(
@@ -199,17 +226,32 @@ def estimate_complexity(repos: List[GitHubRepoRaw]) -> List[ComplexityAnalysis]:
     Only non-fork repos are analyzed to reflect the author's own work.
     """
     results: List[ComplexityAnalysis] = []
+    beginner_keywords = {"basic", "practice", "tutorial", "exercise", "assignment", "demo", "hello-world", "self-study"}
 
     for repo in repos:
         if repo.is_fork:
             continue
 
+        signals = set(_repo_signals(repo))
         points, evidence = _score_repo(repo)
 
-        if not evidence:
-            evidence = ["No strong complexity signals detected"]
+        is_explicit_beginner = bool(signals & beginner_keywords) or (repo.size > 0 and repo.size < 100 and not evidence)
 
-        level, confidence = _points_to_level_and_confidence(points, len(evidence))
+        if points >= 7:
+            level = "advanced"
+            confidence = "high" if len(evidence) >= 3 else "medium"
+        elif points >= 3:
+            level = "intermediate"
+            confidence = "high" if len(evidence) >= 2 else "medium"
+        elif is_explicit_beginner:
+            level = "beginner"
+            confidence = "medium"
+            if not evidence:
+                evidence = ["Single-script or basic tutorial/practice codebase"]
+        else:
+            level = "unknown"
+            confidence = "low"
+            evidence = ["Insufficient technical complexity signals detected"]
 
         results.append(
             ComplexityAnalysis(

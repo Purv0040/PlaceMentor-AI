@@ -26,6 +26,10 @@ class GitHubRepoRaw(BaseModel):
     updated_at: Optional[str] = None
     pushed_at: Optional[str] = None
     size: int = Field(default=0, description="Repo size in KB")
+    file_signals: List[str] = Field(
+        default_factory=list,
+        description="Lightweight detected root files/directories e.g. Dockerfile, package.json, requirements.txt, .github/workflows"
+    )
 
     model_config = {"populate_by_name": True}
 

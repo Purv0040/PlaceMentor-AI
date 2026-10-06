@@ -114,8 +114,9 @@ class GitHubService:
                 profile_data = self._fetch_user(client, username)
                 repos = self._fetch_repos(client, username)
 
-            # Attach README detection
+            # Attach README detection & lightweight file evidence
             repos_with_readme = self._mark_readme_presence(repos)
+            repos_enriched = self._enrich_lightweight_evidence(client, username, repos_with_readme)
 
             profile = GitHubProfileRaw(
                 username=profile_data.get("login", username),
@@ -127,7 +128,7 @@ class GitHubService:
                 location=profile_data.get("location"),
                 company=profile_data.get("company"),
                 blog=profile_data.get("blog"),
-                repositories=repos_with_readme,
+                repositories=repos_enriched,
             )
 
             self._set_cached(username, profile)
@@ -193,4 +194,52 @@ class GitHubService:
         """
         for repo in repos:
             repo.has_readme = repo.size > 0
+        return repos
+
+    def _enrich_lightweight_evidence(
+        self,
+        client: httpx.Client,
+        username: str,
+        repos: List[GitHubRepoRaw]
+    ) -> List[GitHubRepoRaw]:
+        """
+        Fetches root directory file/folder signals for top non-fork repositories
+        using GitHub's contents API to extract lightweight evidence (e.g. Dockerfile,
+        package.json, requirements.txt, .github/workflows) without downloading repo content.
+        """
+        non_forks = [r for r in repos if not r.is_fork][:10]  # Cap at top 10 most recent non-fork repos
+        for repo in non_forks:
+            try:
+                url = f"{self.BASE_URL}/repos/{username}/{repo.name}/contents"
+                res = client.get(url, timeout=5.0)
+                if res.status_code == 200:
+                    items = res.json()
+                    if isinstance(items, list):
+                        signals: List[str] = []
+                        has_github_dir = False
+                        for item in items:
+                            name = item.get("name", "")
+                            if name in (
+                                "Dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yaml",
+                                "package.json", "requirements.txt", "pyproject.toml", "Pipfile",
+                                "pom.xml", "build.gradle", "tsconfig.json", "angular.json",
+                                "manage.py", "app.py", "main.py", "server.js",
+                                "routes", "controllers", "models", "tests", "api"
+                            ):
+                                signals.append(name)
+                            if name == ".github":
+                                has_github_dir = True
+
+                        if has_github_dir:
+                            try:
+                                wf_res = client.get(f"{self.BASE_URL}/repos/{username}/{repo.name}/contents/.github/workflows", timeout=3.0)
+                                if wf_res.status_code == 200:
+                                    signals.append(".github/workflows")
+                            except Exception:
+                                pass
+
+                        repo.file_signals = list(dict.fromkeys(signals))
+            except Exception as e:
+                logger.debug(f"Could not fetch lightweight file signals for '{repo.name}': {e}")
+
         return repos

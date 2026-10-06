@@ -311,3 +311,135 @@ def test_api_github_analyze_api_failure(monkeypatch):
 def test_api_github_analyze_empty_username():
     response = client.post("/api/ai/github/analyze", json={"username": ""})
     assert response.status_code == 422  # Pydantic min_length validation
+
+
+# ---------------------------------------------------------------------------
+# Hallucination Prevention & Evidence-Based Detection Tests (All 10 required tests)
+# ---------------------------------------------------------------------------
+
+class TestHallucinationPrevention:
+    def test_1_python_only_basic_repo(self):
+        """TEST 1: Python/Java basic repos must NOT be classified as Backend / Server without backend evidence."""
+        repos = [
+            _make_repo("Heart_Stroke_Prediction", description="Prediction model script", language="Python"),
+            _make_repo("basic_python", description="Basic Python exercises", language="Python"),
+            _make_repo("java_self-study", description="Java practice programs", language="Java"),
+        ]
+        cats = detect_tech_categories(repos)
+        backend_cat = next(c for c in cats if c.name == "Backend / Server")
+        assert backend_cat.detected is False
+        assert backend_cat.evidence == []
+
+    def test_2_fastapi_uvicorn_routes_detected(self):
+        """TEST 2: Repository with FastAPI + uvicorn + routes detects Backend and REST API."""
+        repo = _make_repo(
+            "my-service",
+            description="FastAPI service with uvicorn endpoints",
+            language="Python",
+            topics=["fastapi", "uvicorn", "rest"],
+        )
+        cats = detect_tech_categories([repo])
+        backend_cat = next(c for c in cats if c.name == "Backend / Server")
+        rest_cat = next(c for c in cats if c.name == "REST API")
+        assert backend_cat.detected is True
+        assert "my-service" in backend_cat.evidence
+        assert rest_cat.detected is True
+        assert "my-service" in rest_cat.evidence
+
+    def test_3_dockerfile_detected(self):
+        """TEST 3: Repository containing Dockerfile or container topics detects Docker / Containerization."""
+        repo = _make_repo("app", description="Containerized app", topics=["docker"])
+        repo.file_signals = ["Dockerfile"]
+        cats = detect_tech_categories([repo])
+        docker_cat = next(c for c in cats if c.name == "Docker / Containerization")
+        assert docker_cat.detected is True
+        assert "app" in docker_cat.evidence
+
+    def test_4_github_actions_workflow_detected(self):
+        """TEST 4: Repository containing GitHub Actions workflow detects Deployment / DevOps."""
+        repo = _make_repo("app", description="CI/CD enabled", topics=["github-actions"])
+        repo.file_signals = [".github/workflows"]
+        cats = detect_tech_categories([repo])
+        devops_cat = next(c for c in cats if c.name == "Deployment / DevOps")
+        assert devops_cat.detected is True
+        assert "app" in devops_cat.evidence
+
+    def test_5_pytest_detected(self):
+        """TEST 5: Repository containing pytest detects Testing."""
+        repo = _make_repo("core-lib", description="Library with pytest suite", topics=["pytest"])
+        cats = detect_tech_categories([repo])
+        testing_cat = next(c for c in cats if c.name == "Testing")
+        assert testing_cat.detected is True
+        assert "core-lib" in testing_cat.evidence
+
+    def test_6_javascript_without_frontend_evidence(self):
+        """TEST 6: Plain JavaScript helper script without React/Vue/UI is NOT automatically Frontend."""
+        repo = _make_repo("node-util", description="CLI string utility helper", language="JavaScript")
+        cats = detect_tech_categories([repo])
+        fe_cat = next(c for c in cats if c.name == "Frontend")
+        assert fe_cat.detected is False
+        assert fe_cat.evidence == []
+
+    def test_7_sklearn_pandas_jupyter_ml_detected(self):
+        """TEST 7: Repository with sklearn/pandas/Jupyter ML code detects ML/AI and Data Science."""
+        repo = _make_repo(
+            "ml-experiment",
+            description="Jupyter notebook with sklearn and pandas model training",
+            language="Jupyter Notebook",
+            topics=["sklearn", "pandas"],
+        )
+        cats = detect_tech_categories([repo])
+        ml_cat = next(c for c in cats if c.name == "Machine Learning / AI")
+        ds_cat = next(c for c in cats if c.name == "Data Science")
+        assert ml_cat.detected is True
+        assert ds_cat.detected is True
+
+    def test_8_insufficient_complexity_evidence(self):
+        """TEST 8: Repository with insufficient complexity evidence returns complexity_level=unknown and confidence=low."""
+        repo = _make_repo("Heart_Stroke_Prediction", description="Data script", size=500)
+        results = estimate_complexity([repo])
+        assert len(results) == 1
+        assert results[0].complexity_level == "unknown"
+        assert results[0].confidence == "low"
+        assert "Insufficient technical complexity signals detected" in results[0].evidence
+
+    def test_9_no_docker_recommendation_when_docker_present(self):
+        """TEST 9: When Docker is detected as true, Docker is NOT in gaps and NOT recommended."""
+        repo = _make_repo("app", description="Dockerized app", topics=["docker"])
+        repo.file_signals = ["Dockerfile"]
+        cats = detect_tech_categories([repo])
+
+        # Run sanitizer on raw analysis with Docker detected
+        profile = _make_profile([repo])
+        activity = build_activity_summary(profile)
+        langs = build_language_distribution([repo])
+        comps = estimate_complexity([repo])
+
+        from app.engines.github_engine import _validate_and_sanitize_analysis
+        from app.schemas.github import GitHubAnalysis
+
+        raw = GitHubAnalysis(
+            profile=profile,
+            activity=activity,
+            languages=langs,
+            technical_categories=cats,
+            complexity_analyses=comps,
+            strengths=["Docker evidence"],
+            gaps=["No containerization evidence"], # Hallucinated gap
+            technical_patterns=["Containerized deployment"],
+            recommendations=["Add Dockerfile"], # Hallucinated rec
+            evidence_summary="Docker app"
+        )
+        sanitized = _validate_and_sanitize_analysis(raw)
+        assert not any("containerization" in g.lower() for g in sanitized.gaps)
+        assert not any("docker" in r.lower() for r in sanitized.recommendations)
+
+    def test_10_no_backend_evidence(self):
+        """TEST 10: When no backend evidence exists, Backend / Server is false with evidence = []."""
+        repo = _make_repo("docs-site", description="Documentation site in Markdown", language="Markdown")
+        cats = detect_tech_categories([repo])
+        backend_cat = next(c for c in cats if c.name == "Backend / Server")
+        assert backend_cat.detected is False
+        assert backend_cat.evidence == []
+
+
