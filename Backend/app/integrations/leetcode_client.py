@@ -51,9 +51,9 @@ _QUERY_TOPIC_TAGS = """
 query userTopicTags($username: String!) {
   matchedUser(username: $username) {
     tagProblemCounts {
-      advanced { tagName slug problemsSolved }
-      intermediate { tagName slug problemsSolved }
-      fundamental { tagName slug problemsSolved }
+      advanced { tagName tagSlug problemsSolved }
+      intermediate { tagName tagSlug problemsSolved }
+      fundamental { tagName tagSlug problemsSolved }
     }
   }
 }
@@ -64,6 +64,7 @@ query recentAcSubmissions($username: String!, $limit: Int!) {
   recentAcSubmissionList(username: $username, limit: $limit) {
     title
     timestamp
+    statusDisplay
   }
 }
 """
@@ -180,7 +181,7 @@ class LeetCodeAPIClient:
                 for entry in tag_counts.get(tier, []):
                     flat.append({
                         "tagName": entry.get("tagName", ""),
-                        "slug": entry.get("slug", ""),
+                        "slug": entry.get("tagSlug", "") or entry.get("slug", ""),
                         "problemsSolved": entry.get("problemsSolved", 0),
                         "tier": tier,
                     })
@@ -197,7 +198,9 @@ class LeetCodeAPIClient:
             return [
                 {
                     "title": s.get("title", "Unknown"),
-                    "timestamp": str(s.get("timestamp")) if s.get("timestamp") else None
+                    "timestamp": str(s.get("timestamp")) if s.get("timestamp") else None,
+                    "status": s.get("statusDisplay") or None,
+                    "difficulty": None
                 }
                 for s in submissions
             ]

@@ -65,15 +65,21 @@ class LeetCodeIntelligence:
 
         logger.info("[LeetCodeIntelligence] Running deterministic analysis...")
 
-        topic_analyses = analyze_topics(bundle.topic_tags)
-        difficulty_dist = build_difficulty_distribution(stats)
-        recommendations = generate_recommendations(stats, topic_analyses)
+        topics_available = bundle.status.topics_available
+        if topics_available:
+            topic_analyses = analyze_topics(bundle.topic_tags, stats=stats)
+            strong_topics = [t.topic for t in topic_analyses if t.performance_level == "strong"]
+            weak_topics = [
+                t.topic for t in topic_analyses
+                if t.performance_level in ("beginner", "untested")
+            ]
+        else:
+            topic_analyses = []
+            strong_topics = []
+            weak_topics = []
 
-        strong_topics = [t.topic for t in topic_analyses if t.performance_level == "strong"]
-        weak_topics   = [
-            t.topic for t in topic_analyses
-            if t.performance_level in ("beginner", "untested")
-        ]
+        difficulty_dist = build_difficulty_distribution(stats)
+        recommendations = generate_recommendations(stats, topic_analyses, topics_available=topics_available)
 
         # Try contest data if the provider supports it
         contest = None

@@ -218,9 +218,10 @@ class TestLeetCodeIntelligence:
         engine = LeetCodeIntelligence(provider=MockProvider(bundle=bundle))
         result = engine.analyze("testuser")
 
-        assert all(t.performance_level == "untested" for t in result.topic_analysis)
+        assert result.topic_analysis == []
         assert result.data_source_status.topics_available is False
-        assert len(result.weak_topics) == len(CANONICAL_TOPICS)
+        assert result.weak_topics == []
+        assert result.strong_topics == []
 
     def test_strong_and_weak_classification(self):
         tags = [
