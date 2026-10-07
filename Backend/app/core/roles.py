@@ -1,6 +1,6 @@
 """Centralized configuration for target roles and categories across the system."""
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 ALLOWED_TARGET_ROLES: List[str] = [
     "Backend Developer",
