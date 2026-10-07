@@ -115,9 +115,51 @@ def test_github_connect_and_sync_flow(client: TestClient, auth_headers: dict):
     assert res_fetch_analysis.status_code == 200
     assert res_fetch_analysis.json()["data"]["analysis"]["profile"]["username"] == "Purv0040"
 
+    # Verify has_analysis is True when GET /api/v1/github is called
+    res_get_after_analysis = client.get("/api/v1/github", headers=auth_headers)
+    assert res_get_after_analysis.status_code == 200
+    assert res_get_after_analysis.json()["data"]["has_analysis"] is True
+
+    # Test repeated analyze calls behave safely / idempotently
+    with patch("app.integrations.ai_client.AIClient.analyze_github", new_callable=AsyncMock) as mock_ai_analyze:
+        mock_ai_analyze.return_value = mock_ai_output
+        res_analyze_again = client.post("/api/v1/github/analyze", headers=auth_headers)
+        assert res_analyze_again.status_code == 200
+        assert res_analyze_again.json()["success"] is True
+
     res_del = client.delete("/api/v1/github", headers=auth_headers)
     assert res_del.status_code == 200
     assert res_del.json()["data"]["disconnected"] is True
 
     res_after = client.get("/api/v1/github", headers=auth_headers)
     assert res_after.status_code == 404
+
+
+def test_github_ai_analysis_failure_handling(client: TestClient, auth_headers: dict):
+    """Verify that AI service failures return HTTP 502 with structured error details."""
+    from app.integrations.ai_client import AIClientError
+
+    mock_profile = {
+        "id": 54321,
+        "login": "testdev",
+        "name": "Test Dev",
+        "public_repos": 2,
+        "html_url": "https://github.com/testdev"
+    }
+
+    with patch("app.integrations.github_client.GitHubAPIClient.get_user_profile", new_callable=AsyncMock) as mock_get_profile:
+        mock_get_profile.return_value = mock_profile
+        client.post("/api/v1/github/connect", json={"github_username": "testdev"}, headers=auth_headers)
+
+    with patch("app.integrations.ai_client.AIClient.analyze_github", new_callable=AsyncMock) as mock_ai_analyze:
+        mock_ai_analyze.side_effect = AIClientError("AI Service error HTTP 500: Failed to generate valid structured output")
+
+        res = client.post("/api/v1/github/analyze", headers=auth_headers)
+        assert res.status_code == 502
+        body = res.json()
+        assert body["success"] is False
+        assert "AI GitHub analysis failed" in body["error"]["message"]
+
+    # Cleanup
+    client.delete("/api/v1/github", headers=auth_headers)
+

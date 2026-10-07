@@ -42,4 +42,3 @@ api_router.include_router(mentor.router, prefix="/mentor", tags=["AI Mentor"])
 api_router.include_router(achievements.router, prefix="/achievements", tags=["Achievements"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])
-

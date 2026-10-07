@@ -82,10 +82,10 @@ class ProjectService:
         live_url = (project_in.liveUrl or (project_in.links.live if project_in.links else None) or "").strip()
 
         # Generate initial STAR bullet evidence if not provided
-        tech_str = ", ".join(clean_techs[:3]) if clean_techs else "modern web frameworks"
+        tech_str = ", ".join(clean_techs[:3]) if clean_techs else "selected technologies"
         initial_bullets = [
-            f"Engineered {project_in.title} utilizing {tech_str}, delivering modular code architecture and sub-200ms latency.",
-            f"Integrated robust data validation and error handling across application components."
+            f"Engineered '{project_in.title}' utilizing {tech_str}, structuring core functional components.",
+            f"Integrated application features and data workflow using {tech_str}."
         ]
 
         # Check GitHub connection if GitHub URL is provided
@@ -104,7 +104,7 @@ class ProjectService:
             "technologies": clean_techs,
             "features": project_in.features,
             "achievements": project_in.achievements,
-            "architectureTags": clean_arch or ["REST API", "Microservices"],
+            "architectureTags": clean_arch,
             "links": {
                 "github": github_url or None,
                 "live": live_url or None,
@@ -115,9 +115,9 @@ class ProjectService:
             "github": github_info,
             "status": "active",
             "is_featured": project_in.is_featured,
-            "score": min(95, 75 + len(clean_techs) * 3 + (5 if github_url else 0)),
-            "scoreBadge": "Production Grade" if len(clean_techs) >= 4 else "System Architect",
-            "complexityScore": min(95, 75 + len(clean_techs) * 3),
+            "score": min(95, 65 + len(clean_techs) * 3 + (5 if github_url else 0)),
+            "scoreBadge": "Good Evidence" if len(clean_techs) >= 4 else "Foundational",
+            "complexityScore": min(95, 60 + len(clean_techs) * 3),
             "evidenceBullets": initial_bullets,
             "analysis": None,
             "analysis_status": "not_analyzed",
@@ -208,14 +208,23 @@ class ProjectService:
         """Trigger AI Project Intelligence analysis and save results."""
         project = await self.get_project_by_id(project_id, user_id)
 
+        github_url = project.get("githubUrl") or (project.get("links", {}).get("github") if isinstance(project.get("links"), dict) else None)
+        live_url = project.get("liveUrl") or (project.get("links", {}).get("live") if isinstance(project.get("links"), dict) else None)
+        demo_url = project.get("links", {}).get("demo") if isinstance(project.get("links"), dict) else None
+
         payload = {
             "title": project["title"],
             "description": project["description"],
             "category": project.get("category"),
             "role": project.get("role"),
+            "duration": project.get("duration"),
             "technologies": project.get("technologies", []),
+            "features": project.get("features", []),
+            "achievements": project.get("achievements", []),
             "architectureTags": project.get("architectureTags", []),
-            "github_url": project.get("githubUrl")
+            "github_url": github_url,
+            "live_url": live_url,
+            "demo_url": demo_url
         }
 
         await self.repo.update_analysis_status(project_id, user_id, "analyzing")

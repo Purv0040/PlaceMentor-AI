@@ -143,12 +143,18 @@ class ProjectRepository:
             "updated_at": now
         }
 
-        # If AI analysis extracted evidence bullets or complexity score, update root fields gracefully
         if "evidence_bullets" in analysis_data and isinstance(analysis_data["evidence_bullets"], list):
             update_fields["evidenceBullets"] = analysis_data["evidence_bullets"]
+        if "architecture_tags" in analysis_data and isinstance(analysis_data["architecture_tags"], list):
+            update_fields["architectureTags"] = analysis_data["architecture_tags"]
         if "score" in analysis_data and isinstance(analysis_data["score"], (int, float)):
             update_fields["score"] = int(analysis_data["score"])
+        if "complexity_score" in analysis_data and isinstance(analysis_data["complexity_score"], (int, float)):
+            update_fields["complexityScore"] = int(analysis_data["complexity_score"])
+        elif "score" in analysis_data and isinstance(analysis_data["score"], (int, float)):
             update_fields["complexityScore"] = int(analysis_data["score"])
+        if "score_badge" in analysis_data and isinstance(analysis_data["score_badge"], str):
+            update_fields["scoreBadge"] = analysis_data["score_badge"]
 
         res = await self.projects.update_one(query, {"$set": update_fields})
         return res.modified_count > 0 or res.matched_count > 0

@@ -114,8 +114,9 @@ class GitHubService:
                 profile_data = self._fetch_user(client, username)
                 repos = self._fetch_repos(client, username)
 
-            # Attach README detection
-            repos_with_readme = self._mark_readme_presence(repos)
+                # Attach README detection & lightweight file evidence inside active client context
+                repos_with_readme = self._mark_readme_presence(repos)
+                repos_enriched = self._enrich_lightweight_evidence(client, username, repos_with_readme)
 
             profile = GitHubProfileRaw(
                 username=profile_data.get("login", username),
@@ -127,7 +128,7 @@ class GitHubService:
                 location=profile_data.get("location"),
                 company=profile_data.get("company"),
                 blog=profile_data.get("blog"),
-                repositories=repos_with_readme,
+                repositories=repos_enriched,
             )
 
             self._set_cached(username, profile)
@@ -194,3 +195,180 @@ class GitHubService:
         for repo in repos:
             repo.has_readme = repo.size > 0
         return repos
+
+    def _enrich_lightweight_evidence(
+        self,
+        client: httpx.Client,
+        username: str,
+        repos: List[GitHubRepoRaw]
+    ) -> List[GitHubRepoRaw]:
+        """
+        Fetches full repository tree (Git Trees API), dependency signals, README signals,
+        and code signals for top non-fork repositories.
+        """
+        non_forks = [r for r in repos if not r.is_fork][:10]  # Cap at top 10 most recent non-fork repos
+        for repo in non_forks:
+            file_signals: List[str] = []
+            dependency_signals: List[str] = []
+            readme_signals: List[str] = []
+            code_signals: List[str] = []
+            tree_items: List[Dict[str, Any]] = []
+            branch = repo.default_branch or "main"
+
+            # 1. Git Trees API call
+            try:
+                tree_url = f"{self.BASE_URL}/repos/{username}/{repo.name}/git/trees/{branch}?recursive=1"
+                res = client.get(tree_url, timeout=6.0)
+
+                # Fallback to master if main returned 404
+                if res.status_code == 404 and branch != "master":
+                    branch = "master"
+                    tree_url = f"{self.BASE_URL}/repos/{username}/{repo.name}/git/trees/{branch}?recursive=1"
+                    res = client.get(tree_url, timeout=6.0)
+
+                if res.status_code == 200:
+                    tree_data = res.json()
+                    tree_items = tree_data.get("tree", [])
+                else:
+                    logger.error(
+                        "GitHub API tree error repo=%s status=%s branch=%s response=%s",
+                        repo.name, res.status_code, branch, res.text[:200]
+                    )
+            except Exception as e:
+                logger.error("Failed to fetch git tree for repo=%s branch=%s error=%s", repo.name, branch, e)
+
+            # 2. Extract file_signals from tree paths
+            paths = [item.get("path", "") for item in tree_items]
+            for path in paths:
+                path_lower = path.lower()
+                basename = path.split("/")[-1].lower()
+
+                if basename in (
+                    "dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yaml",
+                    "package.json", "requirements.txt", "pyproject.toml", "pipfile",
+                    "pom.xml", "build.gradle", "tsconfig.json", "angular.json",
+                    "manage.py", "app.py", "main.py", "server.js", "vite.config.js",
+                    "vite.config.ts", "next.config.js", "next.config.mjs"
+                ):
+                    file_signals.append(basename)
+
+                if ".github/workflows" in path_lower:
+                    file_signals.append(".github/workflows")
+                if "/components/" in path_lower or path_lower.startswith("src/components"):
+                    file_signals.append("src/components")
+                if "routes/" in path_lower or basename == "routes":
+                    file_signals.append("routes/")
+                if "controllers/" in path_lower or basename == "controllers":
+                    file_signals.append("controllers/")
+                if "models/" in path_lower or basename == "models":
+                    file_signals.append("models/")
+                if "tests/" in path_lower or "test/" in path_lower or basename.startswith("test_") or basename.endswith(".test.js") or basename.endswith(".spec.ts"):
+                    file_signals.append("tests/")
+
+            file_signals = list(dict.fromkeys(file_signals))
+
+            # 3. Extract dependencies
+            if any(f in file_signals for f in ["package.json", "requirements.txt", "pyproject.toml", "pipfile", "pom.xml"]):
+                dep_signals = self._extract_dependencies(client, username, repo.name, branch, file_signals)
+                dependency_signals.extend(dep_signals)
+
+            # 4. Extract README signals
+            if repo.has_readme or any("readme" in p.lower() for p in paths):
+                r_signals = self._extract_readme_signals(client, username, repo.name, branch)
+                readme_signals.extend(r_signals)
+
+            # 5. Extract Code signals
+            c_signals = self._extract_code_signals(paths, dependency_signals, file_signals)
+            code_signals.extend(c_signals)
+
+            repo.file_signals = file_signals
+            repo.dependency_signals = list(dict.fromkeys(dependency_signals))
+            repo.readme_signals = list(dict.fromkeys(readme_signals))
+            repo.code_signals = list(dict.fromkeys(code_signals))
+
+            logger.info(
+                "GitHub evidence debug repo=%s branch=%s tree_items=%s file_signals=%s dep_signals=%s readme_signals=%s code_signals=%s",
+                repo.name, branch, len(tree_items), repo.file_signals, repo.dependency_signals, repo.readme_signals, repo.code_signals
+            )
+
+        return repos
+
+    def _extract_dependencies(
+        self, client: httpx.Client, username: str, repo_name: str, branch: str, file_signals: List[str]
+    ) -> List[str]:
+        deps: List[str] = []
+        raw_base = f"https://raw.githubusercontent.com/{username}/{repo_name}/{branch}"
+
+        if "package.json" in file_signals:
+            try:
+                res = client.get(f"{raw_base}/package.json", timeout=4.0)
+                if res.status_code == 200:
+                    pkg_data = res.json()
+                    all_deps = {**pkg_data.get("dependencies", {}), **pkg_data.get("devDependencies", {})}
+                    key_pkgs = ["react", "vue", "angular", "next", "express", "nestjs", "vite", "tailwindcss",
+                                "mongodb", "mongoose", "prisma", "pg", "mysql2", "jest", "vitest", "cypress",
+                                "jsonwebtoken", "passport", "bcrypt"]
+                    for pkg in key_pkgs:
+                        if pkg in all_deps:
+                            deps.append(pkg)
+            except Exception as e:
+                logger.debug("Failed parsing package.json for %s: %s", repo_name, e)
+
+        if "requirements.txt" in file_signals:
+            try:
+                res = client.get(f"{raw_base}/requirements.txt", timeout=4.0)
+                if res.status_code == 200:
+                    text = res.text.lower()
+                    key_py = ["fastapi", "flask", "django", "uvicorn", "gunicorn", "scikit-learn", "sklearn",
+                              "tensorflow", "torch", "pytorch", "pandas", "numpy", "pytest", "pymongo",
+                              "sqlalchemy", "psycopg2", "python-jose", "passlib", "celery"]
+                    for py_pkg in key_py:
+                        if py_pkg in text:
+                            deps.append(py_pkg)
+            except Exception as e:
+                logger.debug("Failed parsing requirements.txt for %s: %s", repo_name, e)
+
+        return list(dict.fromkeys(deps))
+
+    def _extract_readme_signals(
+        self, client: httpx.Client, username: str, repo_name: str, branch: str
+    ) -> List[str]:
+        readme_techs: List[str] = []
+        raw_base = f"https://raw.githubusercontent.com/{username}/{repo_name}/{branch}"
+        for fname in ["README.md", "readme.md", "README.MD"]:
+            try:
+                res = client.get(f"{raw_base}/{fname}", timeout=4.0)
+                if res.status_code == 200:
+                    content = res.text[:3000].lower()
+                    tech_keywords = {
+                        "react": "React", "vue": "Vue", "angular": "Angular", "next.js": "Next.js",
+                        "fastapi": "FastAPI", "flask": "Flask", "django": "Django", "express": "Express",
+                        "spring boot": "Spring Boot", "docker": "Docker", "kubernetes": "Kubernetes",
+                        "mongodb": "MongoDB", "postgresql": "PostgreSQL", "mysql": "MySQL",
+                        "pytorch": "PyTorch", "tensorflow": "TensorFlow", "scikit-learn": "scikit-learn",
+                        "jwt": "JWT", "oauth": "OAuth", "pytest": "pytest", "jest": "Jest"
+                    }
+                    for kw, label in tech_keywords.items():
+                        if kw in content:
+                            readme_techs.append(label)
+                    break
+            except Exception as e:
+                logger.debug("Failed reading README for %s: %s", repo_name, e)
+        return list(dict.fromkeys(readme_techs))
+
+    def _extract_code_signals(
+        self, paths: List[str], dependency_signals: List[str], file_signals: List[str]
+    ) -> List[str]:
+        code_sigs: List[str] = []
+        paths_lower = [p.lower() for p in paths]
+
+        if any("react" in d for d in dependency_signals) or any(p.endswith(".jsx") or p.endswith(".tsx") for p in paths_lower):
+            code_sigs.append("React UI components detected")
+        if "fastapi" in dependency_signals or any("main.py" in f for f in file_signals):
+            code_sigs.append("Python entry point detected")
+        if "express" in dependency_signals or any("server.js" in f for f in file_signals):
+            code_sigs.append("Node server entry point detected")
+        if any("test" in p for p in paths_lower):
+            code_sigs.append("Automated test suite files detected")
+
+        return list(dict.fromkeys(code_sigs))

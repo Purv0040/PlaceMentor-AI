@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class GitHubConnectRequest(BaseModel):
-    github_username: str = Field(..., example="Purv0040", description="GitHub username to connect")
+    github_username: str = Field(..., example="octocat", description="GitHub username to connect")
 
 
 class GitHubProfileDetail(BaseModel):

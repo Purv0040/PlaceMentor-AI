@@ -36,5 +36,10 @@ Activity:
 ---
 
 Based ONLY on the above data, produce a JSON response matching the required schema.
-The "evidence_summary" should be 2-3 sentences max.
+You MUST include all of the following keys in your JSON object:
+- "strengths": List of strings citing specific portfolio strengths.
+- "gaps": List of strings citing observable missing tech or gaps.
+- "technical_patterns": List of strings detailing tech stack patterns across repos.
+- "recommendations": List of actionable portfolio recommendations.
+- "evidence_summary": A 2-3 sentence summary of the portfolio based strictly on available evidence.
 """

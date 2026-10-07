@@ -45,3 +45,49 @@ def test_llm_service_structured_generation_mock():
         
     # Restore original for safety
     service.provider.generate_json = original_json_gen
+
+
+def test_github_interpretation_structured_generation_default_mock():
+    """Verify that MockLLMProvider natively returns valid LLMGitHubInterpretation without extra monkeypatching."""
+    from app.schemas.github import LLMGitHubInterpretation
+    from app.prompts.github_prompts import GITHUB_INTERPRETATION_PROMPT
+
+    service = LLMService()
+    prompt = GITHUB_INTERPRETATION_PROMPT.format(
+        username="testuser",
+        public_repos=5,
+        non_fork_repos=5,
+        total_stars=10,
+        primary_language="Python",
+        all_languages="Python, JavaScript",
+        technical_categories="Backend",
+        complexity_analyses="None",
+        most_recent_push="2024-01-01",
+        most_starred_repo="my-repo",
+        most_starred_count=10,
+    )
+    result = service.generate_structured(prompt, LLMGitHubInterpretation)
+    assert isinstance(result, LLMGitHubInterpretation)
+    assert len(result.strengths) > 0
+    assert len(result.gaps) > 0
+    assert len(result.technical_patterns) > 0
+    assert len(result.recommendations) > 0
+    assert len(result.evidence_summary) > 0
+
+
+def test_structured_generation_error_detail_logging():
+    """Verify detailed error messages and raw response logging on validation failure."""
+    service = LLMService()
+
+    def bad_schema_gen(prompt, **kwargs):
+        return '{"strengths": ["Only strengths provided"]}'  # Missing required fields
+
+    service.provider.generate_json = bad_schema_gen
+
+    from app.schemas.github import LLMGitHubInterpretation
+    with pytest.raises(ValueError) as exc_info:
+        service.generate_structured("LLMGitHubInterpretation prompt", LLMGitHubInterpretation, max_retries=1)
+
+    assert "Failed to generate valid structured output" in str(exc_info.value)
+    assert "ValidationError" in str(exc_info.value)
+

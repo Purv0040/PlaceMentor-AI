@@ -27,6 +27,7 @@ from app.services.llm_service import LLMService
 from app.analyzers.resume_analyzer import ResumeAnalyzer
 from app.engines.github_engine import GitHubIntelligence
 from app.engines.leetcode_engine import LeetCodeIntelligence
+from app.engines.project_engine import ProjectIntelligenceEngine
 from app.engines.profile_engine import StudentProfileIntelligenceEngine
 from app.engines.skill_gap_engine import SkillGapEngine
 from app.engines.readiness_engine import PlacementReadinessEngine
@@ -83,6 +84,7 @@ llm_service = LLMService()
 resume_analyzer = ResumeAnalyzer()
 github_intelligence = GitHubIntelligence()
 leetcode_intelligence = LeetCodeIntelligence()
+project_intelligence_engine = ProjectIntelligenceEngine(llm_service=llm_service)
 profile_intelligence_engine = StudentProfileIntelligenceEngine()
 skill_gap_engine = SkillGapEngine(llm_service=llm_service)
 readiness_engine = PlacementReadinessEngine()
@@ -220,38 +222,12 @@ async def analyze_leetcode(request: LeetCodeRequest):
 @app.post("/api/ai/project/analyze", response_model=ProjectAIAnalysis)
 async def analyze_project(request: ProjectAnalyzeRequest):
     """
-    Analyze project technical depth, architecture tags, and STAR resume evidence.
+    Analyze project technical depth, architecture tags, AST code audit, and STAR resume evidence.
     """
     try:
-        tech_str = ", ".join(request.technologies) if request.technologies else "General Software"
-        bullets = [
-            f"Engineered '{request.title}' utilizing {tech_str}, ensuring high modularity and scalable system architecture.",
-            f"Implemented core backend features for '{request.title}' maintaining sub-200ms API response throughput."
-        ]
-        score = min(98, max(70, 75 + len(request.technologies) * 3 + (10 if request.github_url else 0)))
-        score_badge = "Production Grade" if score >= 88 else "System Architect" if score >= 80 else "Good Evidence"
-        
-        return ProjectAIAnalysis(
-            score=score,
-            score_badge=score_badge,
-            complexity_score=score,
-            architecture_tags=request.architectureTags or ["Microservices", "REST API"],
-            evidence_bullets=bullets,
-            strengths=[
-                f"Solid technical stack integration using {tech_str}.",
-                "Clear separation of concerns and architectural modularity."
-            ],
-            weaknesses=[
-                "Lack of automated CI/CD pipeline documentation.",
-                "Could include load testing benchmarks under high concurrent traffic."
-            ],
-            recommendations=[
-                "Add Docker containerization and Docker Compose setup.",
-                "Include unit and integration test suites with mock assertions.",
-                "Highlight STAR metrics in resume bullet descriptions."
-            ]
-        )
+        return project_intelligence_engine.analyze(request)
     except Exception as e:
+        logger.error("Project AI Analysis failed: %s", e)
         raise HTTPException(status_code=500, detail=f"Project AI analysis failed: {str(e)}")
 
 

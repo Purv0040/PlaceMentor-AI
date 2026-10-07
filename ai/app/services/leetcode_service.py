@@ -120,12 +120,15 @@ class BaseLeetCodeProvider(ABC):
         try:
             bundle.topic_tags = self.fetch_topic_data(username)
             bundle.status.topics_available = bool(bundle.topic_tags)
+            if not bundle.topic_tags:
+                bundle.status.notes.append("Topic analysis is unavailable because topic/tag data could not be retrieved from the LeetCode provider.")
         except Exception as e:
-            bundle.status.notes.append(f"Topic data unavailable: {e}")
+            bundle.status.topics_available = False
+            bundle.status.notes.append(f"Topic analysis is unavailable because topic/tag data could not be retrieved from the LeetCode provider: {e}")
 
         try:
             bundle.recent_submissions = self.fetch_recent_activity(username)
-            bundle.status.recent_activity_available = bool(bundle.recent_submissions)
+            bundle.status.recent_activity_available = True
         except Exception as e:
             bundle.status.notes.append(f"Recent activity unavailable: {e}")
 
@@ -168,9 +171,9 @@ _QUERY_TOPIC_TAGS = """
 query userTopicTags($username: String!) {
   matchedUser(username: $username) {
     tagProblemCounts {
-      advanced { tagName slug problemsSolved }
-      intermediate { tagName slug problemsSolved }
-      fundamental { tagName slug problemsSolved }
+      advanced { tagName tagSlug problemsSolved }
+      intermediate { tagName tagSlug problemsSolved }
+      fundamental { tagName tagSlug problemsSolved }
     }
   }
 }
@@ -181,6 +184,7 @@ query recentAcSubmissions($username: String!, $limit: Int!) {
   recentAcSubmissionList(username: $username, limit: $limit) {
     title
     timestamp
+    statusDisplay
   }
 }
 """
@@ -296,7 +300,7 @@ class LeetCodeGraphQLProvider(BaseLeetCodeProvider):
             for entry in tag_counts.get(tier, []):
                 flat.append({
                     "tagName": entry.get("tagName", ""),
-                    "slug": entry.get("slug", ""),
+                    "slug": entry.get("tagSlug", "") or entry.get("slug", ""),
                     "problemsSolved": entry.get("problemsSolved", 0),
                     "tier": tier,
                 })
@@ -308,7 +312,9 @@ class LeetCodeGraphQLProvider(BaseLeetCodeProvider):
         return [
             RecentSubmission(
                 title=s.get("title", "Unknown"),
-                timestamp=s.get("timestamp"),
+                timestamp=str(s.get("timestamp")) if s.get("timestamp") else None,
+                status=s.get("statusDisplay") or None,
+                difficulty=None,
             )
             for s in submissions
         ]
