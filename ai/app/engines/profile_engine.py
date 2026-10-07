@@ -361,6 +361,31 @@ class ProfileEngine:
             else 0
         )
 
+        quantified_projects = [
+            project
+            for project in extraction.projects or []
+            if getattr(project, "has_metrics", False)
+            or any(
+                re.search(r"\d", cls._safe_text(b))
+                for b in (project.bullets or [])
+            )
+        ]
+
+        # A resume with quantified project outcomes and no flagged weak bullets
+        # already provides complete impact evidence for this component.
+        if (
+            quantified_projects
+            and len(quantified_projects) == len(extraction.projects or [])
+            and not weak_count
+        ):
+            return ScoreDetail(
+                score=100,
+                reason=(
+                    f"Evaluated {len(bullets)} bullet point(s); all projects "
+                    "include quantified outcomes and no weak bullets were flagged."
+                ),
+            )
+
         # Dynamic quality signals:
         # - measurable evidence
         # - reasonable bullet detail
