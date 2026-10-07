@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Backend Tests
         env:
-          PYTHONPATH: .
+          PYTHONPATH: Backend:.
           JWT_SECRET_KEY: "default_secret_key_for_development_and_ci_testing_32bytes"
           MONGODB_URI: "mongodb://localhost:27017/placementor_test"
           APP_ENV: "testing"
@@ -51,7 +51,8 @@ jobs:
 
       - name: Run AI Microservice Tests
         env:
-          PYTHONPATH: .
+          PYTHONPATH: ai:.
+          APP_ENV: "testing"
         run: |
           cd ai
           python -m pytest tests/ -v
