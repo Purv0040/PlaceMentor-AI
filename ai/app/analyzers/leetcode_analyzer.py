@@ -13,7 +13,7 @@ Transparent rule table::
   solved_count >= 1                           → beginner    (low confidence)
   solved_count == 0                           → untested    (low confidence)
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.schemas.leetcode import (
     DifficultyDistribution,
