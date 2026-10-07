@@ -48,6 +48,10 @@ export const ResumePage = () => {
   const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
 
   useEffect(() => {
+    fetchResumes();
+  }, []);
+
+  useEffect(() => {
     const activeRole = user?.targetRole;
     const activeResume = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
     setResumeData(prev => ({

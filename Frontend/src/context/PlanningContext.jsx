@@ -11,6 +11,22 @@ export const PlanningProvider = ({ children }) => {
     planningService.saveState(planningState);
   }, [planningState]);
 
+  useEffect(() => {
+    const fetchApiPlanning = async () => {
+      const [apiTasks, apiRoadmap] = await Promise.all([
+        planningService.getTasksFromApi(),
+        planningService.getRoadmapFromApi(),
+      ]);
+
+      setPlanningState((prev) => ({
+        ...prev,
+        ...(apiTasks && apiTasks.length > 0 ? { tasks: apiTasks } : {}),
+        ...(apiRoadmap ? { roadmap: apiRoadmap } : {}),
+      }));
+    };
+    fetchApiPlanning();
+  }, []);
+
   const showToast = (message) => {
     setToastNotification(message);
     setTimeout(() => setToastNotification(null), 3000);
@@ -24,7 +40,6 @@ export const PlanningProvider = ({ children }) => {
 
       const completedCount = updatedTasks.filter((t) => t.completed).length;
       const totalCount = updatedTasks.length;
-      const completionPercent = Math.round((completedCount / totalCount) * 100);
 
       const updatedProgress = {
         ...prevState.progress,
@@ -36,6 +51,10 @@ export const PlanningProvider = ({ children }) => {
       const targetTask = prevState.tasks.find((t) => t.id === taskId);
       const isCompleted = targetTask ? !targetTask.completed : false;
       showToast(isCompleted ? `Task completed! (+1 task)` : `Task marked in-complete`);
+
+      if (isCompleted && !taskId.startsWith('task-skill-')) {
+        planningService.completeTaskInApi(taskId).catch(() => {});
+      }
 
       return {
         ...prevState,

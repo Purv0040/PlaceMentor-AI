@@ -26,16 +26,79 @@ export const GithubPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
 
+  const fetchGithubData = async () => {
+    try {
+      const profileRes = await githubService.getProfile();
+      if (profileRes && profileRes.data) {
+        const pData = profileRes.data;
+        setIsConnected(pData.is_connected ?? true);
+        const stats = pData.statistics || {};
+        const profile = pData.profile || {};
+
+        const reposRes = await githubService.getRepositories(1, 50);
+        const repos = (reposRes && reposRes.data && reposRes.data.items) || [];
+
+        setData(prev => ({
+          ...prev,
+          handle: pData.github_username || profile.login || prev.handle,
+          profileUrl: profile.html_url || `https://github.com/${pData.github_username || prev.handle}`,
+          lastSynced: pData.sync?.last_synced_at ? new Date(pData.sync.last_synced_at).toLocaleTimeString() : 'Just now',
+          metrics: {
+            ...prev.metrics,
+            impactScore: stats.impact_score || prev.metrics.impactScore,
+            totalCommitsYear: stats.total_commits_year || prev.metrics.totalCommitsYear,
+            starsEarned: stats.stars_earned || prev.metrics.starsEarned,
+            reposAnalyzedCount: repos.length || prev.metrics.reposAnalyzedCount,
+          },
+          topRepositories: repos.length > 0 ? repos.slice(0, 4).map(r => ({
+            id: r.id,
+            name: r.name,
+            fullName: r.full_name,
+            url: r.html_url,
+            language: r.language || 'Code',
+            stars: r.stars || 0,
+            forks: r.forks || 0,
+            astScore: r.ast_score || 85,
+            qualityTier: r.qualityTier || 'Verified',
+            description: r.description || 'Synchronized GitHub Repository',
+            tags: r.tags || [r.language].filter(Boolean)
+          })) : prev.topRepositories
+        }));
+      }
+    } catch (err) {
+      console.warn('Failed to load live GitHub profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchGithubData();
+  }, []);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    const updated = await githubService.syncProfile(data.handle);
-    setData(updated);
-    setIsRefreshing(false);
+    try {
+      await githubService.syncProfile();
+      await fetchGithubData();
+    } catch (e) {
+      console.warn('GitHub sync error:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleToggleConnection = async () => {
-    const nextState = await githubService.toggleConnection(isConnected);
-    setIsConnected(nextState);
+    try {
+      if (isConnected) {
+        await githubService.disconnect();
+        setIsConnected(false);
+      } else {
+        await githubService.connect(data.handle);
+        setIsConnected(true);
+        fetchGithubData();
+      }
+    } catch (e) {
+      console.warn('GitHub toggle connection error:', e);
+    }
   };
 
   return (

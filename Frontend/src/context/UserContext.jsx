@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { profileService } from '../services/profileService';
 
 const USER_KEY = 'placementor_user_data';
 
@@ -51,14 +52,32 @@ export const UserProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    const activeUser = authService.getCurrentUser();
-    if (activeUser) {
-      setUser(prev => ({
-        ...prev,
-        ...activeUser,
-        name: prev.name || activeUser.name || activeUser.full_name || 'digisha savaliya'
-      }));
-    }
+    const fetchApiProfile = async () => {
+      const activeUser = authService.getCurrentUser();
+      if (activeUser) {
+        setUser(prev => ({
+          ...prev,
+          ...activeUser,
+          name: prev.name || activeUser.name || activeUser.full_name || 'Student Candidate'
+        }));
+
+        const apiProfile = await profileService.getProfileFromApi();
+        if (apiProfile) {
+          setUser(prev => ({
+            ...prev,
+            ...apiProfile,
+            name: apiProfile.full_name || apiProfile.name || prev.name,
+            targetRole: apiProfile.target_role || apiProfile.targetRole || prev.targetRole,
+            college: apiProfile.college || prev.college,
+            degree: apiProfile.degree || prev.degree,
+            graduationYear: apiProfile.graduation_year || apiProfile.graduationYear || prev.graduationYear,
+            githubHandle: apiProfile.github_username || apiProfile.githubHandle || prev.githubHandle,
+            leetcodeHandle: apiProfile.leetcode_username || apiProfile.leetcodeHandle || prev.leetcodeHandle,
+          }));
+        }
+      }
+    };
+    fetchApiProfile();
   }, []);
 
   const updateUserProfile = (newDetails) => {
@@ -75,6 +94,7 @@ export const UserProvider = ({ children }) => {
       } catch (e) {
         console.error('Failed to save user profile:', e);
       }
+      profileService.updateProfileInApi(updated).catch(() => {});
       return updated;
     });
   };

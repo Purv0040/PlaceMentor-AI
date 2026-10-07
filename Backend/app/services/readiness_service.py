@@ -10,6 +10,8 @@ from app.repositories.resume_repository import ResumeRepository
 from app.repositories.github_repository import GitHubRepository
 from app.repositories.leetcode_repository import LeetCodeRepository
 from app.repositories.project_repository import ProjectRepository
+from app.repositories.communication_repository import CommunicationRepository
+from app.repositories.interview_repository import InterviewRepository
 from app.engines.readiness_engine import DeterministicReadinessEngine
 from app.integrations.ai_client import AIClient, AIClientError
 
@@ -31,6 +33,8 @@ class ReadinessService:
         self.github_repo = GitHubRepository(db)
         self.leetcode_repo = LeetCodeRepository(db)
         self.project_repo = ProjectRepository(db)
+        self.comm_repo = CommunicationRepository(db)
+        self.interview_repo = InterviewRepository(db)
         self.ai_client = ai_client or AIClient()
         self.engine = DeterministicReadinessEngine()
 
@@ -39,10 +43,17 @@ class ReadinessService:
         user_id: str,
         target_role_override: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Collect telemetry from all 6 modules, compute deterministic readiness, enrich with AI, and persist."""
-        # 1. Fetch Student Profile
+        """Collect telemetry from all modules, compute deterministic readiness, enrich with AI, and persist."""
+        # 1. Fetch Student Profile & Determine Target Role
         student_profile = await self.profile_repo.get_by_user_id(user_id)
-        target_role = target_role_override or (student_profile.get("target_role") if student_profile else None) or "Backend Developer"
+
+        target_role = target_role_override
+        if not target_role and student_profile:
+            career = student_profile.get("career", {})
+            if isinstance(career, dict):
+                target_role = career.get("targetRole") or career.get("target_role")
+            if not target_role:
+                target_role = student_profile.get("target_role")
 
         # 2. Fetch Resume Intelligence
         resume_doc = await self.resume_repo.find_active_by_user(user_id)
@@ -59,7 +70,14 @@ class ReadinessService:
         # 5. Fetch Projects
         projects_list = await self.project_repo.find_by_user_id(user_id)
 
-        # 6. Check for stale telemetry data
+        # 6. Fetch Communication & Mock Interview Telemetry
+        comm_history = await self.comm_repo.get_history_by_user_id(user_id, limit=1)
+        comm_doc = comm_history[0] if comm_history else None
+
+        interview_history = await self.interview_repo.get_history_by_user_id(user_id, limit=1)
+        interview_doc = interview_history[0] if interview_history else None
+
+        # 7. Check for stale telemetry data
         stale_warnings: List[Dict[str, Any]] = []
         now = datetime.utcnow()
 
@@ -69,7 +87,7 @@ class ReadinessService:
                 stale_warnings.append({
                     "source": "leetcode",
                     "last_updated": last_up.isoformat(),
-                    "message": "LeetCode data has not been synchronized in over 7 days."
+                    "message": "LeetCode telemetry has not been synchronized in over 7 days."
                 })
 
         if github_doc and github_doc.get("updated_at"):
@@ -81,7 +99,16 @@ class ReadinessService:
                     "message": "GitHub repository data has not been synchronized in over 14 days."
                 })
 
-        # 7. Compute deterministic scoring across 7 categories
+        if resume_doc and resume_doc.get("updated_at"):
+            last_up = resume_doc["updated_at"]
+            if isinstance(last_up, datetime) and (now - last_up).days > 30:
+                stale_warnings.append({
+                    "source": "resume",
+                    "last_updated": last_up.isoformat(),
+                    "message": "Resume analysis is older than 30 days. Re-upload your resume to refresh ATS audit."
+                })
+
+        # 8. Compute deterministic scoring across 7 categories
         computed_result = self.engine.compute(
             target_role=target_role,
             profile_data=student_profile,
@@ -89,29 +116,37 @@ class ReadinessService:
             github_data=github_doc,
             leetcode_data=leetcode_doc,
             projects_list=projects_list,
-            interview_data=None
+            communication_data=comm_doc,
+            interview_data=interview_doc
         )
         computed_result["stale_data"] = stale_warnings
 
-        # 8. Enrich with external AI microservice interpretation if available
+        # 9. Enrich with external AI microservice interpretation if available
         try:
-            ai_payload = {
-                "target_role": target_role,
-                "student_profile": student_profile,
-                "resume_analysis": resume_doc.get("analysis") if resume_doc else None,
-                "github_analysis": github_doc.get("analysis") if github_doc else None,
-                "leetcode_analysis": leetcode_doc.get("analysis") if leetcode_doc else None,
-            }
-            ai_interpretation = await self.ai_client.calculate_readiness(ai_payload)
-            if ai_interpretation and isinstance(ai_interpretation, dict):
-                if ai_interpretation.get("strengths"):
-                    computed_result["strengths"] = ai_interpretation["strengths"][:4]
-                if ai_interpretation.get("key_gaps"):
-                    computed_result["key_gaps"] = ai_interpretation["key_gaps"][:4]
+            if target_role:
+                ai_payload = {
+                    "target_role": target_role,
+                    "student_profile": student_profile,
+                    "resume_analysis": resume_doc.get("analysis") if resume_doc else None,
+                    "github_analysis": github_doc.get("analysis") if github_doc else None,
+                    "leetcode_analysis": leetcode_doc.get("analysis") if leetcode_doc else None,
+                }
+                ai_interpretation = await self.ai_client.calculate_readiness(ai_payload)
+                if ai_interpretation and isinstance(ai_interpretation, dict):
+                    if ai_interpretation.get("strengths"):
+                        for s in ai_interpretation["strengths"]:
+                            if s not in computed_result["strengths"]:
+                                computed_result["strengths"].append(s)
+                        computed_result["strengths"] = computed_result["strengths"][:4]
+                    if ai_interpretation.get("key_gaps"):
+                        for g in ai_interpretation["key_gaps"]:
+                            if g not in computed_result["key_gaps"]:
+                                computed_result["key_gaps"].append(g)
+                        computed_result["key_gaps"] = computed_result["key_gaps"][:4]
         except Exception as e:
             logger.warning("AI microservice readiness calculation fallback engaged: %s", e)
 
-        # 9. Persist result in MongoDB Atlas
+        # 10. Persist result in MongoDB Atlas
         created = await self.repo.create_analysis(user_id, computed_result)
         logger.info("Successfully saved Placement Readiness Analysis for user %s (score %s)", user_id, created.get("overall_score"))
         return created

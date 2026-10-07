@@ -29,16 +29,28 @@ export const DashboardPage = () => {
   const [readinessScore, setReadinessScore] = useState(user?.overallReadinessScore || dashboardData.readinessScore);
   const [readinessLabel, setReadinessLabel] = useState(dashboardData.readinessTrend);
   const [aiInsights, setAiInsights] = useState(dashboardData.aiInsights);
+  const [vectorScores, setVectorScores] = useState(dashboardData.vectorScores);
 
   useEffect(() => {
     if (user?.overallReadinessScore) {
       setReadinessScore(user.overallReadinessScore);
     }
     readinessService.getSummary().then((summary) => {
-      if (summary && typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
-        setReadinessScore(Math.round(summary.overall_score));
+      if (summary) {
+        if (typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
+          setReadinessScore(Math.round(summary.overall_score));
+        }
         if (summary.readiness_label) {
           setReadinessLabel(summary.readiness_label);
+        }
+        if (summary.vector_scores && summary.vector_scores.length > 0) {
+          setVectorScores(summary.vector_scores.map(v => ({
+            id: v.id || v.vector_id,
+            vector: v.name || v.vector,
+            score: Math.round(v.score || 0),
+            target: v.target || 85,
+            color: v.color || '#6366f1'
+          })));
         }
       }
     });
@@ -191,7 +203,7 @@ export const DashboardPage = () => {
             </div>
 
             <div className="space-y-3.5">
-              {dashboardData.vectorScores.map((v) => (
+              {vectorScores.map((v) => (
                 <div key={v.id} className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-200 font-semibold">{v.vector}</span>

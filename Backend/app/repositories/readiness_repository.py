@@ -36,7 +36,7 @@ class ReadinessRepository:
         now = datetime.utcnow()
         doc = {
             "user_id": str(user_id),
-            "target_role": analysis_dict.get("target_role", "Backend Developer"),
+            "target_role": analysis_dict.get("target_role") or "Unspecified Role",
             "overall_score": analysis_dict.get("overall_score"),
             "overall_confidence": analysis_dict.get("overall_confidence", 0.0),
             "readiness_label": analysis_dict.get("readiness_label", "Insufficient Evidence"),
@@ -50,6 +50,7 @@ class ReadinessRepository:
             "role_alignment": analysis_dict.get("role_alignment"),
             "data_completeness": analysis_dict.get("data_completeness"),
             "stale_data": analysis_dict.get("stale_data", []),
+            "provenance": analysis_dict.get("provenance", {}),
             "calculation_version": analysis_dict.get("calculation_version", "1.0"),
             "created_at": now,
             "updated_at": now

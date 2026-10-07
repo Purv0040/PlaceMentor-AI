@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class CategoryScoreSchema(BaseModel):
     category: str = Field(..., example="Resume")
+    key: Optional[str] = Field(None, example="resume")
     score: Optional[int] = Field(None, ge=0, le=100, example=78)
     weight: float = Field(..., example=0.15)
     weighted_score: float = Field(..., example=11.7)
@@ -19,6 +20,9 @@ class RoleAlignmentSchema(BaseModel):
     role: str = Field(..., example="Backend Developer")
     aligned_skills: List[str] = Field(default_factory=list, example=["Python", "FastAPI"])
     missing_skills: List[str] = Field(default_factory=list, example=["Docker", "Kubernetes"])
+    role_alignment_score: Optional[int] = Field(None, example=75)
+    status: Optional[str] = Field("scored", example="scored")
+    message: Optional[str] = Field(None, example="Target role alignment evaluated.")
 
 
 class DataCompletenessSchema(BaseModel):
@@ -74,6 +78,7 @@ class ReadinessResponse(BaseModel):
     role_alignment: Optional[RoleAlignmentSchema] = None
     data_completeness: Optional[DataCompletenessSchema] = None
     stale_data: List[StaleDataItemSchema] = Field(default_factory=list)
+    provenance: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
     calculation_version: str = Field("1.0")
     created_at: datetime

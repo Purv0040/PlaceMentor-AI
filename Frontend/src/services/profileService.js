@@ -1,8 +1,35 @@
-// Profile Service for candidate details and consistent profile completion calculation
+import { apiRequest } from './api';
 
 const PROFILE_STORAGE_KEY = 'placementCopilotProfile';
 
 export const profileService = {
+  getProfileFromApi: async () => {
+    try {
+      const res = await apiRequest('/users/me/profile');
+      if (res && res.success && res.data) {
+        return res.data;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch profile from API, fallback to local', e);
+    }
+    return null;
+  },
+
+  updateProfileInApi: async (profileData) => {
+    try {
+      const res = await apiRequest('/users/me/profile', {
+        method: 'PUT',
+        body: JSON.stringify(profileData)
+      });
+      if (res && res.success && res.data) {
+        return res.data;
+      }
+    } catch (e) {
+      console.warn('Failed to update profile in API', e);
+    }
+    return null;
+  },
+
   getProfile: (userContext = null, onboardingData = null) => {
     try {
       const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
@@ -64,3 +91,4 @@ export const profileService = {
     return Math.round((filledCount / fields.length) * 100);
   }
 };
+

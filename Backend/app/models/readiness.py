@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class CategoryScoreModel(BaseModel):
     category: str = Field(..., description="Category name (e.g. Resume, DSA, Projects, GitHub, CS Fundamentals, Communication, Interview)")
+    key: Optional[str] = Field(None, description="Stable internal category key (e.g. resume, dsa, projects)")
     score: Optional[int] = Field(None, ge=0, le=100, description="Category score out of 100")
     weight: float = Field(..., ge=0.0, le=1.0, description="Configured weight for this category")
     weighted_score: float = Field(0.0, description="Weighted contribution to overall score")
@@ -19,6 +20,9 @@ class RoleAlignmentModel(BaseModel):
     role: str = Field(..., description="Target placement role")
     aligned_skills: List[str] = Field(default_factory=list)
     missing_skills: List[str] = Field(default_factory=list)
+    role_alignment_score: Optional[int] = Field(None, description="Percentage of target role skills aligned")
+    status: str = Field("scored", description="'scored' or 'insufficient_data'")
+    message: Optional[str] = Field(None, description="Role alignment status message")
 
 
 class DataCompletenessModel(BaseModel):
@@ -42,7 +46,7 @@ class ReadinessAnalysisModel(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
     user_id: str = Field(..., description="ID of authenticated user owning the analysis")
 
-    target_role: str = Field("Backend Developer", description="Student's target placement role")
+    target_role: Optional[str] = Field("Unspecified Role", description="Student's target placement role")
     overall_score: Optional[int] = Field(None, ge=0, le=100, description="Normalized overall readiness score (0-100)")
     overall_confidence: float = Field(0.0, ge=0.0, le=1.0, description="Overall weighted confidence")
     readiness_label: str = Field("Insufficient Evidence", description="Label: Placement Ready, Advanced, Developing, Needs Work, Insufficient Evidence")
@@ -60,6 +64,7 @@ class ReadinessAnalysisModel(BaseModel):
     role_alignment: Optional[RoleAlignmentModel] = None
     data_completeness: Optional[DataCompletenessModel] = Field(default_factory=DataCompletenessModel)
     stale_data: List[StaleDataItemModel] = Field(default_factory=list)
+    provenance: Dict[str, Any] = Field(default_factory=dict, description="Source analysis IDs and data provenance")
 
     calculation_version: str = Field("1.0", description="Version of readiness scoring algorithm")
     created_at: datetime = Field(default_factory=datetime.utcnow)
