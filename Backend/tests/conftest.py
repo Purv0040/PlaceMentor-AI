@@ -224,6 +224,27 @@ def mock_db() -> AsyncMockDatabase:
 
 
 @pytest.fixture
+def mock_gridfs():
+    """GridFS bucket stub that matches the async interface used by ResumeService."""
+    files: Dict[str, bytes] = {}
+
+    async def mock_upload(filename, source, metadata=None):
+        file_id = f"mock_file_id_{len(files) + 1}"
+        files[file_id] = source
+        return file_id
+
+    async def mock_download(file_id, stream):
+        data = files.get(str(file_id), b"%PDF-1.4 test resume pdf content")
+        stream.write(data)
+
+    mock_gridfs = AsyncMock()
+    mock_gridfs.upload_from_stream = AsyncMock(side_effect=mock_upload)
+    mock_gridfs.download_to_stream = AsyncMock(side_effect=mock_download)
+    mock_gridfs.delete = AsyncMock()
+    return mock_gridfs
+
+
+@pytest.fixture
 def client(mock_db: AsyncMockDatabase) -> Generator[TestClient, None, None]:
     """Test client fixture with mocked isolated database to protect production Atlas data."""
     async def override_get_db():
