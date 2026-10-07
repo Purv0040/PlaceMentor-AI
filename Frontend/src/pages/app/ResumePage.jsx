@@ -230,7 +230,7 @@ export const ResumePage = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-5xl mx-auto space-y-5 sm:space-y-6 animate-in fade-in duration-300">
       {/* 1. HERO BANNER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 shadow-2xl">
         <div className="space-y-2">
@@ -460,24 +460,23 @@ export const ResumePage = () => {
 
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-5 sm:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 items-stretch">
           {/* Section Score Breakdown */}
-          <div className="lg:col-span-2 bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
+          <div className="lg:col-span-3 bg-[#121624] p-5 sm:p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl h-full">
+            <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#232b3e]">
               <h3 className="font-bold text-base sm:text-lg text-white">ATS Section Breakdown</h3>
-              <span className="text-xs font-mono text-indigo-400 font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                Tier-1 Benchmark
-              </span>
+              <span className="hidden sm:inline text-xs font-mono text-indigo-400 font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20">Tier-1 Benchmark</span>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {resumeData.sections.map((section, idx) => (
-                <div key={idx} className="space-y-1.5">
+                <div key={idx} className="space-y-1">
                   <div className="flex items-center justify-between text-xs sm:text-sm">
-                    <span className="font-semibold text-slate-200">{section.name}</span>
-                    <span className="font-mono text-xs text-indigo-400 font-bold">{section.score}% Score</span>
+                    <span className="font-semibold text-slate-200">{section.name.replace(' & GPA', '')}</span>
+                    <span className="font-mono text-xs text-indigo-400 font-bold">{section.score}%</span>
                   </div>
-                  <div className="w-full bg-[#0f131d] rounded-full h-2.5 overflow-hidden border border-[#232b3e]">
+                  <div className="w-full bg-[#0f131d] rounded-full h-2 overflow-hidden border border-[#232b3e]">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         section.score >= 90
@@ -494,28 +493,31 @@ export const ResumePage = () => {
             </div>
 
             {/* Cross module CTA */}
-            <div className="mt-6 pt-4 border-t border-[#232b3e] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="mt-5 pt-4 border-t border-[#232b3e] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-white">Target Role Benchmark</h4>
-                <p className="text-xs text-slate-400">Missing critical backend technologies required by Tier-1 companies.</p>
+                <h4 className="text-sm font-bold text-white">Detailed Analysis</h4>
+                <p className="text-xs text-slate-400">Review every section against your target role.</p>
               </div>
               <button
                 onClick={() => navigate('/skill-gaps')}
                 className="px-4 py-2 rounded-xl bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-indigo-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#232b3e] shrink-0 self-start sm:self-auto"
               >
-                <span>Analyze Skill Gaps</span>
+                <span>View Detailed Analysis</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
           {/* AI Insights Sidebar */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-lg text-white px-1">AI Optimization Suggestions</h3>
+          <div className="lg:col-span-2 space-y-4 h-full">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="font-bold text-base sm:text-lg text-white">AI Recommendations</h3>
+              <Sparkles className="w-4 h-4 text-purple-400" />
+            </div>
             {resumeData.aiInsights.map((insight, index) => (
               <div
                 key={index}
-                className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-purple-500/40 space-y-3 transition-colors shadow-xl"
+                className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-purple-500/40 space-y-3 transition-colors shadow-xl"
               >
                 <div className="flex items-center gap-2">
                   {insight.type === 'critical' ? (
@@ -525,7 +527,7 @@ export const ResumePage = () => {
                   )}
                   <h4 className="font-bold text-sm text-white">{insight.title}</h4>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{insight.description}</p>
+                <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{insight.description}</p>
                 {insight.actionRoute ? (
                   <button
                     onClick={() => navigate(insight.actionRoute)}
@@ -546,6 +548,29 @@ export const ResumePage = () => {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="flex items-center gap-2 text-base sm:text-lg font-bold text-white">
+                <Search className="w-5 h-5 text-cyan-400" /> Resume Issues
+              </h3>
+              <p className="mt-3 text-sm text-slate-300">
+                {resumeData.missingSkills.length - 1} keyword gaps <span className="text-slate-500">•</span>{' '}
+                {resumeData.bulletAudits.filter((bullet) => bullet.isWeak).length} weak bullets <span className="text-slate-500">•</span>{' '}
+                {resumeData.missingSkills.filter((skill) => skill.importance === 'High').length} missing skills
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('bullets')}
+              className="self-start sm:self-auto px-4 py-2 rounded-xl bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-indigo-300 text-xs font-semibold border border-[#232b3e]"
+            >
+              Fix All with AI
+            </button>
+          </div>
+        </div>
         </div>
       )}
 

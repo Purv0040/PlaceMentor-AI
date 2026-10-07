@@ -13,8 +13,6 @@ import {
   Star,
   GitFork,
   Code2,
-  Sparkles,
-  ArrowUpRight,
   TrendingUp,
   ShieldCheck,
   Power
@@ -400,29 +398,6 @@ export const GithubPage = () => {
         </div>
       </div>
 
-      {/* 6. AI RECOMMENDATIONS BANNER */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-white text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          Copilot GitHub Telemetry Advice
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.aiInsights.map((insight, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-              <h4 className="font-bold text-sm text-white">{insight.title}</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">{insight.description}</p>
-              <button
-                onClick={() => navigate(insight.actionRoute)}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-              >
-                <span>{insight.actionLabel}</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

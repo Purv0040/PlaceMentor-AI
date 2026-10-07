@@ -1,330 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Sparkles,
-  TrendingUp,
-  Zap,
-  Target,
-  ArrowRight,
-  Flame,
-  Award,
-  AlertCircle,
+  ArrowUpRight,
+  Bot,
+  Check,
+  Code2,
   FileText,
   Github,
-  Code2,
-  FolderKanban,
-  Activity,
-  CheckCircle2,
-  Bot
+  LineChart,
+  Sparkles,
+  Target
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import { usePlanning } from '../../context/PlanningContext';
 import { dashboardData } from '../../data/dashboardData';
 import { readinessService } from '../../services/readinessService';
 import { skillGapService } from '../../services/skillGapService';
-import { TelemetryChart } from '../../components/dashboard/TelemetryChart';
-import { ActionPlanList } from '../../components/dashboard/ActionPlanList';
+
+const Panel = ({ children, className = '' }) => (
+  <section className={`p-5 sm:p-6 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-xl ${className}`}>{children}</section>
+);
+
+const PanelTitle = ({ icon, children, action }) => (
+  <div className="flex items-center justify-between gap-4 mb-6">
+    <h2 className="flex items-center gap-2 text-base font-bold text-white">{icon}{children}</h2>
+    {action}
+  </div>
+);
 
 export const DashboardPage = () => {
   const { user } = useUser();
+  const { tasks, toggleTaskCompletion } = usePlanning();
   const [readinessScore, setReadinessScore] = useState(user?.overallReadinessScore || dashboardData.readinessScore);
-  const [readinessLabel, setReadinessLabel] = useState(dashboardData.readinessTrend);
-  const [aiInsights, setAiInsights] = useState(dashboardData.aiInsights);
   const [vectorScores, setVectorScores] = useState(dashboardData.vectorScores);
+  const [aiInsights, setAiInsights] = useState(dashboardData.aiInsights);
 
   useEffect(() => {
-    if (user?.overallReadinessScore) {
-      setReadinessScore(user.overallReadinessScore);
-    }
+    if (user?.overallReadinessScore) setReadinessScore(user.overallReadinessScore);
+
     readinessService.getSummary().then((summary) => {
-      if (summary) {
-        if (typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
-          setReadinessScore(Math.round(summary.overall_score));
-        }
-        if (summary.readiness_label) {
-          setReadinessLabel(summary.readiness_label);
-        }
-        if (summary.vector_scores && summary.vector_scores.length > 0) {
-          setVectorScores(summary.vector_scores.map(v => ({
-            id: v.id || v.vector_id,
-            vector: v.name || v.vector,
-            score: Math.round(v.score || 0),
-            target: v.target || 85,
-            color: v.color || '#6366f1'
-          })));
-        }
+      if (!summary) return;
+      if (typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
+        setReadinessScore(Math.round(summary.overall_score));
+      }
+      if (summary.vector_scores?.length) {
+        setVectorScores(summary.vector_scores.map((vector) => ({
+          id: vector.id || vector.vector_id,
+          vector: vector.name || vector.vector,
+          score: Math.round(vector.score || 0),
+          target: vector.target || 85,
+          color: vector.color || '#d4d4d4'
+        })));
       }
     });
 
-    skillGapService.getSummary().then((gapSummary) => {
-      if (gapSummary && gapSummary.top_priority_gaps && gapSummary.top_priority_gaps.length > 0) {
-        const dynamicInsights = gapSummary.top_priority_gaps.map((g, idx) => ({
-          id: `dyn-gap-${idx}`,
-          title: `Prioritize ${g.skill} (${g.category})`,
-          description: g.reason || g.suggested_action,
-          priority: g.priority || 'High',
+    skillGapService.getSummary().then((summary) => {
+      if (summary?.top_priority_gaps?.length) {
+        setAiInsights(summary.top_priority_gaps.slice(0, 3).map((gap, index) => ({
+          id: `gap-${index}`,
+          title: gap.skill,
+          description: gap.reason || gap.suggested_action,
           route: '/skill-gaps'
-        }));
-        setAiInsights(dynamicInsights);
+        })));
       }
     });
   }, [user]);
 
-  return (
-    <div className="dashboard-page space-y-4 sm:space-y-6">
-      {/* 1. WELCOME HERO BANNER */}
-      <div className="dashboard-hero p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 shadow-2xl">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-[11px] sm:text-xs font-mono font-semibold">
-            <Sparkles className="w-3.5 h-3.5 shrink-0" /> Day {dashboardData.sprintDay} of {dashboardData.totalSprintDays}-Day Placement Sprint
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white">
-            Good Morning, {user?.name || user?.full_name || 'Candidate'} 👋
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-300">
-            Target: <span className="text-white font-semibold">{user?.targetRole || 'Software Engineer'}</span> • Readiness Baseline:{' '}
-            <span className="text-indigo-400 font-mono font-bold">{readinessScore}%</span> ({readinessLabel})
-          </p>
-        </div>
+  const displayName = user?.name || user?.full_name || 'Demo';
+  const targetRole = user?.targetRole || user?.target_role || 'Full Stack';
+  const leetcodeSolved = user?.leetcodeHandle ? (user?.leetcodeSolved || 248) : 0;
+  const visibleSkills = vectorScores.slice(0, 3);
 
-        <NavLink
-          to="/tasks"
-          className="w-full sm:w-auto px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all shrink-0 border border-indigo-400/30 text-center"
-        >
-          <Zap className="w-4 h-4" /> Start Today's Action Plan <ArrowRight className="w-4 h-4" />
+  return (
+    <div className="dashboard-page w-full max-w-5xl mx-auto space-y-5 sm:space-y-6">
+      <div className="flex items-center gap-3 text-xl sm:text-2xl font-bold text-white"><Code2 size={20} /> <span>Dashboard</span></div>
+
+      <Panel className="dashboard-hero flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div>
+          <p className="text-xl sm:text-2xl font-extrabold text-white">Good Morning, {displayName} <span aria-hidden="true">👋</span></p>
+          <p className="mt-2 text-sm text-slate-300">Your placement readiness is <strong className="text-indigo-400">{readinessScore}%</strong></p>
+        </div>
+        <NavLink to="/tasks" className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold text-center">Start Today's Plan <ArrowUpRight className="inline ml-1" size={14} /></NavLink>
+      </Panel>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <NavLink to="/placement-readiness" className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-indigo-500/40 transition-colors">
+          <span className="block text-xs text-slate-400">Readiness</span><strong className="block mt-4 text-center text-xl text-white">{readinessScore}%</strong>
+        </NavLink>
+        <NavLink to="/roadmap" className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-indigo-500/40 transition-colors">
+          <span className="block text-xs text-slate-400">Applications</span><strong className="block mt-4 text-center text-xl text-white">{user?.applicationsCount || 0} Days</strong>
+        </NavLink>
+        <NavLink to="/leetcode" className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-purple-500/40 transition-colors">
+          <span className="block text-xs text-slate-400">LeetCode</span><strong className="block mt-4 text-center text-xl text-white">{leetcodeSolved}</strong>
+        </NavLink>
+        <NavLink to="/profile" className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-emerald-500/40 transition-colors">
+          <span className="block text-xs text-slate-400">Target Role</span><strong className="block mt-4 text-center text-sm text-white truncate">{targetRole}</strong>
         </NavLink>
       </div>
 
-      {/* 2. TOP METRICS STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-indigo-500/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 font-medium">Overall Readiness</p>
-            <Sparkles className="w-4 h-4 text-indigo-400" />
+      <div className="grid lg:grid-cols-3 items-stretch gap-5 sm:gap-6">
+        <Panel className="terminal-progress-panel h-full">
+          <PanelTitle
+            icon={<LineChart size={16} className="text-indigo-400" />}
+            action={<NavLink className="text-xs text-indigo-400 hover:underline" to="/progress">View Details →</NavLink>}
+          >
+            Your Progress
+          </PanelTitle>
+          <div className="h-40 flex items-end gap-3 border-b border-[#232b3e]" aria-label="Five-week progress chart">
+            {dashboardData.weeklyTelemetryCurve.map((week) => (
+              <div className="flex-1 h-full flex flex-col justify-end items-center gap-2 text-[10px] text-slate-500" key={week.week}>
+                <div className="w-full max-w-10 bg-indigo-500 rounded-t" style={{ height: `${Math.max(18, week.readiness)}%` }} />
+                <span className="pb-2">{week.week}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">{readinessScore}%</span>
-            <span className="text-xs text-emerald-400 font-mono font-semibold">{readinessLabel}</span>
-          </div>
-          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-indigo-500" style={{ width: `${readinessScore}%` }} />
-          </div>
-        </div>
+          <p className="flex items-center gap-2 mt-5 text-sm text-slate-300"><LineChart size={16} /> 5-Week Progress</p>
+        </Panel>
 
-        <div className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-amber-500/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 font-medium">Preparation Streak</p>
-            <Flame className="w-4 h-4 text-amber-400" />
+        <Panel className="lg:col-span-2 h-full">
+          <PanelTitle action={<NavLink className="text-xs text-indigo-400 hover:underline" to="/tasks">View All →</NavLink>}>Today's Action Plan</PanelTitle>
+          <div className="space-y-4">
+            {tasks.slice(0, 3).map((task) => (
+              <button
+                type="button"
+                className={`flex items-center gap-3 w-full text-left text-sm ${task.completed ? 'text-slate-500 line-through' : 'text-slate-200'}`}
+                key={task.id}
+                onClick={() => toggleTaskCompletion(task.id)}
+              >
+                <span className="text-slate-500">{task.completed ? <Check size={14} /> : '□'}</span>
+                <span>{task.title}</span>
+              </button>
+            ))}
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">
-              {(user?.streakDays !== undefined && user?.streakDays !== null) ? user.streakDays : 0} Days
-            </span>
-            <span className="text-xs text-amber-400 font-mono font-semibold">
-              {(user?.streakDays || 0) > 0 ? '🔥 Active Sprint' : '⚡ Day 1 Sprint'}
-            </span>
-          </div>
-          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-amber-500"
-              style={{ width: `${Math.min(100, Math.max(5, (((user?.streakDays || 0)) / 30) * 100))}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-purple-500/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 font-medium">LeetCode Solved</p>
-            <Code2 className="w-4 h-4 text-purple-400" />
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-white font-mono">
-              {user?.leetcodeHandle ? (user?.leetcodeSolved || 248) : 0}
-            </span>
-            <span className="text-xs text-purple-400 font-mono">
-              {user?.leetcodeHandle ? (user?.leetcodeBreakdown || '148 Med / 32 Hard') : 'Not Connected'}
-            </span>
-          </div>
-          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-purple-500"
-              style={{ width: user?.leetcodeHandle ? `${Math.min(100, ((user?.leetcodeSolved || 248) / 400) * 100)}%` : '0%' }}
-            />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-2.5 hover:border-emerald-500/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400 font-medium">Target Company Benchmark</p>
-            <Target className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-white truncate">{user?.targetRole || 'Full Stack Engineer'}</span>
-            <span className="text-xs text-emerald-400 font-mono font-semibold">{user?.companyTier ? user.companyTier.split('(')[0].trim() : 'Tier-1 Target'}</span>
-          </div>
-          <div className="progress-track w-full h-1.5 rounded-full bg-[#0f131d] overflow-hidden">
-            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${readinessScore}%` }} />
-          </div>
-        </div>
+        </Panel>
       </div>
 
-      {/* 3. MAIN DASHBOARD CONTENT GRID */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols): Telemetry Chart & 7-Vector Progress */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Recharts Telemetry Curve Chart Card */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base text-white flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-indigo-400" /> 5-Week Telemetry Curve
-                </h3>
-                <p className="text-xs text-slate-400">Longitudinal tracking of candidate readiness & DSA accuracy</p>
+      <div className="grid lg:grid-cols-2 items-stretch gap-5 sm:gap-6">
+        <Panel className="h-full">
+          <PanelTitle
+            icon={<Target size={20} />}
+            action={<NavLink className="text-xs text-indigo-400 hover:underline" to="/skill-gaps">View Full Analysis →</NavLink>}
+          >
+            Skills to Improve
+          </PanelTitle>
+          <div className="space-y-4">
+            {visibleSkills.map((skill) => (
+              <div className="grid grid-cols-[1fr_110px_42px] items-center gap-3 text-xs" key={skill.id}>
+                <span className="text-slate-300">{skill.vector.replace(/ &.*$/, '')}</span>
+                <div className="h-2 rounded-full bg-[#0f131d] overflow-hidden"><i className="block h-full bg-indigo-500" style={{ width: `${skill.score}%` }} /></div>
+                <strong className="text-indigo-400">{skill.score}%</strong>
               </div>
-              <span className="text-xs text-emerald-400 font-mono font-semibold px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20">
-                +18% Progress
-              </span>
-            </div>
-
-            <TelemetryChart />
+            ))}
           </div>
+        </Panel>
 
-          {/* 7-Vector Readiness Breakdown */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base text-white flex items-center gap-2">
-                  <Award className="w-4 h-4 text-purple-400" /> 7-Vector Readiness Breakdown
-                </h3>
-                <p className="text-xs text-slate-400">Baseline score evaluation vs SDE-1 target requirements</p>
-              </div>
-              <NavLink to="/placement-readiness" className="text-xs text-indigo-400 hover:underline font-semibold flex items-center gap-1">
-                View Full Audit →
-              </NavLink>
-            </div>
-
-            <div className="space-y-3.5">
-              {vectorScores.map((v) => (
-                <div key={v.id} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-200 font-semibold">{v.vector}</span>
-                    <span className="text-indigo-400 font-mono font-bold">
-                      {v.score}% <span className="text-slate-500 font-normal">/ {v.target}% Target</span>
-                    </span>
-                  </div>
-                  <div className="progress-track w-full h-2 rounded-full bg-[#0f131d] overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${v.score}%`, backgroundColor: v.color }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+        <Panel className="h-full">
+          <PanelTitle icon={<Bot size={16} className="text-purple-400" />}>AI Mentor</PanelTitle>
+          <div className="space-y-4">
+            {aiInsights.slice(0, 3).map((insight) => (
+              <NavLink className="block text-sm text-slate-200 hover:text-purple-400" to={insight.route} key={insight.id}>{insight.title}</NavLink>
+            ))}
           </div>
-        </div>
-
-        {/* Right Column (1 Col): Today's Tasks, AI Insights, Recent Activity */}
-        <div className="space-y-6">
-          {/* Today's Tasks */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-white">Today's Action Plan</h3>
-              <NavLink to="/tasks" className="text-xs text-indigo-400 hover:underline font-semibold">
-                View All →
-              </NavLink>
-            </div>
-            <ActionPlanList />
-          </div>
-
-          {/* AI Insights Card */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <Bot className="w-4.5 h-4.5 text-purple-400" /> AI Mentor Recommendations
-            </h3>
-
-            <div className="space-y-3">
-              {aiInsights.map((ins) => (
-                <NavLink
-                  key={ins.id}
-                  to={ins.route}
-                  className="p-3.5 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-purple-500/40 block space-y-1 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">{ins.title}</span>
-                    <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded ${
-                      ins.priority === 'High' ? 'bg-rose-500/20 text-rose-400' :
-                      ins.priority === 'Success' ? 'bg-emerald-500/20 text-emerald-400' :
-                      'bg-indigo-500/20 text-indigo-400'
-                    }`}>
-                      {ins.priority}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">{ins.description}</p>
-                </NavLink>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Activity Timeline */}
-          <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-amber-400" /> Recent Telemetry Activity
-            </h3>
-
-            <div className="space-y-3">
-              {dashboardData.recentActivity.map((act) => (
-                <div key={act.id} className="flex items-start gap-3 text-xs p-2.5 rounded-xl bg-[#0f131d] border border-[#232b3e]">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-200 truncate">{act.title}</p>
-                    <p className="text-[11px] text-slate-400 truncate">{act.desc}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-500 font-mono shrink-0">{act.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+          <NavLink className="inline-flex items-center gap-1 mt-6 text-xs text-indigo-400 hover:underline" to="/mentor">View All <ArrowUpRight size={15} /></NavLink>
+        </Panel>
       </div>
 
-      {/* 4. QUICK ACTIONS GRID */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-base text-white">Preparation Shortcuts & Quick Tools</h3>
-
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <NavLink
-            to="/resume"
-            className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-indigo-500/40 text-center space-y-2 transition-all hover:-translate-y-0.5"
-          >
-            <FileText className="w-5 h-5 text-indigo-400 mx-auto" />
-            <p className="text-xs font-bold text-white">Resume Audit</p>
-          </NavLink>
-
-          <NavLink
-            to="/github"
-            className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-slate-400 text-center space-y-2 transition-all hover:-translate-y-0.5"
-          >
-            <Github className="w-5 h-5 text-white mx-auto" />
-            <p className="text-xs font-bold text-white">GitHub Sync</p>
-          </NavLink>
-
-          <NavLink
-            to="/leetcode"
-            className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-amber-500/40 text-center space-y-2 transition-all hover:-translate-y-0.5"
-          >
-            <Code2 className="w-5 h-5 text-amber-400 mx-auto" />
-            <p className="text-xs font-bold text-white">LeetCode Solves</p>
-          </NavLink>
-
-          <NavLink
-            to="/projects"
-            className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] hover:border-indigo-500/40 text-center space-y-2 transition-all hover:-translate-y-0.5"
-          >
-            <FolderKanban className="w-5 h-5 text-indigo-400 mx-auto" />
-            <p className="text-xs font-bold text-white">Projects Audit</p>
-          </NavLink>
-
-        </div>
+      <div className="flex flex-wrap gap-3">
+        <NavLink className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121624] border border-[#232b3e] text-xs text-slate-300 hover:border-indigo-500/40" to="/resume"><FileText size={16} /> Resume Audit</NavLink>
+        <NavLink className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121624] border border-[#232b3e] text-xs text-slate-300 hover:border-slate-400" to="/github"><Github size={16} /> GitHub Sync</NavLink>
+        <NavLink className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[#121624] border border-[#232b3e] text-xs text-slate-300 hover:border-amber-500/40" to="/leetcode"><Sparkles size={16} /> LeetCode Analytics</NavLink>
       </div>
     </div>
   );

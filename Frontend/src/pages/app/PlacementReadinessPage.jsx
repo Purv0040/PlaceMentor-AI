@@ -11,8 +11,6 @@ import {
   CheckCircle2,
   TrendingUp,
   ShieldCheck,
-  Sparkles,
-  ArrowUpRight,
   FileText,
   GitBranch,
   Code,
@@ -216,41 +214,6 @@ export const PlacementReadinessPage = () => {
         </div>
       </div>
 
-      {/* 5. PREPARATION MODULES SUMMARY CARDS */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-white text-lg">Connected Preparation Modules</h3>
-          <span className="text-xs font-mono text-slate-400">Phase 5 Integration</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {data.dimensionsSummary.map((dim) => (
-            <div
-              key={dim.id}
-              className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-indigo-500/40 transition-colors flex flex-col justify-between shadow-xl"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-sm text-white">{dim.name}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {dim.score}%
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{dim.detail}</p>
-              </div>
-
-              <button
-                onClick={() => navigate(dim.route)}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-2"
-              >
-                <span>View Module Analysis</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* 6. TIER-1 COMPANY BENCHMARK MATRIX */}
       <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
@@ -293,37 +256,6 @@ export const PlacementReadinessPage = () => {
         </div>
       </div>
 
-      {/* 7. AI PRIORITY REMEDIATION MATRIX */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-white text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          AI Priority Remediation Recommendations
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.priorityRemediations.map((rem) => (
-            <div key={rem.id} className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-wider">
-                  {rem.vector}
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                  {rem.priority} Priority
-                </span>
-              </div>
-              <h4 className="font-bold text-sm text-white">{rem.title}</h4>
-              <p className="text-xs text-slate-300 leading-relaxed">{rem.description}</p>
-              <button
-                onClick={() => navigate(rem.actionRoute)}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-              >
-                <span>{rem.actionLabel}</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

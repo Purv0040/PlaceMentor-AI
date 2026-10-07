@@ -7,7 +7,6 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Sparkles,
   ArrowUpRight,
   TrendingUp,
   SlidersHorizontal,
@@ -106,30 +105,7 @@ export const RoadmapPage = () => {
         </div>
       </div>
 
-      {/* 3. ADAPTIVE RE-BALANCING ALERT BANNER */}
-      {roadmap.adaptiveRebalancingNotice && roadmap.adaptiveRebalancingNotice.isAdapted && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-amber-400 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              Telemetry-Driven Adaptive Adjustment
-            </span>
-            <span className="font-mono text-[11px] text-slate-400">
-              Adapted {roadmap.adaptiveRebalancingNotice.adaptedAt}
-            </span>
-          </div>
-          <p className="text-slate-300 font-sans">{roadmap.adaptiveRebalancingNotice.reason}</p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            {roadmap.adaptiveRebalancingNotice.adjustments.map((adj, idx) => (
-              <span key={idx} className="px-2.5 py-1 rounded-lg bg-[#0f131d] text-slate-200 text-[11px] font-mono border border-[#232b3e]">
-                • {adj}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. PHASE TIMELINE TABS */}
+      {/* 3. PHASE TIMELINE TABS */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 border-b border-[#232b3e] pb-2 overflow-x-auto">
           {roadmap.phases.map((phase) => (
@@ -266,43 +242,6 @@ export const RoadmapPage = () => {
         </div>
       </div>
 
-      {/* 6. AI STRATEGY ADVICE BANNER */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-white text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          Copilot Roadmap Optimization Strategy
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Daily Task Execution Matrix</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Complete Today's 5 action items to maintain your 24-day active study streak.
-            </p>
-            <button
-              onClick={() => navigate('/tasks')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>Go to Today's Tasks</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Track Completion Analytics</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              View your overall preparation velocity, weekly study hours, and module scores.
-            </p>
-            <button
-              onClick={() => navigate('/progress')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>View Progress Telemetry</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

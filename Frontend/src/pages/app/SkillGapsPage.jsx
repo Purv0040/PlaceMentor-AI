@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   Layers,
   Award,
-  Grid,
   TrendingUp,
   BrainCircuit,
   SlidersHorizontal,
@@ -272,22 +271,6 @@ export const SkillGapsPage = () => {
             <p className="text-xs text-slate-400">Current skill level vs target role benchmark</p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
-            {['All', 'Backend', 'DSA', 'Cloud', 'DBMS'].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveCategoryFilter(filter)}
-                className={`px-3 py-1.5 rounded-lg border transition-all ${
-                  activeCategoryFilter === filter
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-400/30 shadow-md font-bold'
-                    : 'bg-[#121624] text-slate-400 border-[#232b3e] hover:text-white hover:bg-[#1a2030]'
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -356,125 +339,6 @@ export const SkillGapsPage = () => {
         </div>
       </div>
 
-      {/* 6. 2X2 SKILL PRIORITY MATRIX: IMPACT VS EFFORT */}
-      <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
-        <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
-          <div>
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
-              <Grid className="w-5 h-5 text-purple-400" />
-              2x2 Skill Priority Matrix: Impact vs. Effort
-            </h3>
-            <p className="text-xs text-slate-400">Prioritize skills based on hiring ROI vs study effort</p>
-          </div>
-          <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-            Strategic Grid
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-          {/* Quick Wins */}
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-            <div className="flex items-center justify-between text-emerald-400 font-bold">
-              <span>QUICK WINS (High Impact, Low Effort)</span>
-              <span className="text-[10px] bg-emerald-500/20 px-2 py-0.5 rounded">Priority 1</span>
-            </div>
-            <div className="space-y-1.5 pt-1">
-              {data.matrix2x2.quickWins.map((item, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-white font-semibold">
-                  <span>{item.skill}</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">{item.category}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Major Projects */}
-          <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 space-y-2">
-            <div className="flex items-center justify-between text-indigo-400 font-bold">
-              <span>MAJOR PROJECTS (High Impact, High Effort)</span>
-              <span className="text-[10px] bg-indigo-500/20 px-2 py-0.5 rounded">Priority 2</span>
-            </div>
-            <div className="space-y-1.5 pt-1">
-              {data.matrix2x2.majorProjects.map((item, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-white font-semibold">
-                  <span>{item.skill}</span>
-                  <span className="text-[10px] text-indigo-400 font-mono">{item.category}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Fill-ins */}
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2">
-            <div className="flex items-center justify-between text-slate-300 font-bold">
-              <span>FILL-INS (Low Impact, Low Effort)</span>
-              <span className="text-[10px] text-slate-400">Priority 3</span>
-            </div>
-            <div className="space-y-1.5 pt-1">
-              {data.matrix2x2.fillIns.map((item, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-[#121624] border border-[#232b3e] flex items-center justify-between text-slate-300">
-                  <span>{item.skill}</span>
-                  <span className="text-[10px] font-mono">{item.category}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Hard Long-term */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
-            <div className="flex items-center justify-between text-amber-400 font-bold">
-              <span>LONG TERM (Low Impact, High Effort)</span>
-              <span className="text-[10px] text-amber-400">Priority 4</span>
-            </div>
-            <div className="space-y-1.5 pt-1">
-              {data.matrix2x2.hardLongTerm.map((item, idx) => (
-                <div key={idx} className="p-2 rounded-lg bg-[#0f131d] border border-[#232b3e] flex items-center justify-between text-slate-300">
-                  <span>{item.skill}</span>
-                  <span className="text-[10px] text-amber-400 font-mono">{item.category}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 7. AI LEARNING RECOMMENDATIONS BANNER */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <h3 className="font-bold text-white text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          Copilot Skill Gap Roadmap Strategy
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Target 90-Day Adaptive Roadmap</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Incorporate Redis Caching and 2D DP problem sets into your active 90-day placement sprint schedule.
-            </p>
-            <button
-              onClick={() => navigate('/roadmap')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>View 90-Day Roadmap</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Execute Daily Practice Tasks</h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Start with Today's Action Plan tasks focusing on Course Schedule II and Course Schedule III.
-            </p>
-            <button
-              onClick={() => navigate('/tasks')}
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
-            >
-              <span>View Today's Tasks</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
