@@ -352,36 +352,51 @@ export const aiService = {
         const targetCtc = goals.targetCtc || '14 - 24 LPA (Product Tier)';
         const selectedTechList = skills.selectedSkills || [];
 
-        // 1. Calculate dynamic baseline score across all 6 steps
-        let score = 55;
+        // 1. Dynamic baseline score computation across all 6 onboarding steps
+        let score = 38;
 
-        // Step 1: Academic Profile completeness (+10 max)
-        if (profile.name && profile.college && profile.degree) score += 10;
-        else if (profile.name) score += 5;
+        // Academic profile completeness (+6 max)
+        if (profile.name && profile.college && profile.degree) score += 6;
+        else if (profile.name) score += 3;
 
-        // Step 2 & 3: Target Role vs Self-Reported Skill Levels (+15 max)
-        if (skills.dsaLevel?.includes('Advanced')) score += 6;
-        else if (skills.dsaLevel?.includes('Intermediate')) score += 4;
+        // Step 2 & 3: DSA Level evaluation (+4 to +20)
+        const dsa = skills.dsaLevel || 'Intermediate';
+        if (dsa.includes('Expert') || dsa.includes('Master')) score += 20;
+        else if (dsa.includes('Advanced')) score += 16;
+        else if (dsa.includes('Intermediate')) score += 10;
+        else score += 4;
+
+        // System Design / Framework level (+3 to +14)
+        const sys = skills.sysDesignLevel || skills.frameworkLevel || 'Beginner';
+        if (sys.includes('Advanced') || sys.includes('Expert')) score += 14;
+        else if (sys.includes('Intermediate')) score += 8;
+        else score += 3;
+
+        // Selected Tech Stack width (+2 per tech, max +10)
+        score += Math.min(10, selectedTechList.length * 2);
+
+        // Step 4: Telemetry & Resume Integrations (+6 GitHub, +6 LeetCode, +7 Resume)
+        if (integrations.githubConnected || integrations.githubHandle) score += 6;
+        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 6;
+        if (integrations.resumeUploaded || integrations.resumeFileName) score += 7;
+
+        // Step 5: Study Hours Commitment (+2 to +10)
+        const mins = parseInt(preferences.dailyGoalMinutes || '90', 10);
+        if (mins >= 180) score += 10;
+        else if (mins >= 120) score += 8;
+        else if (mins >= 90) score += 6;
+        else if (mins >= 60) score += 4;
         else score += 2;
 
-        if (skills.frameworkLevel?.includes('Advanced') || skills.sysDesignLevel?.includes('Advanced')) score += 5;
-        else if (skills.frameworkLevel?.includes('Intermediate') || skills.sysDesignLevel?.includes('Intermediate')) score += 3;
-        else score += 1;
+        // Step 6: Target Tier Alignment adjustment (-4 to +4)
+        if (companyTier.includes('Tier-1') && dsa.includes('Beginner')) {
+          score -= 4;
+        } else if (!companyTier.includes('Tier-1') && (dsa.includes('Intermediate') || dsa.includes('Advanced'))) {
+          score += 4;
+        }
 
-        if (selectedTechList.length >= 5) score += 4;
-        else if (selectedTechList.length >= 2) score += 2;
-
-        // Step 4: Telemetry & Resume Integrations (+15 max)
-        if (integrations.githubConnected || integrations.githubHandle) score += 5;
-        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 5;
-        if (integrations.resumeUploaded || integrations.resumeFileName) score += 5;
-
-        // Step 5 & 6: Commitment & Placement Goal alignment (+5 max)
-        if (parseInt(preferences.dailyGoalMinutes || '0', 10) >= 90) score += 3;
-        if (goals.targetDrive) score += 2;
-
-        // Cap score logically between 62 and 94
-        score = Math.min(94, Math.max(62, score));
+        // Clamp dynamically between 35 and 98
+        score = Math.min(98, Math.max(35, Math.round(score)));
 
         // 2. Synthesize Role & Skill-based Day 1 Roadmap Task
         let day1Task = 'LC 207: Course Schedule (Graph Cycle Detection)';
