@@ -11,13 +11,21 @@ from app.schemas.project import (
     ProjectResponse,
     ProjectListResponse,
     ProjectSingleResponse,
-    ProjectAnalysisResponse
+    ProjectAnalysisResponse,
+    ProjectDeleteResponse,
+    ProjectDeleteData,
+    ProjectErrorResponse
 )
 from app.services.project_service import ProjectService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+STANDARD_ERROR_RESPONSES = {
+    404: {"model": ProjectErrorResponse, "description": "Project not found or access denied."},
+    401: {"description": "Unauthorized access - Invalid or missing token."}
+}
 
 
 @router.post("", response_model=ProjectSingleResponse, status_code=status.HTTP_201_CREATED)
@@ -54,7 +62,7 @@ async def list_projects(
     )
 
 
-@router.get("/{project_id}", response_model=ProjectSingleResponse)
+@router.get("/{project_id}", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
 async def get_project(
     project_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -71,7 +79,7 @@ async def get_project(
     )
 
 
-@router.put("/{project_id}", response_model=ProjectSingleResponse)
+@router.put("/{project_id}", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
 async def update_project(
     project_id: str,
     project_in: ProjectUpdateRequest,
@@ -89,7 +97,7 @@ async def update_project(
     )
 
 
-@router.patch("/{project_id}", response_model=ProjectSingleResponse)
+@router.patch("/{project_id}", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
 async def patch_project(
     project_id: str,
     project_in: ProjectUpdateRequest,
@@ -107,7 +115,7 @@ async def patch_project(
     )
 
 
-@router.delete("/{project_id}")
+@router.delete("/{project_id}", response_model=ProjectDeleteResponse, responses=STANDARD_ERROR_RESPONSES)
 async def delete_project(
     project_id: str,
     soft_delete: bool = Query(True, description="Soft delete status='archived' or permanent delete"),
@@ -118,14 +126,14 @@ async def delete_project(
     user_id = str(current_user["id"])
     service = ProjectService(db)
     deleted = await service.delete_project(project_id, user_id, soft_delete=soft_delete)
-    return {
-        "success": True,
-        "message": "Project removed successfully.",
-        "data": {"project_id": project_id, "deleted": deleted}
-    }
+    return ProjectDeleteResponse(
+        success=True,
+        message="Project removed successfully.",
+        data=ProjectDeleteData(project_id=project_id, deleted=deleted)
+    )
 
 
-@router.patch("/{project_id}/featured", response_model=ProjectSingleResponse)
+@router.patch("/{project_id}/featured", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
 async def toggle_featured_project(
     project_id: str,
     req: ProjectFeaturedRequest,
@@ -143,7 +151,7 @@ async def toggle_featured_project(
     )
 
 
-@router.post("/{project_id}/analyze", response_model=ProjectSingleResponse)
+@router.post("/{project_id}/analyze", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
 async def analyze_project(
     project_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -160,7 +168,7 @@ async def analyze_project(
     )
 
 
-@router.get("/{project_id}/analysis", response_model=ProjectAnalysisResponse)
+@router.get("/{project_id}/analysis", response_model=ProjectAnalysisResponse, responses=STANDARD_ERROR_RESPONSES)
 async def get_project_analysis(
     project_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
