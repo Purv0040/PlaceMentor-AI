@@ -37,9 +37,9 @@ class SkillGapRepository:
         now = datetime.utcnow()
         doc = {
             "user_id": str(user_id),
-            "target_role": analysis_dict.get("target_role", "Backend Developer"),
+            "target_role": analysis_dict.get("target_role", "Software Engineer"),
             "overall_coverage": analysis_dict.get("overall_coverage", 0),
-            "confidence_index": analysis_dict.get("confidence_index", "95.0%"),
+            "confidence_index": analysis_dict.get("confidence_index", 95.0),
             "total_audited": analysis_dict.get("total_audited", 0),
             "summary": analysis_dict.get("summary", {}),
             "category_coverage": analysis_dict.get("category_coverage", []),

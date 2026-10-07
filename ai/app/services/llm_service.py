@@ -121,13 +121,16 @@ class MockLLMProvider(BaseLLMProvider):
             return json.dumps(extracted_data)
 
         if "LLMSynthesisOutput" in prompt or "skill gap synthesis" in prompt.lower():
+            import re
+            role_m = re.search(r"target role:\s*['\"]?([^'\"\n\r]+)['\"]?", prompt, re.IGNORECASE)
+            detected_role = role_m.group(1).strip() if role_m else "Target Role"
             return json.dumps({
-                "summary": "Targeted skill gap analysis for AI/ML Engineer role.",
+                "summary": f"Targeted skill gap analysis for {detected_role} role.",
                 "item_explanations": [
                     {
-                        "skill": "PyTorch",
-                        "explanation": "Required level is Intermediate, student shows Intermediate proficiency.",
-                        "recommended_action": "Practice advanced model optimization and distributed training."
+                        "skill": "Core Proficiency",
+                        "explanation": f"Evaluating student proficiency for {detected_role}.",
+                        "recommended_action": f"Focus on foundational competencies aligned with {detected_role} requirements."
                     }
                 ]
             })

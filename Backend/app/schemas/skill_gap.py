@@ -1,14 +1,28 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class SkillGapAnalyzeRequest(BaseModel):
     """Request payload for POST /api/v1/skill-gaps/analyze."""
-    target_role: Optional[str] = Field(
-        None,
-        description="Optional target role override (e.g. 'AI/ML Engineer', 'Backend Developer', 'Full Stack Developer')"
+    target_role: str = Field(
+        ...,
+        min_length=2,
+        max_length=100,
+        description="Target role for skill gap analysis (e.g. 'AI/ML Engineer', 'Backend Developer', 'Data Scientist')",
+        json_schema_extra={"example": "AI/ML Engineer"}
     )
+
+    @field_validator("target_role")
+    @classmethod
+    def validate_target_role(cls, v: str) -> str:
+        stripped = v.strip() if v else ""
+        if not stripped:
+            raise ValueError("target_role cannot be empty or whitespace.")
+        if len(stripped) < 2:
+            raise ValueError("target_role must be at least 2 characters.")
+        return stripped
+
 
 
 class SkillItemSchema(BaseModel):
@@ -93,7 +107,7 @@ class SkillGapResponse(BaseModel):
     user_id: str
     target_role: str
     overall_coverage: int
-    confidence_index: str = "95.0%"
+    confidence_index: float = 95.0
     total_audited: int
     summary: SkillGapSummarySchema
     category_coverage: List[CategoryCoverageSchema] = Field(default_factory=list)
@@ -118,7 +132,7 @@ class SkillGapSummaryResponse(BaseModel):
     user_id: str
     target_role: str
     overall_coverage: int
-    confidence_index: str = "95.0%"
+    confidence_index: float = 95.0
     total_audited: int
     gaps_identified_count: int
     summary: SkillGapSummarySchema
@@ -130,3 +144,11 @@ class SkillGapHistoryResponse(BaseModel):
     """Historical calculation list response."""
     items: List[SkillGapResponse]
     total: int
+
+
+class SkillGapAnalyzeDataResponse(BaseModel):
+    """Response payload wrapper for POST /api/v1/skill-gaps/analyze."""
+    status: str = "success"
+    message: str = "Skill gap analysis completed successfully."
+    data: SkillGapResponse
+

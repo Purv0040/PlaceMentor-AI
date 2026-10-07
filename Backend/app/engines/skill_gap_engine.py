@@ -102,7 +102,34 @@ ALIAS_LOOKUP: Dict[str, str] = {
     "operating systems": "Operating Systems",
     "computer networks": "Computer Networks",
     "oop": "Object-Oriented Programming",
-    "oops": "Object-Oriented Programming"
+    "oops": "Object-Oriented Programming",
+    "spring": "Spring Boot",
+    "spring boot": "Spring Boot",
+    "springboot": "Spring Boot",
+    "linux": "Linux",
+    "terraform": "Terraform",
+    "threat detection": "Threat Detection",
+    "vulnerability assessment": "Vulnerability Assessment",
+    "siem": "SIEM",
+    "security fundamentals": "Security Fundamentals",
+    "cryptography": "Cryptography",
+    "security architecture": "Security Architecture",
+    "selenium": "Selenium",
+    "database tuning": "Database Tuning",
+    "react native": "React Native",
+    "figma": "Figma",
+    "user research": "User Research",
+    "design systems": "Design Systems",
+    "wireframing": "Wireframing & Prototyping",
+    "wireframing & prototyping": "Wireframing & Prototyping",
+    "user experience design": "User Experience Design",
+    "ux": "User Experience Design",
+    "requirements gathering": "Requirements Gathering",
+    "agile": "Agile Methodologies",
+    "agile methodologies": "Agile Methodologies",
+    "excel": "Excel Modeling",
+    "excel modeling": "Excel Modeling",
+    "mlops": "MLOps"
 }
 
 # Mapping canonical skill -> category
@@ -126,6 +153,7 @@ TECH_TAXONOMY: Dict[str, str] = {
     "FastAPI": "Backend",
     "Flask": "Backend",
     "Django": "Backend",
+    "Spring Boot": "Backend",
     "Node.js": "Backend",
     "Express.js": "Backend",
     "REST API": "Backend",
@@ -139,11 +167,15 @@ TECH_TAXONOMY: Dict[str, str] = {
     "MySQL": "Databases",
     "MongoDB": "Databases",
     "Redis": "Databases",
+    "Database Tuning": "Databases",
     "Docker": "DevOps",
     "Kubernetes": "DevOps",
     "CI/CD": "DevOps",
     "Git": "DevOps",
+    "Terraform": "DevOps",
+    "MLOps": "DevOps",
     "AWS": "Cloud",
+    "Linux": "OS",
     "System Design": "CS Fundamentals",
     "DBMS": "CS Fundamentals",
     "Operating Systems": "CS Fundamentals",
@@ -161,84 +193,33 @@ TECH_TAXONOMY: Dict[str, str] = {
     "Statistics": "Data Science",
     "Data Visualization": "Data Science",
     "Exploratory Data Analysis": "Data Science",
+    "Security Fundamentals": "Security",
+    "Threat Detection": "Security",
+    "Vulnerability Assessment": "Security",
+    "SIEM": "Security",
+    "Cryptography": "Security",
+    "Security Architecture": "Security",
+    "Selenium": "Testing",
+    "React Native": "Mobile",
+    "Figma": "Design",
+    "User Research": "Design",
+    "Design Systems": "Design",
+    "Wireframing & Prototyping": "Design",
+    "User Experience Design": "Design",
+    "Requirements Gathering": "Business",
+    "Agile Methodologies": "Business",
+    "Excel Modeling": "Business",
 }
 
-# Role requirements definitions
-ROLE_REQUIREMENTS: Dict[str, List[Dict[str, Any]]] = {
-    "AI/ML Engineer": [
-        {"skill": "Python", "required_level": "Advanced", "importance": "critical", "category": "Programming"},
-        {"skill": "PyTorch", "required_level": "Intermediate", "importance": "high", "category": "Machine Learning"},
-        {"skill": "Scikit-learn", "required_level": "Intermediate", "importance": "high", "category": "Machine Learning"},
-        {"skill": "Data Structures & Algorithms", "required_level": "Intermediate", "importance": "high", "category": "DSA"},
-        {"skill": "Deep Learning", "required_level": "Intermediate", "importance": "high", "category": "Machine Learning"},
-        {"skill": "Statistics", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "Docker", "required_level": "Intermediate", "importance": "medium", "category": "DevOps"},
-        {"skill": "REST API", "required_level": "Intermediate", "importance": "medium", "category": "Backend"},
-        {"skill": "TensorFlow", "required_level": "Intermediate", "importance": "medium", "category": "Machine Learning"},
-    ],
-    "Backend Developer": [
-        {"skill": "Python", "required_level": "Advanced", "importance": "critical", "category": "Programming"},
-        {"skill": "Data Structures & Algorithms", "required_level": "Advanced", "importance": "critical", "category": "DSA"},
-        {"skill": "REST API", "required_level": "Advanced", "importance": "critical", "category": "Backend"},
-        {"skill": "FastAPI", "required_level": "Intermediate", "importance": "high", "category": "Backend"},
-        {"skill": "PostgreSQL", "required_level": "Intermediate", "importance": "high", "category": "Databases"},
-        {"skill": "Docker", "required_level": "Intermediate", "importance": "high", "category": "DevOps"},
-        {"skill": "System Design", "required_level": "Intermediate", "importance": "high", "category": "CS Fundamentals"},
-        {"skill": "Redis", "required_level": "Intermediate", "importance": "medium", "category": "Databases"},
-        {"skill": "Git", "required_level": "Intermediate", "importance": "medium", "category": "DevOps"},
-    ],
-    "Full Stack Developer": [
-        {"skill": "JavaScript", "required_level": "Advanced", "importance": "critical", "category": "Programming"},
-        {"skill": "React", "required_level": "Intermediate", "importance": "high", "category": "Frontend"},
-        {"skill": "Node.js", "required_level": "Intermediate", "importance": "high", "category": "Backend"},
-        {"skill": "HTML/CSS", "required_level": "Intermediate", "importance": "high", "category": "Frontend"},
-        {"skill": "REST API", "required_level": "Advanced", "importance": "critical", "category": "Backend"},
-        {"skill": "PostgreSQL", "required_level": "Intermediate", "importance": "high", "category": "Databases"},
-        {"skill": "Data Structures & Algorithms", "required_level": "Intermediate", "importance": "high", "category": "DSA"},
-        {"skill": "Docker", "required_level": "Intermediate", "importance": "medium", "category": "DevOps"},
-        {"skill": "Git", "required_level": "Intermediate", "importance": "medium", "category": "DevOps"},
-    ],
-    "Data Scientist": [
-        {"skill": "Python", "required_level": "Advanced", "importance": "critical", "category": "Programming"},
-        {"skill": "Pandas", "required_level": "Advanced", "importance": "critical", "category": "Data Science"},
-        {"skill": "SQL", "required_level": "Intermediate", "importance": "high", "category": "Databases"},
-        {"skill": "Scikit-learn", "required_level": "Intermediate", "importance": "high", "category": "Machine Learning"},
-        {"skill": "Exploratory Data Analysis", "required_level": "Advanced", "importance": "high", "category": "Data Science"},
-        {"skill": "Statistics", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "NumPy", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "Data Visualization", "required_level": "Intermediate", "importance": "medium", "category": "Data Science"},
-    ],
-    "Data Analyst": [
-        {"skill": "SQL", "required_level": "Advanced", "importance": "critical", "category": "Databases"},
-        {"skill": "Python", "required_level": "Intermediate", "importance": "high", "category": "Programming"},
-        {"skill": "Tableau", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "Data Visualization", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "Exploratory Data Analysis", "required_level": "Intermediate", "importance": "high", "category": "Data Science"},
-        {"skill": "Statistics", "required_level": "Intermediate", "importance": "medium", "category": "Data Science"},
-    ],
-    "Data Engineer": [
-        {"skill": "Python", "required_level": "Advanced", "importance": "critical", "category": "Programming"},
-        {"skill": "SQL", "required_level": "Advanced", "importance": "critical", "category": "Databases"},
-        {"skill": "PostgreSQL", "required_level": "Advanced", "importance": "high", "category": "Databases"},
-        {"skill": "Docker", "required_level": "Intermediate", "importance": "high", "category": "DevOps"},
-        {"skill": "Kafka", "required_level": "Intermediate", "importance": "medium", "category": "Backend"},
-        {"skill": "Data Structures & Algorithms", "required_level": "Intermediate", "importance": "high", "category": "DSA"},
-    ],
-}
+from app.services.role_requirement_service import (
+    RoleRequirementService,
+    RoleNormalizationService,
+    ROLE_REQUIREMENTS_REGISTRY,
+    ROLE_ALIASES,
+)
 
-ROLE_ALIASES: Dict[str, str] = {
-    "ai/ml engineer": "AI/ML Engineer",
-    "ai/ml": "AI/ML Engineer",
-    "ml engineer": "AI/ML Engineer",
-    "backend developer": "Backend Developer",
-    "backend engineer": "Backend Developer",
-    "backend": "Backend Developer",
-    "full stack developer": "Full Stack Developer",
-    "fullstack developer": "Full Stack Developer",
-    "data scientist": "Data Scientist",
-    "data analyst": "Data Analyst",
-    "data engineer": "Data Engineer",
-}
+# Export for backward compatibility with existing tests/services
+ROLE_REQUIREMENTS = ROLE_REQUIREMENTS_REGISTRY
 
 
 def normalize_skill_name(raw_name: str) -> Tuple[str, str]:
@@ -258,15 +239,34 @@ def normalize_skill_name(raw_name: str) -> Tuple[str, str]:
 
 
 def get_canonical_role(target_role: Optional[str]) -> str:
-    """Resolve target role name to canonical registry key."""
+    """Resolve target role name to canonical registry key using centralized RoleNormalizationService."""
     if not target_role:
-        return "Backend Developer"
-    clean = target_role.strip().lower()
-    return ROLE_ALIASES.get(clean, target_role.strip().title())
+        return "Software Engineer"
+    return RoleNormalizationService.normalize(target_role)
+
+
+def _is_role_name(skill: str, canonical_role: str) -> bool:
+    """
+    Return True if the skill string matches the target role name (or a known alias).
+    Used to prevent the target role itself from appearing as a required skill.
+    """
+    s_norm = RoleNormalizationService._normalize_for_lookup(skill)
+    r_norm = RoleNormalizationService._normalize_for_lookup(canonical_role)
+    if s_norm == r_norm:
+        return True
+    # Also check against all aliases
+    from app.services.role_requirement_service import ROLE_ALIASES
+    for alias, canon in ROLE_ALIASES.items():
+        if s_norm == alias and canon == canonical_role:
+            return True
+    return False
 
 
 class DeterministicSkillGapEngine:
-    """Pure, deterministic engine that evaluates current candidate skill evidence against target role benchmarks."""
+    """Pure, deterministic engine that evaluates candidate skill evidence against target role benchmarks."""
+
+    def __init__(self, role_service: Optional[RoleRequirementService] = None) -> None:
+        self.role_service = role_service or RoleRequirementService()
 
     def normalize_skills(self, raw_skills: List[str]) -> List[str]:
         """Normalize a list of raw skill strings."""
@@ -278,9 +278,10 @@ class DeterministicSkillGapEngine:
         return result
 
     def get_role_requirements(self, target_role: str) -> List[Dict[str, Any]]:
-        """Retrieve requirement list for a given role."""
-        canon = get_canonical_role(target_role)
-        return ROLE_REQUIREMENTS.get(canon, ROLE_REQUIREMENTS["Backend Developer"])
+        """Retrieve requirement list for a given role dynamically from RoleRequirementService."""
+        return self.role_service.get_requirements(target_role)
+
+
 
     def build_skill_inventory(
         self,
@@ -435,13 +436,21 @@ class DeterministicSkillGapEngine:
         resume_data: Optional[Dict[str, Any]] = None,
         github_data: Optional[Dict[str, Any]] = None,
         leetcode_data: Optional[Dict[str, Any]] = None,
-        projects_list: Optional[List[Dict[str, Any]]] = None
+        projects_list: Optional[List[Dict[str, Any]]] = None,
+        role_requirements: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
         Execute deterministic Skill Gap analysis comparing candidate inventory against target role requirements.
         """
         canonical_role = get_canonical_role(target_role)
-        role_reqs = self.get_role_requirements(canonical_role)
+        role_reqs = role_requirements or self.get_role_requirements(canonical_role)
+
+        # --- GUARD: Remove any requirement whose skill name matches the target role ---
+        role_reqs = [
+            req for req in role_reqs
+            if not _is_role_name(req.get("skill", ""), canonical_role)
+        ]
+
         inventory = self.build_skill_inventory(
             profile_data=profile_data,
             resume_data=resume_data,
@@ -480,46 +489,38 @@ class DeterministicSkillGapEngine:
                 curr_level = "Untested"
                 curr_level_num = 0
                 evidence_level = "none"
-                evidence_list = [f"No verified evidence of {can_skill} detected in analyzed profiles."]
+                evidence_list = [f"No verified evidence of {can_skill} detected in analyzed student data."]
 
             diff = req_level_num - curr_level_num
+            # Always use canonical role for display — prevents raw typos in output
+            target_role_display = canonical_role
 
-            # Determine gap type and severity
-            if diff <= 0:
+            # Determine gap type, severity, priority, reason, recommended action using SINGLE SOURCE OF TRUTH
+            if curr_level_num >= req_level_num:
                 gap_type = "aligned"
                 gap_severity = "None"
                 priority = "Low"
                 aligned_count += 1
-                reason = f"Candidate satisfies '{req_level}' requirement for {canonical_role}."
-                action = f"Maintain active proficiency in {can_skill}."
+                reason = f"Current {curr_level} proficiency meets or exceeds the required {req_level} level for {target_role_display}."
+                action = f"Maintain and deepen {can_skill} proficiency through advanced projects and production use."
                 action_label = "Proficiency Aligned"
                 action_route = "/dashboard"
-                strengths.append(f"Demonstrated {curr_level} competency in {can_skill} ({category}).")
             elif curr_level_num == 0:
                 gap_type = "missing"
                 gap_severity = "Critical" if importance == "critical" else "High"
                 priority = "High" if importance in ["critical", "high"] else "Medium"
                 missing_count += 1
-                reason = f"{can_skill} is a {importance} requirement for {canonical_role}, but no project or repository evidence exists."
-                action = f"Build a practical {category} project demonstrating {can_skill}."
+                reason = f"No verified evidence of {can_skill} was found, so current proficiency is Untested for {target_role_display}."
+                action = f"Build practical {can_skill} projects to establish verified {req_level} proficiency."
                 action_label = "Add to Roadmap"
                 action_route = "/roadmap"
-            elif diff >= 2:
-                gap_type = "weak"
-                gap_severity = "High"
-                priority = "High" if importance in ["critical", "high"] else "Medium"
-                weak_count += 1
-                reason = f"Current {curr_level} evidence for {can_skill} is substantially below required {req_level} level."
-                action = f"Advance from {curr_level} to {req_level} via dedicated practice and projects."
-                action_label = "Add to Roadmap"
-                action_route = "/roadmap"
-            else:  # diff == 1
+            else:
                 gap_type = "developing"
-                gap_severity = "Medium"
-                priority = "Medium" if importance in ["critical", "high"] else "Low"
+                gap_severity = "High" if diff >= 2 else "Medium"
+                priority = "High" if (importance in ["critical", "high"] and diff >= 2) else ("Medium" if importance in ["critical", "high"] else "Low")
                 developing_count += 1
-                reason = f"{can_skill} has basic evidence ({curr_level}), but needs advancement to {req_level} for Tier-1 parity."
-                action = f"Refine {can_skill} depth with advanced concepts and production patterns."
+                reason = f"Current {curr_level} proficiency is below the required {req_level} level for {target_role_display}."
+                action = f"Advance {can_skill} proficiency from {curr_level} to {req_level} through production-style projects and practice."
                 action_label = "Add to Roadmap"
                 action_route = "/roadmap"
 
@@ -564,41 +565,52 @@ class DeterministicSkillGapEngine:
                 }
                 priority_gaps.append(p_gap)
 
-        # Sort priority gaps: High first, then Medium, then Low
+        # Sort priority gaps: Critical/High first, then Medium, then Low
         priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
         priority_gaps.sort(key=lambda g: priority_order.get(g["priority"], 2))
 
-        # Overall coverage calculation
-        overall_coverage = round(
-            ((aligned_count * 1.0 + developing_count * 0.5 + weak_count * 0.2) / max(1, total_required_skills)) * 100
+        # Overall coverage calculation (weighted by importance and level requirements)
+        total_weight = sum(req.get("weight", 0.8) * req.get("required_level_num", 2) for req in role_reqs)
+        achieved_weight = sum(
+            req.get("weight", 0.8) * min(req.get("required_level_num", 2), s["current_level_num"])
+            for req, s in zip(role_reqs, evaluated_skills)
         )
+        overall_coverage = round((achieved_weight / max(0.1, total_weight)) * 100) if total_weight > 0 else 0
         overall_coverage = min(100, max(0, overall_coverage))
 
-        # Category coverage breakdown
-        category_groups: Dict[str, Dict[str, int]] = {}
-        for item in evaluated_skills:
+        # Category coverage breakdown (dynamic from actual role categories)
+        category_groups: Dict[str, Dict[str, float]] = {}
+        for req, item in zip(role_reqs, evaluated_skills):
             cat = item["category"]
+            w = req.get("weight", 0.8)
+            req_l = req.get("required_level_num", 2)
+            cur_l = item["current_level_num"]
             if cat not in category_groups:
-                category_groups[cat] = {"total": 0, "score": 0}
-            category_groups[cat]["total"] += 1
-            if item["gap_type"] == "aligned":
-                category_groups[cat]["score"] += 100
-            elif item["gap_type"] == "developing":
-                category_groups[cat]["score"] += 60
-            elif item["gap_type"] == "weak":
-                category_groups[cat]["score"] += 25
-            else:
-                category_groups[cat]["score"] += 0
+                category_groups[cat] = {"total": 0.0, "achieved": 0.0}
+            category_groups[cat]["total"] += w * req_l
+            category_groups[cat]["achieved"] += w * min(req_l, cur_l)
 
-        color_palette = ["#4edea3", "#8083ff", "#ddb7ff", "#ffb4ab", "#fcd34d", "#60a5fa"]
+        color_palette = ["#4edea3", "#8083ff", "#ddb7ff", "#ffb4ab", "#fcd34d", "#60a5fa", "#f472b6", "#38bdf8"]
         category_coverage = []
         for idx, (c_name, c_data) in enumerate(category_groups.items()):
-            cov = round(c_data["score"] / max(1, c_data["total"]))
+            cov = round((c_data["achieved"] / max(0.1, c_data["total"])) * 100) if c_data["total"] > 0 else 0
             category_coverage.append({
                 "category": c_name,
                 "coverage": min(100, max(0, cov)),
                 "color": color_palette[idx % len(color_palette)]
             })
+
+        # Strengths dynamically derived from actual aligned or highest-scoring skills
+        strengths = [
+            f"Demonstrated {s['current_level']} competency in {s['skill']} ({s['category']})."
+            for s in evaluated_skills if s["gap_type"] == "aligned"
+        ][:4]
+        if not strengths:
+            top_assessed = sorted([s for s in evaluated_skills if s["current_level_num"] > 0], key=lambda x: x["current_level_num"], reverse=True)
+            if top_assessed:
+                strengths = [f"Demonstrated {s['current_level']} competency in {s['skill']} ({s['category']})." for s in top_assessed[:3]]
+            else:
+                strengths = [f"Foundational skills required for {target_role_display} are in early development."]
 
         # 2x2 Impact vs Effort Matrix
         quick_wins = []
@@ -629,25 +641,53 @@ class DeterministicSkillGapEngine:
         if not major_projects and priority_gaps:
             major_projects = [{"skill": priority_gaps[0]["skill"], "category": priority_gaps[0]["category"]}]
 
-        recommendations = [
-            {
-                "title": f"Bridge Top Skill Gaps for {canonical_role}",
-                "description": f"Focus on {priority_gaps[0]['skill'] if priority_gaps else 'Core System Design'} to elevate role alignment.",
+        # Dynamic Recommendations based on top priority gaps and target role
+        recommendations = []
+        if priority_gaps:
+            top_gap = priority_gaps[0]
+            recommendations.append({
+                "title": f"Bridge Priority Gap: {top_gap['skill']} for {target_role_display}",
+                "description": f"Focus on advancing {top_gap['skill']} from {top_gap['current_level']} to {top_gap['required_level']} to align with {target_role_display} standards.",
                 "action_label": "View 90-Day Roadmap",
                 "action_route": "/roadmap"
-            },
-            {
-                "title": "Execute Daily Practice Tasks",
-                "description": "Start with targeted daily problem sets and technical milestones.",
+            })
+        if len(priority_gaps) > 1:
+            second_gap = priority_gaps[1]
+            recommendations.append({
+                "title": f"Strengthen {second_gap['category']} Proficiency",
+                "description": f"Target practical milestones in {second_gap['skill']} ({second_gap['required_level']} level required).",
                 "action_label": "View Today's Tasks",
                 "action_route": "/tasks"
-            }
-        ]
+            })
+        else:
+            recommendations.append({
+                "title": f"Maintain Role Alignment for {target_role_display}",
+                "description": "Engage in advanced system design and production-style projects.",
+                "action_label": "View Today's Tasks",
+                "action_route": "/tasks"
+            })
+
+        # Evidence-grounded confidence index
+        active_sources = set()
+        for item in inventory.values():
+            active_sources.update(item["evidence_sources"])
+
+        source_weight = 0
+        if "profile" in active_sources: source_weight += 7
+        if "resume" in active_sources: source_weight += 10
+        if "github" in active_sources: source_weight += 11
+        if "leetcode" in active_sources: source_weight += 11
+        if "projects" in active_sources: source_weight += 11
+
+        volume_bonus = min(8, len(inventory) // 2)
+        confidence_val = min(98.0, max(50.0, 50.0 + source_weight + volume_bonus))
+        confidence_index = confidence_val  # float, e.g. 98.0
 
         return {
+            # Always return the canonical role — not the raw typo-riddled input
             "target_role": canonical_role,
             "overall_coverage": overall_coverage,
-            "confidence_index": f"{min(98, 70 + len(inventory) * 3)}%",
+            "confidence_index": confidence_index,
             "total_audited": len(inventory) + total_required_skills,
             "summary": {
                 "total_required_skills": total_required_skills,
@@ -668,10 +708,12 @@ class DeterministicSkillGapEngine:
                 "hard_long_term": hard_long_term[:4],
             },
             "data_quality": {
-                "profile": profile_data is not None,
-                "resume": resume_data is not None,
-                "github": github_data is not None,
-                "leetcode": leetcode_data is not None,
-                "projects": projects_list is not None and len(projects_list) > 0,
+                "profile": bool(profile_data and (profile_data.get("technical_skills") or profile_data.get("categories"))),
+                "resume": bool(resume_data and (resume_data.get("analysis", {}).get("skills_extracted") or resume_data.get("skills_extracted"))),
+                "github": bool(github_data and (github_data.get("statistics", {}).get("languages") or github_data.get("analysis", {}).get("top_languages"))),
+                "leetcode": bool(leetcode_data and (leetcode_data.get("topic_statistics") or leetcode_data.get("statistics", {}).get("total_solved", 0) > 0)),
+                "projects": bool(projects_list and len(projects_list) > 0),
             }
         }
+
+

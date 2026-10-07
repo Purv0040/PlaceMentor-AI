@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.api.deps import get_db, get_current_user
 from app.schemas.skill_gap import (
     SkillGapAnalyzeRequest,
+    SkillGapAnalyzeDataResponse,
     SkillGapResponse,
     SkillGapSummaryResponse,
     SkillGapHistoryResponse,
@@ -17,9 +18,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/analyze", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)
+@router.post("/analyze", response_model=SkillGapAnalyzeDataResponse, status_code=status.HTTP_200_OK)
 async def analyze_skill_gaps(
-    request_data: Optional[SkillGapAnalyzeRequest] = None,
+    request_data: SkillGapAnalyzeRequest,
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
@@ -27,7 +28,7 @@ async def analyze_skill_gaps(
     Synthesize multi-module student telemetry and compute deterministic skill gaps with AI recommendations.
     """
     user_id = str(current_user["id"])
-    target_role = request_data.target_role if request_data else None
+    target_role = request_data.target_role
     service = SkillGapService(db)
     analysis = await service.analyze_skill_gaps(user_id, target_role_override=target_role)
     return {
@@ -35,6 +36,7 @@ async def analyze_skill_gaps(
         "message": "Skill gap analysis completed successfully.",
         "data": analysis
     }
+
 
 
 @router.get("", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)

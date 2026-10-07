@@ -12,13 +12,14 @@ from app.repositories.leetcode_repository import LeetCodeRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.readiness_repository import ReadinessRepository
 from app.engines.skill_gap_engine import DeterministicSkillGapEngine
+from app.services.role_requirement_service import RoleRequirementService
 from app.integrations.ai_client import AIClient, AIClientError
 
 logger = logging.getLogger(__name__)
 
 
 class SkillGapService:
-    """Orchestrates multi-module student telemetry collection, deterministic skill gap computation, AI synthesis, and storage."""
+    """Orchestrates multi-module student telemetry collection, dynamic role requirements, deterministic skill gap computation, AI synthesis, and storage."""
 
     def __init__(
         self,
@@ -34,7 +35,9 @@ class SkillGapService:
         self.project_repo = ProjectRepository(db)
         self.readiness_repo = ReadinessRepository(db)
         self.ai_client = ai_client or AIClient()
-        self.engine = DeterministicSkillGapEngine()
+        self.role_service = RoleRequirementService(self.ai_client)
+        self.engine = DeterministicSkillGapEngine(role_service=self.role_service)
+
 
     async def analyze_skill_gaps(
         self,
@@ -44,7 +47,12 @@ class SkillGapService:
         """Collect telemetry from all student modules, compute deterministic skill gaps, enrich with AI, and persist."""
         # 1. Fetch Student Profile
         student_profile = await self.profile_repo.get_by_user_id(user_id)
-        target_role = target_role_override or (student_profile.get("target_role") if student_profile else None) or "Backend Developer"
+        target_role_raw = target_role_override or (student_profile.get("target_role") if student_profile else None) or "Software Engineer"
+
+        # Sanitize raw input: max 100 chars, strip, non-empty
+        target_role_raw = (target_role_raw or "").strip()[:100] or "Software Engineer"
+        # The engine will canonicalize this — we pass the raw string through
+        target_role = target_role_raw
 
         # 2. Fetch Resume Intelligence
         resume_doc = await self.resume_repo.find_active_by_user(user_id)
@@ -83,49 +91,100 @@ class SkillGapService:
                     "message": "GitHub repository data is over 14 days old."
                 })
 
-        # 7. Compute deterministic skill gaps
+        # 7. Dynamically resolve role requirements via centralized RoleRequirementService
+        role_reqs = await self.role_service.get_requirements_async(target_role)
+
+        # 8. Compute deterministic skill gaps using resolved requirements
         computed_result = self.engine.analyze(
             target_role=target_role,
             profile_data=student_profile,
             resume_data=resume_doc,
             github_data=github_doc,
             leetcode_data=leetcode_doc,
-            projects_list=projects_list
+            projects_list=projects_list,
+            role_requirements=role_reqs
         )
         computed_result["stale_data"] = stale_warnings
 
+
         # 8. Enrich with external AI microservice interpretation if available
+        canonical_role_in_result = computed_result.get("target_role", target_role)
         try:
             ai_payload = {
-                "target_role": target_role,
+                "target_role": canonical_role_in_result,
                 "profile": {
                     "skills": [
-                        {"skill": item["skill"], "current_level": item["current_level"], "evidence": item["evidence"]}
+                        {
+                            "skill": item["skill"],
+                            "current_level": item["current_level"],
+                            "current_level_num": item["current_level_num"],
+                            "required_level": item["required_level"],
+                            "required_level_num": item["required_level_num"],
+                            "gap_type": item["gap_type"],
+                            "evidence": item["evidence"]
+                        }
                         for item in computed_result.get("skills", [])
                     ]
                 }
             }
             ai_interpretation = await self.ai_client.analyze_skill_gaps(ai_payload)
             if ai_interpretation and isinstance(ai_interpretation, dict):
-                if ai_interpretation.get("summary"):
-                    computed_result["ai_summary"] = ai_interpretation["summary"]
+                ai_sum = ai_interpretation.get("summary")
+                if ai_sum:
+                    # Guard: do not accept AI summary if it references an unrelated role (e.g. stale mock fallback)
+                    if "ai/ml engineer" in ai_sum.lower() and canonical_role_in_result != "AI/ML Engineer":
+                        logger.warning("Rejected AI summary referencing AI/ML Engineer for canonical role '%s'", canonical_role_in_result)
+                    else:
+                        computed_result["ai_summary"] = ai_sum
                 # Update item explanations if available from AI
                 if ai_interpretation.get("skills"):
                     ai_skill_map = {s.get("skill", "").lower(): s for s in ai_interpretation["skills"] if isinstance(s, dict)}
                     for s_item in computed_result.get("skills", []):
                         ai_s = ai_skill_map.get(s_item["skill"].lower())
                         if ai_s:
-                            if ai_s.get("explanation"):
-                                s_item["reason"] = ai_s["explanation"]
-                            if ai_s.get("recommended_action"):
-                                s_item["recommended_action"] = ai_s["recommended_action"]
+                            ai_expl = ai_s.get("explanation") or ai_s.get("reason")
+                            # Verify AI explanation doesn't contradict calculated level (e.g. leak "untested")
+                            if ai_expl and not (s_item["current_level"] != "Untested" and "untested" in ai_expl.lower()):
+                                s_item["reason"] = ai_expl
+                            ai_rec = ai_s.get("recommended_action") or ai_s.get("action")
+                            if ai_rec and not (s_item["current_level"] != "Untested" and "untested" in ai_rec.lower()):
+                                s_item["recommended_action"] = ai_rec
         except Exception as e:
             logger.warning("AI microservice skill gap fallback engaged: %s", e)
 
-        # 9. Persist result in MongoDB Atlas
+        # Ensure ai_summary is dynamic and uses the canonical target role from the result
+        if not computed_result.get("ai_summary"):
+            computed_result["ai_summary"] = f"Targeted skill gap analysis for {canonical_role_in_result} role. Overall coverage: {computed_result.get('overall_coverage', 0)}%."
+
+        # 9. Re-sync priority_gaps array with skills array for 100% single source of truth consistency
+        refreshed_priority_gaps = []
+        for item in computed_result.get("skills", []):
+            if item["gap_type"] != "aligned":
+                refreshed_priority_gaps.append({
+                    "id": f"gap-{len(refreshed_priority_gaps) + 1}",
+                    "skill": item["skill"],
+                    "category": item["category"],
+                    "gap_type": item["gap_type"],
+                    "priority": item["priority"],
+                    "importance": item["importance"],
+                    "current_level": item["current_level"],
+                    "current_level_text": f"{item['current_level']} (Level {item['current_level_num']}/4)",
+                    "required_level": item["required_level"],
+                    "required_level_text": f"{item['required_level']} (Level {item['required_level_num']}/4)",
+                    "reason": item["reason"],
+                    "suggested_action": item["recommended_action"],
+                    "action_label": item.get("action_label", "Add to Roadmap"),
+                    "action_route": item.get("action_route", "/roadmap")
+                })
+        priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
+        refreshed_priority_gaps.sort(key=lambda g: priority_order.get(g["priority"], 2))
+        computed_result["priority_gaps"] = refreshed_priority_gaps
+
+        # 10. Persist result in MongoDB Atlas
         created = await self.repo.create_analysis(user_id, computed_result)
         logger.info("Saved Skill Gap Analysis for user %s (coverage %s%%)", user_id, created.get("overall_coverage"))
         return created
+
 
     async def get_latest_skill_gaps(self, user_id: str) -> Dict[str, Any]:
         """Fetch latest skill gap analysis or trigger recalculation if none exists."""

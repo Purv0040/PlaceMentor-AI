@@ -78,19 +78,49 @@ ROLE_REQUIREMENTS_REGISTRY: Dict[str, List[RoleSkillRequirement]] = {
     ],
 }
 
+# Canonical role definitions
+CANONICAL_ROLES: List[str] = [
+    "AI/ML Engineer",
+    "Backend Developer",
+    "Frontend Developer",
+    "Full Stack Developer",
+    "Data Scientist",
+    "Data Engineer",
+    "DevOps Engineer",
+    "Cybersecurity Analyst",
+    "Software Engineer",
+    "Cloud Engineer",
+    "Mobile App Developer",
+    "QA / Test Engineer",
+    "Database Engineer",
+    "Business Analyst",
+    "Product Manager",
+    "Data Analyst",
+]
+
+CANONICAL_ROLE_MAP: Dict[str, str] = {r.lower(): r for r in CANONICAL_ROLES}
+
 # Alias map for user inputs (lowercase -> canonical role name)
 ROLE_ALIASES: Dict[str, str] = {
-    "ai/ml engineer": "AI/ML Engineer",
+    **CANONICAL_ROLE_MAP,
     "ai/ml": "AI/ML Engineer",
+    "ai engineer": "AI/ML Engineer",
+    "ai ml engineer": "AI/ML Engineer",
     "ml engineer": "AI/ML Engineer",
     "machine learning engineer": "AI/ML Engineer",
     "backend developer": "Backend Developer",
     "backend engineer": "Backend Developer",
+    "backend dev": "Backend Developer",
     "backend": "Backend Developer",
     "sde 1 backend": "Backend Developer",
+    "frontend developer": "Frontend Developer",
+    "frontend engineer": "Frontend Developer",
+    "frontend dev": "Frontend Developer",
+    "frontend": "Frontend Developer",
     "full stack developer": "Full Stack Developer",
     "fullstack developer": "Full Stack Developer",
     "full stack engineer": "Full Stack Developer",
+    "fullstack engineer": "Full Stack Developer",
     "fullstack": "Full Stack Developer",
     "data scientist": "Data Scientist",
     "ds": "Data Scientist",
@@ -98,15 +128,45 @@ ROLE_ALIASES: Dict[str, str] = {
     "da": "Data Analyst",
     "data engineer": "Data Engineer",
     "de": "Data Engineer",
+    "devops engineer": "DevOps Engineer",
+    "devops": "DevOps Engineer",
+    "cybersecurity analyst": "Cybersecurity Analyst",
+    "cyber security analyst": "Cybersecurity Analyst",
+    "cybersecurity": "Cybersecurity Analyst",
+    "security analyst": "Cybersecurity Analyst",
+    "software engineer": "Software Engineer",
+    "sde": "Software Engineer",
+    "swe": "Software Engineer",
+    "software developer": "Software Engineer",
+    "cloud engineer": "Cloud Engineer",
+    "cloud architect": "Cloud Engineer",
+    "mobile app developer": "Mobile App Developer",
+    "mobile developer": "Mobile App Developer",
+    "android developer": "Mobile App Developer",
+    "ios developer": "Mobile App Developer",
+    "qa / test engineer": "QA / Test Engineer",
+    "qa engineer": "QA / Test Engineer",
+    "test engineer": "QA / Test Engineer",
+    "qa": "QA / Test Engineer",
+    "quality assurance": "QA / Test Engineer",
+    "database engineer": "Database Engineer",
+    "database administrator": "Database Engineer",
+    "dba": "Database Engineer",
+    "business analyst": "Business Analyst",
+    "ba": "Business Analyst",
+    "product manager": "Product Manager",
+    "pm": "Product Manager",
 }
 
 
 def get_canonical_role_name(target_role: str) -> str:
     """Resolves raw target role string to canonical role name."""
     if not target_role:
-        return "Backend Developer"
+        return "Software Engineer"
     clean = target_role.strip().lower()
-    return ROLE_ALIASES.get(clean, target_role.strip().title())
+    if clean in ROLE_ALIASES:
+        return ROLE_ALIASES[clean]
+    return target_role.strip()
 
 
 def get_role_requirements(target_role: str) -> List[RoleSkillRequirement]:
