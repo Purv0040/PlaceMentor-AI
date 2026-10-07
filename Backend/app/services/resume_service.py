@@ -56,23 +56,15 @@ class ResumeService:
     ) -> None:
 
         self.db = db
-
         self.repo = ResumeRepository(db)
-
-        if gridfs_bucket is not None:
-            self.gridfs = gridfs_bucket
-        else:
-            try:
-                self.gridfs = AsyncIOMotorGridFSBucket(
-                    db,
-                    bucket_name="resumes",
-                )
-            except Exception:
-                from unittest.mock import AsyncMock
-                mock_gridfs = AsyncMock()
-                mock_gridfs.upload_from_stream.return_value = "mock_gridfs_file_id_123"
-                self.gridfs = mock_gridfs
-
+        self.gridfs = (
+            gridfs_bucket
+            if gridfs_bucket is not None
+            else AsyncIOMotorGridFSBucket(
+                db,
+                bucket_name="resumes",
+            )
+        )
         self.ai_client = ai_client or AIClient()
 
     # =========================================================
