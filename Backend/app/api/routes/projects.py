@@ -11,6 +11,7 @@ from app.schemas.project import (
     ProjectResponse,
     ProjectListResponse,
     ProjectSingleResponse,
+    ProjectAnalyzeResponse,
     ProjectAnalysisResponse,
     ProjectDeleteResponse,
     ProjectDeleteData,
@@ -151,7 +152,7 @@ async def toggle_featured_project(
     )
 
 
-@router.post("/{project_id}/analyze", response_model=ProjectSingleResponse, responses=STANDARD_ERROR_RESPONSES)
+@router.post("/{project_id}/analyze", response_model=ProjectAnalyzeResponse, responses=STANDARD_ERROR_RESPONSES)
 async def analyze_project(
     project_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -161,7 +162,7 @@ async def analyze_project(
     user_id = str(current_user["id"])
     service = ProjectService(db)
     analyzed = await service.analyze_project(project_id, user_id)
-    return ProjectSingleResponse(
+    return ProjectAnalyzeResponse(
         success=True,
         message="Project analyzed successfully.",
         data=analyzed
