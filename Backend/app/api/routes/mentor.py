@@ -35,6 +35,8 @@ async def create_conversation(
     try:
         user_id = _extract_user_id(current_user)
         return await service.create_conversation(user_id=user_id, title=payload.title)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create conversation: {str(e)}")
 
@@ -73,16 +75,14 @@ async def send_message(
 ):
     """Send a query to the AI Mentor within an existing conversation."""
     user_id = _extract_user_id(current_user)
-    conv = await service.get_conversation_detail(conversation_id=conversation_id, user_id=user_id)
-    if not conv:
-        raise HTTPException(status_code=404, detail="Mentor conversation not found.")
-
     try:
         return await service.send_message(
             user_id=user_id,
             conversation_id=conversation_id,
             message_text=payload.message,
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -117,6 +117,8 @@ async def ask_mentor(
             message_text=payload.message,
             conversation_id=payload.conversation_id,
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process mentor query: {str(e)}")
 

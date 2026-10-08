@@ -2,6 +2,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
+from fastapi import HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.repositories.mentor_repository import MentorRepository
@@ -29,11 +30,11 @@ class MentorService:
         return await self.mentor_repo.create_conversation(session_data)
 
     async def get_user_conversations(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
-        """Fetch list of active/archived mentor conversations for user."""
+        """Fetch list of active/archived mentor conversations for authenticated user."""
         return await self.mentor_repo.get_conversations_by_user(user_id, limit=limit)
 
     async def get_conversation_detail(self, conversation_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch conversation metadata and all messages in chronological order."""
+        """Fetch conversation metadata and all messages in chronological order for authenticated user."""
         conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
         if not conv:
             return None
@@ -43,6 +44,10 @@ class MentorService:
 
     async def archive_conversation(self, conversation_id: str, user_id: str) -> bool:
         """Mark conversation as archived."""
+        # First verify it exists and belongs to user
+        conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
+        if not conv:
+            return False
         return await self.mentor_repo.archive_conversation(conversation_id, user_id=user_id)
 
     async def send_message(
@@ -52,10 +57,27 @@ class MentorService:
         message_text: str,
     ) -> Dict[str, Any]:
         """Send a message to the mentor, get context-aware AI guidance, and store conversation memory."""
-        # 1. Validate conversation ownership
+        if not message_text or not message_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Message cannot be empty or whitespace only.",
+            )
+
+        clean_message = message_text.strip()
+
+        # 1. Validate conversation ownership and status
         conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
         if not conv:
-            raise ValueError("Conversation session not found.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mentor conversation not found.",
+            )
+
+        if conv.get("status") == "archived":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot send message to an archived conversation.",
+            )
 
         # 2. Save user message
         user_msg_id = f"msg_user_{int(datetime.now(timezone.utc).timestamp())}_{uuid.uuid4().hex[:4]}"
@@ -64,7 +86,7 @@ class MentorService:
             "conversation_id": conversation_id,
             "user_id": user_id,
             "role": "user",
-            "content": message_text,
+            "content": clean_message,
         }
         await self.mentor_repo.add_message(user_msg_data)
 
@@ -81,7 +103,7 @@ class MentorService:
 
         # 5. Call AI service or local fallback engine
         ai_payload = {
-            "message": message_text,
+            "message": clean_message,
             "student_context": student_context,
             "conversation_history": history_payload,
         }
@@ -92,13 +114,17 @@ class MentorService:
             logger.warning("AI Service unavailable for Mentor Chat (%s), using local fallback engine.", e)
             from app.engines.mentor_engine import AIMentorEngine
             ai_res = AIMentorEngine().chat(ai_payload)
+        except Exception as e:
+            logger.error("Unexpected error during AI Mentor generation: %s", e)
+            from app.engines.mentor_engine import AIMentorEngine
+            ai_res = AIMentorEngine().chat(ai_payload)
 
         answer = ai_res.get("answer", "I am analyzing your placement metrics. Please check your tasks and skill gaps.")
         intent = ai_res.get("intent", "general_placement")
         sources = ai_res.get("context_sources", ["profile", "readiness"])
         evidence = ai_res.get("evidence", [])
         actions = ai_res.get("suggested_actions", [])
-        confidence = ai_res.get("confidence", 0.9)
+        confidence = float(ai_res.get("confidence", 0.85))
 
         # 6. Save assistant message
         asst_msg_id = f"msg_ai_{int(datetime.now(timezone.utc).timestamp())}_{uuid.uuid4().hex[:4]}"
@@ -118,25 +144,45 @@ class MentorService:
 
         # 7. Update conversation title if first turn
         if len(recent_messages) <= 2:
-            title_snippet = message_text[:30] + ("..." if len(message_text) > 30 else "")
+            title_snippet = clean_message[:30] + ("..." if len(clean_message) > 30 else "")
             await self.mentor_repo.update_conversation_timestamp(conversation_id, title=title_snippet)
 
         return created_asst_msg
 
     async def ask_mentor(self, user_id: str, message_text: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
         """Quick mentor query handler."""
-        if not conversation_id:
-            conv = await self.create_conversation(user_id, title=message_text[:30])
+        if not message_text or not message_text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Message cannot be empty or whitespace only.",
+            )
+
+        clean_message = message_text.strip()
+
+        if conversation_id:
+            conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
+            if not conv:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Mentor conversation not found.",
+                )
+            if conv.get("status") == "archived":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Cannot send message to an archived conversation.",
+                )
+        else:
+            conv = await self.create_conversation(user_id, title=clean_message[:30] + ("..." if len(clean_message) > 30 else ""))
             conversation_id = conv["conversation_id"]
 
-        asst_msg = await self.send_message(user_id=user_id, conversation_id=conversation_id, message_text=message_text)
+        asst_msg = await self.send_message(user_id=user_id, conversation_id=conversation_id, message_text=clean_message)
         return {
             "answer": asst_msg.get("content", ""),
             "intent": asst_msg.get("intent", "general_placement"),
             "context_sources": asst_msg.get("context_sources", []),
             "evidence": asst_msg.get("evidence", []),
             "suggested_actions": asst_msg.get("suggested_actions", []),
-            "confidence": asst_msg.get("confidence", 0.9),
+            "confidence": asst_msg.get("confidence", 0.85),
             "conversation_id": conversation_id,
             "created_at": asst_msg.get("created_at"),
         }
