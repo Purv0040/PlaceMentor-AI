@@ -105,7 +105,7 @@ class PersonalMentorEngine:
             "4. If the required information to answer the question is unavailable in the context, explicitly state that the information is unavailable.\n"
             "5. Maintain an encouraging but realistic and professional tone."
         )
-        
+
         context_str = json.dumps(filtered_context, indent=2)
         
         prompt = (

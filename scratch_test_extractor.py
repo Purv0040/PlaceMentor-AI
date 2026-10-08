@@ -11,3 +11,4 @@ with open("Backend/scratch/pdf_text.txt", "r", encoding="utf-8") as f:
 
 result = parse_resume_dynamically(text)
 print(json.dumps(result, indent=2))
+

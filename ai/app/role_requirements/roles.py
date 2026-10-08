@@ -1,6 +1,6 @@
 """
 Structured role requirements definitions for AI Placement Copilot.
-Defines required skills, proficiency levels, importance ratings, and prerequisites for initial target roles.
+Defines required skills, proficiency levels, importance ratings, and prerequisites for target roles.
 """
 from typing import Dict, List, Optional
 from app.schemas.skill_gap import RoleSkillRequirement
@@ -76,6 +76,96 @@ ROLE_REQUIREMENTS_REGISTRY: Dict[str, List[RoleSkillRequirement]] = {
         RoleSkillRequirement(skill="Kafka", required_level="Intermediate", importance="medium", category="Backend"),
         RoleSkillRequirement(skill="Data Structures & Algorithms", required_level="Intermediate", importance="high", category="DSA"),
     ],
+
+    # 7. Cybersecurity Analyst & Engineer / Cybersecurity Analyst
+    "Cybersecurity Analyst & Engineer": [
+        RoleSkillRequirement(skill="Networking", required_level="Advanced", importance="critical", category="Networking"),
+        RoleSkillRequirement(skill="Linux", required_level="Advanced", importance="critical", category="OS & Scripting"),
+        RoleSkillRequirement(skill="Security Fundamentals", required_level="Advanced", importance="critical", category="Security"),
+        RoleSkillRequirement(skill="SIEM", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Threat Detection", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Incident Response", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Vulnerability Management", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="OWASP", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Python", required_level="Intermediate", importance="high", category="Programming"),
+        RoleSkillRequirement(skill="Log Analysis", required_level="Intermediate", importance="medium", category="Security"),
+        RoleSkillRequirement(skill="MITRE ATT&CK", required_level="Intermediate", importance="high", category="Security"),
+    ],
+    "Cybersecurity Analyst": [
+        RoleSkillRequirement(skill="Networking", required_level="Advanced", importance="critical", category="Networking"),
+        RoleSkillRequirement(skill="Linux", required_level="Advanced", importance="critical", category="OS & Scripting"),
+        RoleSkillRequirement(skill="Security Fundamentals", required_level="Advanced", importance="critical", category="Security"),
+        RoleSkillRequirement(skill="SIEM", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Threat Detection", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Incident Response", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Vulnerability Management", required_level="Intermediate", importance="high", category="Security"),
+        RoleSkillRequirement(skill="Python", required_level="Intermediate", importance="high", category="Programming"),
+        RoleSkillRequirement(skill="Log Analysis", required_level="Intermediate", importance="medium", category="Security"),
+    ],
+
+    # 8. Frontend Developer
+    "Frontend Developer": [
+        RoleSkillRequirement(skill="HTML/CSS", required_level="Advanced", importance="critical", category="Frontend"),
+        RoleSkillRequirement(skill="JavaScript", required_level="Advanced", importance="critical", category="Programming"),
+        RoleSkillRequirement(skill="React", required_level="Advanced", importance="critical", category="Frontend"),
+        RoleSkillRequirement(skill="TypeScript", required_level="Intermediate", importance="high", category="Programming"),
+        RoleSkillRequirement(skill="State Management", required_level="Intermediate", importance="high", category="Frontend"),
+        RoleSkillRequirement(skill="REST API", required_level="Intermediate", importance="high", category="Backend"),
+    ],
+
+    # 9. DevOps Engineer
+    "DevOps Engineer": [
+        RoleSkillRequirement(skill="Linux", required_level="Advanced", importance="critical", category="OS & Scripting"),
+        RoleSkillRequirement(skill="Docker", required_level="Advanced", importance="critical", category="DevOps"),
+        RoleSkillRequirement(skill="CI/CD", required_level="Advanced", importance="critical", category="DevOps"),
+        RoleSkillRequirement(skill="Kubernetes", required_level="Intermediate", importance="high", category="DevOps"),
+        RoleSkillRequirement(skill="Infrastructure as Code", required_level="Intermediate", importance="high", category="DevOps"),
+        RoleSkillRequirement(skill="Cloud Platforms", required_level="Intermediate", importance="high", category="Cloud"),
+    ],
+
+    # 10. Cloud Engineer
+    "Cloud Engineer": [
+        RoleSkillRequirement(skill="Cloud Platforms", required_level="Advanced", importance="critical", category="Cloud"),
+        RoleSkillRequirement(skill="Linux", required_level="Intermediate", importance="high", category="OS & Scripting"),
+        RoleSkillRequirement(skill="Docker", required_level="Advanced", importance="critical", category="DevOps"),
+        RoleSkillRequirement(skill="Kubernetes", required_level="Intermediate", importance="high", category="DevOps"),
+        RoleSkillRequirement(skill="Networking", required_level="Intermediate", importance="high", category="Networking"),
+    ],
+
+    # 11. Software Engineer
+    "Software Engineer": [
+        RoleSkillRequirement(skill="Data Structures & Algorithms", required_level="Advanced", importance="critical", category="DSA"),
+        RoleSkillRequirement(skill="Object-Oriented Programming", required_level="Advanced", importance="critical", category="CS Fundamentals"),
+        RoleSkillRequirement(skill="Python", required_level="Intermediate", importance="high", category="Programming"),
+        RoleSkillRequirement(skill="System Design", required_level="Intermediate", importance="high", category="CS Fundamentals"),
+        RoleSkillRequirement(skill="REST API", required_level="Intermediate", importance="high", category="Backend"),
+        RoleSkillRequirement(skill="SQL", required_level="Intermediate", importance="high", category="Databases"),
+    ],
+
+    # 12. QA / Test Engineer
+    "QA / Test Engineer": [
+        RoleSkillRequirement(skill="Testing Fundamentals", required_level="Advanced", importance="critical", category="Testing"),
+        RoleSkillRequirement(skill="Test Case Design", required_level="Advanced", importance="critical", category="Testing"),
+        RoleSkillRequirement(skill="Automation Testing", required_level="Intermediate", importance="high", category="Testing"),
+        RoleSkillRequirement(skill="Selenium", required_level="Intermediate", importance="high", category="Testing"),
+        RoleSkillRequirement(skill="REST API", required_level="Intermediate", importance="high", category="Backend"),
+    ],
+
+    # 13. Mobile App Developer
+    "Mobile App Developer": [
+        RoleSkillRequirement(skill="JavaScript", required_level="Advanced", importance="critical", category="Programming"),
+        RoleSkillRequirement(skill="React Native", required_level="Intermediate", importance="critical", category="Mobile"),
+        RoleSkillRequirement(skill="Mobile UI Design", required_level="Intermediate", importance="high", category="Mobile"),
+        RoleSkillRequirement(skill="REST API", required_level="Intermediate", importance="high", category="Backend"),
+    ],
+
+    # 14. Database Engineer
+    "Database Engineer": [
+        RoleSkillRequirement(skill="SQL", required_level="Advanced", importance="critical", category="Databases"),
+        RoleSkillRequirement(skill="Database Design", required_level="Advanced", importance="critical", category="Databases"),
+        RoleSkillRequirement(skill="PostgreSQL", required_level="Advanced", importance="high", category="Databases"),
+        RoleSkillRequirement(skill="Query Optimization", required_level="Advanced", importance="high", category="Databases"),
+    ],
 }
 
 # Canonical role definitions
@@ -87,6 +177,7 @@ CANONICAL_ROLES: List[str] = [
     "Data Scientist",
     "Data Engineer",
     "DevOps Engineer",
+    "Cybersecurity Analyst & Engineer",
     "Cybersecurity Analyst",
     "Software Engineer",
     "Cloud Engineer",
@@ -130,6 +221,13 @@ ROLE_ALIASES: Dict[str, str] = {
     "de": "Data Engineer",
     "devops engineer": "DevOps Engineer",
     "devops": "DevOps Engineer",
+    "cybersecurity analyst & engineer": "Cybersecurity Analyst & Engineer",
+    "cybersecurity analyst and engineer": "Cybersecurity Analyst & Engineer",
+    "cyber security analyst & engineer": "Cybersecurity Analyst & Engineer",
+    "cyber security analyst and engineer": "Cybersecurity Analyst & Engineer",
+    "cybersecurity engineer": "Cybersecurity Analyst & Engineer",
+    "cyber security engineer": "Cybersecurity Analyst & Engineer",
+    "security engineer": "Cybersecurity Analyst & Engineer",
     "cybersecurity analyst": "Cybersecurity Analyst",
     "cyber security analyst": "Cybersecurity Analyst",
     "cybersecurity": "Cybersecurity Analyst",

@@ -108,15 +108,22 @@ def test_roadmap_prerequisite_ordering(engine):
 def test_roadmap_role_relevance(engine):
     backend_req = RoadmapGenerateRequest(target_role="Backend Developer", available_minutes_per_day=120)
     aiml_req = RoadmapGenerateRequest(target_role="AI/ML Engineer", available_minutes_per_day=120)
+    cyber_req = RoadmapGenerateRequest(target_role="Cybersecurity Analyst & Engineer", available_minutes_per_day=120)
 
     backend_roadmap = engine.generate_roadmap(backend_req)
     aiml_roadmap = engine.generate_roadmap(aiml_req)
+    cyber_roadmap = engine.generate_roadmap(cyber_req)
 
     backend_cats = {t.category for t in backend_roadmap.all_tasks}
     aiml_cats = {t.category for t in aiml_roadmap.all_tasks}
+    cyber_cats = {t.category for t in cyber_roadmap.all_tasks}
 
     assert "Backend" in backend_cats
     assert "AI/ML" in aiml_cats or "Data Science" in aiml_cats
+    assert "Security" in cyber_cats or "Networking" in cyber_cats
+
+    cyber_skills = {t.skill.lower() for t in cyber_roadmap.all_tasks}
+    assert any("network" in s or "siem" in s or "threat" in s or "vulnerability" in s for s in cyber_skills)
 
 
 # ---------------------------------------------------------------------------
