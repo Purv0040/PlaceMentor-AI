@@ -8,6 +8,7 @@ from app.schemas.progress import (
     ProgressResponseSchema,
     ProgressSummaryResponseSchema,
     StreakResponseSchema,
+    WeeklyCompletionSchema,
 )
 from app.services.progress_service import ProgressService
 
@@ -61,7 +62,7 @@ async def get_daily_progress(
     return p.get("daily_completion", [])
 
 
-@router.get("/weekly")
+@router.get("/weekly", response_model=List[WeeklyCompletionSchema])
 async def get_weekly_progress(
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db),

@@ -11,6 +11,8 @@ class ProgressRepository:
         doc = await self.collection.find_one({"user_id": user_id})
         if doc:
             doc["_id"] = str(doc["_id"])
+            if not doc.get("id"):
+                doc["id"] = str(doc["_id"])
         return doc
 
     async def save_or_update(self, user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -19,3 +21,4 @@ class ProgressRepository:
         await self.collection.update_one({"user_id": user_id}, {"$set": data}, upsert=True)
         res = await self.get_by_user_id(user_id)
         return res or data
+

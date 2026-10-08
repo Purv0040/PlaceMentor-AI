@@ -4,6 +4,17 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
 
+class WeeklyCompletionSchema(BaseModel):
+    week: int
+    start_date: str
+    end_date: str
+    total: int = 0
+    completed: int = 0
+    pending: int = 0
+    skipped: int = 0
+    percentage: float = 0.0
+
+
 class ProgressResponseSchema(BaseModel):
     id: Optional[str] = None
 
@@ -18,7 +29,7 @@ class ProgressResponseSchema(BaseModel):
     completion_percentage: float = 0.0
     roadmap_completion_percentage: float = 0.0
 
-    weekly_completion: List[Dict[str, Any]] = Field(
+    weekly_completion: List[WeeklyCompletionSchema] = Field(
         default_factory=list
     )
 

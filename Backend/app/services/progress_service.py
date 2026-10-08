@@ -1,7 +1,9 @@
+import bisect
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Tuple
 
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.repositories.progress_repository import ProgressRepository
@@ -31,16 +33,14 @@ class ProgressService:
         user_id: str,
     ) -> Dict[str, Any]:
 
-        tasks = await self.task_repo.get_all_by_user(
-            user_id,
-            limit=2000,
-        )
-
         active_roadmap = (
             await self.roadmap_repo.get_active_by_user_id(user_id)
         )
 
         roadmap_id = None
+        start_date = None
+        end_date = None
+        duration_days = None
 
         if active_roadmap:
             roadmap_id = (
@@ -50,6 +50,40 @@ class ProgressService:
 
             if roadmap_id is not None:
                 roadmap_id = str(roadmap_id)
+
+            start_date = active_roadmap.get("start_date")
+            end_date = active_roadmap.get("end_date")
+            duration_days = active_roadmap.get("duration_days")
+
+        # Fetch tasks strictly scoped to the user and active roadmap if present
+        if roadmap_id:
+            query: Dict[str, Any] = {
+                "user_id": str(user_id),
+            }
+            if ObjectId.is_valid(roadmap_id):
+                query["$or"] = [
+                    {"roadmap_id": str(roadmap_id)},
+                    {"roadmap_id": ObjectId(roadmap_id)},
+                ]
+            else:
+                query["roadmap_id"] = str(roadmap_id)
+
+            raw_tasks = (
+                await self.task_repo.collection.find(query)
+                .sort("date", 1)
+                .to_list(length=5000)
+            )
+            tasks = self.task_repo._serialize_documents(raw_tasks)
+            if not tasks:
+                tasks = await self.task_repo.get_all_by_user(
+                    user_id,
+                    limit=5000,
+                )
+        else:
+            tasks = await self.task_repo.get_all_by_user(
+                user_id,
+                limit=5000,
+            )
 
         total_tasks = len(tasks)
 
@@ -114,7 +148,7 @@ class ProgressService:
                 1,
             )
             if roadmap_tasks
-            else 0.0
+            else (completion_percentage if total_tasks else 0.0)
         )
 
         # ---------------------------------------------
@@ -203,7 +237,7 @@ class ProgressService:
             if task.get("status") == "completed":
                 daily_map[task_date]["completed"] += 1
 
-        daily_completion = []
+        all_daily_completion = []
 
         for task_date, values in sorted(
             daily_map.items()
@@ -221,7 +255,7 @@ class ProgressService:
                 else 0.0
             )
 
-            daily_completion.append(
+            all_daily_completion.append(
                 {
                     "date": task_date,
                     "total": total,
@@ -231,7 +265,7 @@ class ProgressService:
             )
 
         # ---------------------------------------------
-        # STREAK
+        # STREAK (calculated on full history)
         # ---------------------------------------------
 
         existing = (
@@ -243,9 +277,44 @@ class ProgressService:
 
         current_streak, longest_streak, last_active_date = (
             self._calculate_streak(
-                daily_completion,
+                all_daily_completion,
                 existing,
             )
+        )
+
+        # ---------------------------------------------
+        # DYNAMIC CURRENT PROGRESS WINDOW (14 days)
+        # ---------------------------------------------
+        window_size = 14
+        if len(all_daily_completion) <= window_size:
+            daily_window = all_daily_completion
+        else:
+            all_dates = [item["date"] for item in all_daily_completion]
+            today_str = get_today_date_str()
+
+            if today_str in all_dates:
+                today_idx = all_dates.index(today_str)
+            else:
+                today_idx = bisect.bisect_left(all_dates, today_str)
+                if today_idx >= len(all_dates):
+                    today_idx = len(all_dates) - 1
+
+            # Keep up to 6 past days visible in the window while showing today and upcoming days
+            start_idx = max(0, today_idx - 6)
+            end_idx = start_idx + window_size
+
+            if end_idx > len(all_daily_completion):
+                end_idx = len(all_daily_completion)
+                start_idx = max(0, end_idx - window_size)
+
+            daily_window = all_daily_completion[start_idx:end_idx]
+
+        # ---------------------------------------------
+        # WEEKLY COMPLETION
+        # ---------------------------------------------
+        weekly_completion = self._calculate_weekly_completion(
+            tasks,
+            active_roadmap,
         )
 
         data = {
@@ -257,8 +326,8 @@ class ProgressService:
             "skipped_tasks": skipped_count,
             "completion_percentage": completion_percentage,
             "roadmap_completion_percentage": roadmap_completion_percentage,
-            "weekly_completion": [],
-            "daily_completion": daily_completion[-14:],
+            "weekly_completion": weekly_completion,
+            "daily_completion": daily_window,
             "skill_progress": skill_progress,
             "top_skills_completed": completed_skills,
             "current_streak": current_streak,
@@ -462,3 +531,107 @@ class ProgressService:
                 [],
             ),
         }
+
+    def _calculate_weekly_completion(
+        self,
+        tasks: List[Dict[str, Any]],
+        active_roadmap: Optional[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        if not tasks:
+            return []
+
+        roadmap_start_date = None
+        roadmap_end_date = None
+        duration_days = None
+
+        if active_roadmap:
+            start_raw = active_roadmap.get("start_date")
+            if isinstance(start_raw, datetime):
+                roadmap_start_date = start_raw.date()
+            elif isinstance(start_raw, str):
+                try:
+                    roadmap_start_date = datetime.fromisoformat(start_raw.replace("Z", "+00:00")).date()
+                except Exception:
+                    try:
+                        roadmap_start_date = datetime.strptime(start_raw[:10], "%Y-%m-%d").date()
+                    except Exception:
+                        roadmap_start_date = None
+
+            end_raw = active_roadmap.get("end_date")
+            if isinstance(end_raw, datetime):
+                roadmap_end_date = end_raw.date()
+            elif isinstance(end_raw, str):
+                try:
+                    roadmap_end_date = datetime.fromisoformat(end_raw.replace("Z", "+00:00")).date()
+                except Exception:
+                    try:
+                        roadmap_end_date = datetime.strptime(end_raw[:10], "%Y-%m-%d").date()
+                    except Exception:
+                        roadmap_end_date = None
+
+            duration_days = active_roadmap.get("duration_days")
+
+        task_dates = []
+        for t in tasks:
+            d_str = t.get("date")
+            if d_str and isinstance(d_str, str):
+                try:
+                    task_dates.append(datetime.strptime(d_str[:10], "%Y-%m-%d").date())
+                except Exception:
+                    pass
+
+        if not roadmap_start_date:
+            if task_dates:
+                roadmap_start_date = min(task_dates)
+            else:
+                roadmap_start_date = datetime.now(APP_TIMEZONE).date()
+
+        if not roadmap_end_date:
+            if duration_days:
+                roadmap_end_date = roadmap_start_date + timedelta(days=duration_days - 1)
+            elif task_dates:
+                roadmap_end_date = max(task_dates)
+            else:
+                roadmap_end_date = roadmap_start_date + timedelta(days=89)
+
+        if task_dates and max(task_dates) > roadmap_end_date:
+            roadmap_end_date = max(task_dates)
+
+        if roadmap_end_date < roadmap_start_date:
+            roadmap_end_date = roadmap_start_date
+
+        weekly_completion: List[Dict[str, Any]] = []
+        current_start = roadmap_start_date
+        week_num = 1
+
+        while current_start <= roadmap_end_date:
+            current_end = min(roadmap_end_date, current_start + timedelta(days=6))
+            start_str = current_start.strftime("%Y-%m-%d")
+            end_str = current_end.strftime("%Y-%m-%d")
+
+            week_tasks = [
+                t for t in tasks
+                if t.get("date") and start_str <= t["date"] <= end_str
+            ]
+
+            total = len(week_tasks)
+            completed = len([t for t in week_tasks if t.get("status") == "completed"])
+            pending = len([t for t in week_tasks if t.get("status") in ("pending", "in_progress")])
+            skipped = len([t for t in week_tasks if t.get("status") == "skipped"])
+            percentage = round(completed / total * 100.0, 1) if total else 0.0
+
+            weekly_completion.append({
+                "week": week_num,
+                "start_date": start_str,
+                "end_date": end_str,
+                "total": total,
+                "completed": completed,
+                "pending": pending,
+                "skipped": skipped,
+                "percentage": percentage,
+            })
+
+            current_start = current_start + timedelta(days=7)
+            week_num += 1
+
+        return weekly_completion
