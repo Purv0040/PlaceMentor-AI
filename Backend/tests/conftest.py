@@ -17,39 +17,59 @@ class AsyncMockCollection:
     async def create_index(self, keys, **kwargs) -> str:
         return "mock_index"
 
+    def _matches_filter(self, doc: Dict[str, Any], filter_dict: Dict[str, Any]) -> bool:
+        if not filter_dict:
+            return True
+        for k, v in filter_dict.items():
+            if k == "$or" and isinstance(v, list):
+                or_match = False
+                for cond in v:
+                    if self._matches_filter(doc, cond):
+                        or_match = True
+                        break
+                if not or_match:
+                    return False
+            elif isinstance(v, dict):
+                val = doc.get(k)
+                for op, expected in v.items():
+                    if op == "$in" and isinstance(expected, (list, tuple, set)):
+                        if val not in expected:
+                            return False
+                    elif op == "$nin" and isinstance(expected, (list, tuple, set)):
+                        if val in expected:
+                            return False
+                    elif op == "$lt":
+                        if val is None or str(val) >= str(expected):
+                            return False
+                    elif op == "$lte":
+                        if val is None or str(val) > str(expected):
+                            return False
+                    elif op == "$gt":
+                        if val is None or str(val) <= str(expected):
+                            return False
+                    elif op == "$gte":
+                        if val is None or str(val) < str(expected):
+                            return False
+                    elif op == "$ne":
+                        if str(val) == str(expected):
+                            return False
+            else:
+                parts = k.split(".")
+                curr = doc
+                for p in parts:
+                    if isinstance(curr, dict) and p in curr:
+                        curr = curr[p]
+                    else:
+                        curr = None
+                        break
+                if str(curr) != str(v):
+                    return False
+        return True
+
     async def find_one(self, filter_dict: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         for doc in self.docs.values():
-            match = True
-            for k, v in filter_dict.items():
-                if k == "$or" and isinstance(v, list):
-                    or_match = False
-                    for cond in v:
-                        cond_ok = True
-                        for ck, cv in cond.items():
-                            if str(doc.get(ck)) != str(cv):
-                                cond_ok = False
-                                break
-                        if cond_ok:
-                            or_match = True
-                            break
-                    if not or_match:
-                        match = False
-                        break
-                else:
-                    parts = k.split(".")
-                    curr = doc
-                    for p in parts:
-                        if isinstance(curr, dict) and p in curr:
-                            curr = curr[p]
-                        else:
-                            curr = None
-                            break
-                    if str(curr) != str(v):
-                        match = False
-                        break
-            if match:
-                res = dict(doc)
-                return res
+            if self._matches_filter(doc, filter_dict):
+                return dict(doc)
         return None
 
     async def insert_one(self, document: Dict[str, Any]):
@@ -82,12 +102,7 @@ class AsyncMockCollection:
             return len(self.docs)
         count = 0
         for doc in self.docs.values():
-            match = True
-            for k, v in filter_dict.items():
-                if doc.get(k) != v:
-                    match = False
-                    break
-            if match:
+            if self._matches_filter(doc, filter_dict):
                 count += 1
         return count
 
@@ -122,15 +137,17 @@ class AsyncMockCollection:
     async def update_many(self, filter_dict: Dict[str, Any], update_dict: Dict[str, Any]):
         count = 0
         for doc in list(self.docs.values()):
-            match = True
-            for k, v in filter_dict.items():
-                if doc.get(k) != v:
-                    match = False
-                    break
-            if match and "$set" in update_dict:
-                for k, v in update_dict["$set"].items():
-                    doc[k] = v
-                count += 1
+            if self._matches_filter(doc, filter_dict):
+                if "$set" in update_dict:
+                    for k, v in update_dict["$set"].items():
+                        parts = k.split(".")
+                        curr = doc
+                        for part in parts[:-1]:
+                            if part not in curr or not isinstance(curr[part], dict):
+                                curr[part] = {}
+                            curr = curr[part]
+                        curr[parts[-1]] = v
+                    count += 1
 
         class UpdateResult:
             modified_count = count
@@ -153,36 +170,9 @@ class AsyncMockCollection:
     def find(self, filter_dict: Dict[str, Any]):
         matched = []
         for doc in self.docs.values():
-            match = True
-            for k, v in filter_dict.items():
-                if k == "$or" and isinstance(v, list):
-                    or_match = False
-                    for cond in v:
-                        cond_ok = True
-                        for ck, cv in cond.items():
-                            if isinstance(cv, dict) and "$ne" in cv:
-                                if str(doc.get(ck)) == str(cv["$ne"]):
-                                    cond_ok = False
-                                    break
-                            elif str(doc.get(ck)) != str(cv):
-                                cond_ok = False
-                                break
-                        if cond_ok:
-                            or_match = True
-                            break
-                    if not or_match:
-                        match = False
-                        break
-                elif isinstance(v, dict) and "$ne" in v:
-                    if str(doc.get(k)) == str(v["$ne"]):
-                        match = False
-                        break
-                else:
-                    if str(doc.get(k)) != str(v):
-                        match = False
-                        break
-            if match:
+            if self._matches_filter(doc, filter_dict):
                 matched.append(dict(doc))
+
 
         class MockCursor:
             def __init__(self, data):

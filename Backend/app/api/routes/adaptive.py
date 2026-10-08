@@ -9,6 +9,7 @@ from app.schemas.adaptive import (
     AdaptiveApplyRequestSchema,
     AdaptationEventResponseSchema,
     AdaptiveSummaryResponseSchema,
+    AdaptiveApplyResponseSchema,
 )
 from app.services.adaptive_service import AdaptiveService
 
@@ -23,13 +24,15 @@ def _get_user_id(current_user: Dict[str, Any]) -> str:
 
 @router.get("/summary", response_model=AdaptiveSummaryResponseSchema)
 async def get_adaptive_summary(
+    roadmap_id: Optional[str] = None,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Fetch adaptive planner summary and current recommendation status."""
     user_id = _get_user_id(current_user)
     service = AdaptiveService(db)
-    return await service.get_summary(user_id)
+    return await service.get_summary(user_id, roadmap_id=roadmap_id)
+
 
 
 @router.post("/recalculate", response_model=AdaptationEventResponseSchema)
@@ -42,21 +45,23 @@ async def recalculate_adaptation(
     user_id = _get_user_id(current_user)
     service = AdaptiveService(db)
     roadmap_id = payload.roadmap_id if payload else None
-    return await service.recalculate_adaptation(user_id, roadmap_id=roadmap_id)
+    force = payload.force if payload else False
+    return await service.recalculate_adaptation(user_id, roadmap_id=roadmap_id, force=force)
 
 
 @router.get("/recommendations", response_model=List[AdaptationEventResponseSchema])
 async def get_adaptive_recommendations(
+    roadmap_id: Optional[str] = None,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """Fetch list of historical and pending adaptation recommendations."""
     user_id = _get_user_id(current_user)
     service = AdaptiveService(db)
-    return await service.get_recommendations(user_id)
+    return await service.get_recommendations(user_id, roadmap_id=roadmap_id)
 
 
-@router.post("/apply")
+@router.post("/apply", response_model=AdaptiveApplyResponseSchema)
 async def apply_adaptation(
     payload: Optional[AdaptiveApplyRequestSchema] = None,
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -67,8 +72,11 @@ async def apply_adaptation(
     service = AdaptiveService(db)
     adaptation_id = payload.adaptation_id if payload else None
     roadmap_id = payload.roadmap_id if payload else None
+    accept_changes = payload.accept_changes if payload else True
     return await service.apply_adaptation(
         user_id=user_id,
         adaptation_id=adaptation_id,
         roadmap_id=roadmap_id,
+        accept_changes=accept_changes,
     )
+
