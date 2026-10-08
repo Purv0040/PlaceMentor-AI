@@ -669,7 +669,7 @@ class RoadmapService:
         )
 
         # --------------------------------------------------------
-        # 15. Build dates (using APP_TIMEZONE for consistency)
+        # 15. Build dates
         # --------------------------------------------------------
 
         start_dt = datetime.now(APP_TIMEZONE)
