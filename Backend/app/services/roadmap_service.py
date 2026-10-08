@@ -22,6 +22,7 @@ from app.services.roadmap_curriculum import (
     get_role_phase_goals,
     generate_90_day_curriculum,
 )
+from app.utils.dates import APP_TIMEZONE
 
 
 logger = logging.getLogger(__name__)
@@ -668,12 +669,10 @@ class RoadmapService:
         )
 
         # --------------------------------------------------------
-        # 15. Build dates
+        # 15. Build dates (using APP_TIMEZONE for consistency)
         # --------------------------------------------------------
 
-        start_dt = datetime.now(
-            timezone.utc
-        )
+        start_dt = datetime.now(APP_TIMEZONE)
 
         end_dt = start_dt + timedelta(
             days=89
