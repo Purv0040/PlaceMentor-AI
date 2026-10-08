@@ -1,11 +1,15 @@
 import logging
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, List
+from fastapi import HTTPException, status as http_status
 from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from app.repositories.task_repository import TaskRepository
 from app.repositories.roadmap_repository import RoadmapRepository
 from app.services.progress_service import ProgressService
-from app.integrations.ai_client import AIClient, AIClientError
+from app.integrations.ai_client import AIClient
+from app.utils.dates import get_today_date_str, APP_TIMEZONE
 
 logger = logging.getLogger(__name__)
 
@@ -18,36 +22,50 @@ class TaskService:
         self.ai_client = ai_client or AIClient()
 
     async def get_today_tasks(self, user_id: str) -> Dict[str, Any]:
-        """Fetch today's tasks or generate initial tasks from active roadmap."""
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        """
+        Fetch today's tasks for the user. If an active roadmap exists and tasks for today
+        have not been generated, syncs them seamlessly.
+        """
+        today_str = get_today_date_str()
         existing_today = await self.task_repo.get_by_user_and_date(user_id, today_str)
 
         active_roadmap = await self.roadmap_repo.get_active_by_user_id(user_id)
-        
-        if not existing_today and active_roadmap:
-            start_dt = active_roadmap.get("start_date") or datetime.now(timezone.utc)
+        if active_roadmap:
+            roadmap_id = str(active_roadmap.get("roadmap_id") or active_roadmap.get("_id"))
+            start_dt = active_roadmap.get("start_date") or datetime.now(APP_TIMEZONE)
             if isinstance(start_dt, str):
                 try:
                     start_dt = datetime.fromisoformat(start_dt.replace("Z", "+00:00"))
                 except Exception:
-                    start_dt = datetime.now(timezone.utc)
-            
-            day_number = max(1, min(90, (datetime.now(timezone.utc).date() - start_dt.date()).days + 1))
-            
-            # Find tasks in roadmap for this day_number
+                    start_dt = datetime.now(APP_TIMEZONE)
+
+            start_date = start_dt.date() if isinstance(start_dt, datetime) else start_dt
+            today_date = datetime.now(APP_TIMEZONE).date()
+            day_number = max(1, min(90, (today_date - start_date).days + 1))
+
             all_tasks = active_roadmap.get("all_tasks") or []
-            roadmap_id = active_roadmap.get("roadmap_id") or active_roadmap.get("_id")
-            
+            if not all_tasks and active_roadmap.get("phases"):
+                for p in active_roadmap["phases"]:
+                    all_tasks.extend(p.get("tasks", []))
+
             day_tasks = [t for t in all_tasks if t.get("day") == day_number]
             if not day_tasks and all_tasks:
-                # Fallback: take first 2-3 pending tasks from all_tasks
                 day_tasks = all_tasks[:3]
 
-            if day_tasks:
+            existing_titles = {t.get("title") for t in existing_today}
+            existing_task_ids = {t.get("task_id") for t in existing_today}
+
+            missing_tasks = [
+                t for t in day_tasks
+                if t.get("title") not in existing_titles and t.get("id") not in existing_task_ids
+            ]
+
+            if missing_tasks:
                 new_db_tasks = []
-                for idx, t in enumerate(day_tasks):
+                for idx, t in enumerate(missing_tasks):
+                    uid_suffix = uuid.uuid4().hex[:8]
                     new_db_tasks.append({
-                        "task_id": t.get("id") or f"task_{user_id}_{today_str}_{idx+1}",
+                        "task_id": t.get("id") or f"task_{roadmap_id}_d{day_number}_{idx+1}_{uid_suffix}",
                         "user_id": user_id,
                         "roadmap_id": roadmap_id,
                         "date": today_str,
@@ -56,27 +74,46 @@ class TaskService:
                         "description": t.get("description", "Daily task from placement roadmap"),
                         "category": t.get("category", "General"),
                         "skill": t.get("skill", "Core"),
-                        "priority": t.get("priority", "HIGH").upper(),
+                        "priority": str(t.get("priority", "HIGH")).upper(),
                         "estimated_minutes": t.get("estimated_minutes", 60),
                         "difficulty": t.get("difficulty", "Intermediate"),
                         "status": "pending",
                         "completion_percentage": 0.0,
+                        "notes": None,
+                        "resource": t.get("resource"),
                     })
-                existing_today = await self.task_repo.create_many(new_db_tasks)
+                created_tasks = await self.task_repo.create_many(new_db_tasks)
+                existing_today.extend(created_tasks)
+                await self.progress_service.recalculate_progress(user_id)
 
         completed_tasks = [t for t in existing_today if t.get("status") == "completed"]
         pending_tasks = [t for t in existing_today if t.get("status") in ("pending", "in_progress")]
         total_est = sum(t.get("estimated_minutes", 60) for t in existing_today)
+        current_day_number = existing_today[0].get("day_number", 1) if existing_today else 1
 
         return {
             "date": today_str,
-            "day_number": existing_today[0].get("day_number", 1) if existing_today else 1,
+            "day_number": current_day_number,
             "total_tasks": len(existing_today),
             "completed_tasks": len(completed_tasks),
             "pending_tasks": len(pending_tasks),
             "estimated_total_minutes": total_est,
             "tasks": existing_today,
         }
+
+    async def generate_today_tasks(self, user_id: str) -> Dict[str, Any]:
+        """
+        Generate today's tasks from the user's active roadmap.
+        Rejects if no active roadmap exists. Idempotent if tasks already generated.
+        """
+        active_roadmap = await self.roadmap_repo.get_active_by_user_id(user_id)
+        if not active_roadmap:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="No active roadmap found for user. Please generate a roadmap first."
+            )
+
+        return await self.get_today_tasks(user_id)
 
     async def get_all_tasks(
         self,
@@ -85,9 +122,12 @@ class TaskService:
         category: Optional[str] = None,
         date_str: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        if date_str:
-            return await self.task_repo.get_by_user_and_date(user_id, date_str)
-        return await self.task_repo.get_all_by_user(user_id, status=status, category=category)
+        return await self.task_repo.get_all_by_user(
+            user_id=user_id,
+            status=status,
+            category=category,
+            date_str=date_str,
+        )
 
     async def get_task_by_id(self, task_id: str, user_id: str) -> Optional[Dict[str, Any]]:
         return await self.task_repo.get_by_id(task_id, user_id)
@@ -95,17 +135,31 @@ class TaskService:
     async def create_task(self, user_id: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         task_data["user_id"] = user_id
         if "date" not in task_data or not task_data["date"]:
-            task_data["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            task_data["date"] = get_today_date_str()
         if "task_id" not in task_data or not task_data["task_id"]:
-            task_data["task_id"] = f"task_{user_id}_{int(datetime.now(timezone.utc).timestamp())}"
+            uid_suffix = uuid.uuid4().hex[:10]
+            task_data["task_id"] = f"task_{user_id}_{uid_suffix}"
         task_data.setdefault("status", "pending")
         task_data.setdefault("completion_percentage", 0.0)
+        task_data.setdefault("difficulty", "Intermediate")
         
         created = await self.task_repo.create(task_data)
         await self.progress_service.recalculate_progress(user_id)
         return created
 
     async def update_task(self, task_id: str, user_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        existing = await self.task_repo.get_by_id(task_id, user_id)
+        if not existing:
+            return None
+
+        if "status" in update_data:
+            target_status = update_data["status"]
+            if existing.get("status") == "completed" and target_status == "skipped":
+                raise HTTPException(
+                    status_code=http_status.HTTP_400_BAD_REQUEST,
+                    detail="Completed tasks cannot be skipped."
+                )
+
         updated = await self.task_repo.update(task_id, user_id, update_data)
         if updated:
             await self.progress_service.recalculate_progress(user_id)
@@ -119,6 +173,16 @@ class TaskService:
         actual_minutes: Optional[int] = None,
         notes: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
+        existing = await self.task_repo.get_by_id(task_id, user_id)
+        if not existing:
+            return None
+
+        if existing.get("status") == "completed" and status == "skipped":
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Completed tasks cannot be skipped."
+            )
+
         updated = await self.task_repo.update_status(
             task_id=task_id,
             user_id=user_id,
@@ -140,6 +204,14 @@ class TaskService:
     async def skip_task(
         self, task_id: str, user_id: str, reason: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
+        existing = await self.task_repo.get_by_id(task_id, user_id)
+        if not existing:
+            return None
+        if existing.get("status") == "completed":
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail="Completed tasks cannot be skipped."
+            )
         notes_str = f"Skipped: {reason}" if reason else "Skipped"
         return await self.update_task_status(
             task_id=task_id, user_id=user_id, status="skipped", notes=notes_str
@@ -151,13 +223,14 @@ class TaskService:
         if not roadmap_tasks:
             return []
         
-        base_date = (start_date or datetime.now(timezone.utc)).date()
+        base_date = (start_date or datetime.now(APP_TIMEZONE)).date()
         db_tasks = []
-        for t in roadmap_tasks:
+        for idx, t in enumerate(roadmap_tasks):
             day_num = t.get("day", 1)
             task_date = (base_date + timedelta(days=day_num - 1)).strftime("%Y-%m-%d")
+            uid_suffix = uuid.uuid4().hex[:8]
             db_tasks.append({
-                "task_id": t.get("id") or f"task_{roadmap_id}_d{day_num}_{int(datetime.now(timezone.utc).timestamp())}",
+                "task_id": t.get("id") or f"task_{roadmap_id}_d{day_num}_{idx+1}_{uid_suffix}",
                 "user_id": user_id,
                 "roadmap_id": roadmap_id,
                 "date": task_date,
@@ -176,3 +249,4 @@ class TaskService:
         created_list = await self.task_repo.create_many(db_tasks)
         await self.progress_service.recalculate_progress(user_id)
         return created_list
+

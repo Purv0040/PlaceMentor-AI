@@ -5,6 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.repositories.progress_repository import ProgressRepository
 from app.repositories.task_repository import TaskRepository
 from app.repositories.roadmap_repository import RoadmapRepository
+from app.utils.dates import get_today_date_str, APP_TIMEZONE
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +17,8 @@ class ProgressService:
         self.roadmap_repo = RoadmapRepository(db)
 
     async def get_progress(self, user_id: str) -> Dict[str, Any]:
-        """Fetch current progress or recalculate if not initialized."""
-        record = await self.progress_repo.get_by_user_id(user_id)
-        if not record:
-            return await self.recalculate_progress(user_id)
-        return record
+        """Fetch current progress dynamically from stored task records."""
+        return await self.recalculate_progress(user_id)
 
     async def recalculate_progress(self, user_id: str) -> Dict[str, Any]:
         """Calculate exact progress metrics from stored task records."""
@@ -58,10 +56,18 @@ class ProgressService:
             done = skill_completed.get(skill, 0)
             skill_progress[skill] = round((done / total * 100.0), 1)
 
+        # Completed skills: unique skills from completed tasks ONLY
+        completed_skills: List[str] = []
+        for t in completed_tasks:
+            skill = t.get("skill") or t.get("category")
+            if skill and skill not in completed_skills:
+                completed_skills.append(skill)
+
         # Weekly and daily completion breakdown
         daily_map: Dict[str, Dict[str, int]] = {}
+        today_default = get_today_date_str()
         for t in tasks:
-            d_str = t.get("date") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            d_str = t.get("date") or today_default
             if d_str not in daily_map:
                 daily_map[d_str] = {"total": 0, "completed": 0}
             daily_map[d_str]["total"] += 1
@@ -94,6 +100,7 @@ class ProgressService:
             "weekly_completion": [],
             "daily_completion": daily_completion[-14:],  # Last 14 days
             "skill_progress": skill_progress,
+            "top_skills_completed": completed_skills,
             "current_streak": curr_streak,
             "longest_streak": max_streak,
             "last_active_date": last_date,
@@ -111,13 +118,13 @@ class ProgressService:
     ) -> tuple[int, int, Optional[str]]:
         """Calculate continuous activity streak across days."""
         active_dates = sorted(
-            [item["date"] for item in daily_completion if item.get("completed", 0) > 0]
+            list({item["date"] for item in daily_completion if item.get("completed", 0) > 0})
         )
         if not active_dates:
             return 0, existing.get("longest_streak", 0), existing.get("last_active_date")
 
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        yesterday_str = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        today_str = get_today_date_str()
+        yesterday_str = (datetime.now(APP_TIMEZONE) - timedelta(days=1)).strftime("%Y-%m-%d")
 
         last_active = active_dates[-1]
         date_objs = [datetime.strptime(d, "%Y-%m-%d").date() for d in active_dates]
@@ -134,7 +141,7 @@ class ProgressService:
             if current > longest:
                 longest = current
 
-        # Current streak check
+        # Current streak check (active today or yesterday)
         current_streak = 0
         if last_active in (today_str, yesterday_str):
             rev_dates = sorted(list(set(date_objs)), reverse=True)
@@ -146,12 +153,12 @@ class ProgressService:
                     break
             current_streak = streak_count
 
-        max_streak = max(longest, existing.get("longest_streak", 0))
+        max_streak = max(longest, current_streak, existing.get("longest_streak", 0))
         return current_streak, max_streak, last_active
 
     async def get_streak(self, user_id: str) -> Dict[str, Any]:
         progress = await self.get_progress(user_id)
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today_str = get_today_date_str()
         return {
             "current_streak": progress.get("current_streak", 0),
             "longest_streak": progress.get("longest_streak", 0),
@@ -161,8 +168,6 @@ class ProgressService:
 
     async def get_summary(self, user_id: str) -> Dict[str, Any]:
         p = await self.get_progress(user_id)
-        skill_prog = p.get("skill_progress", {})
-        top_skills = sorted(skill_prog.keys(), key=lambda k: skill_prog[k], reverse=True)[:5]
         return {
             "user_id": user_id,
             "total_tasks": p.get("total_tasks", 0),
@@ -171,5 +176,6 @@ class ProgressService:
             "current_streak": p.get("current_streak", 0),
             "longest_streak": p.get("longest_streak", 0),
             "roadmap_completion_percentage": p.get("roadmap_completion_percentage", 0.0),
-            "top_skills_completed": top_skills,
+            "top_skills_completed": p.get("top_skills_completed", []),
         }
+

@@ -244,6 +244,14 @@ def mock_gridfs():
     return mock_gridfs
 
 
+@pytest.fixture(autouse=True)
+def mock_lifespan_connections(monkeypatch):
+    monkeypatch.setattr("app.core.database.db_manager.connect_to_mongo", AsyncMock())
+    monkeypatch.setattr("app.core.database.db_manager.close_mongo_connection", AsyncMock())
+    monkeypatch.setattr("app.core.redis.redis_manager.connect_to_redis", AsyncMock())
+    monkeypatch.setattr("app.core.redis.redis_manager.close_redis_connection", AsyncMock())
+
+
 @pytest.fixture
 def client(mock_db: AsyncMockDatabase) -> Generator[TestClient, None, None]:
     """Test client fixture with mocked isolated database to protect production Atlas data."""

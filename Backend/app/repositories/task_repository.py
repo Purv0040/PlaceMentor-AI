@@ -39,10 +39,14 @@ class TaskRepository:
             inserted_list.append(t)
         return inserted_list
 
-    async def get_by_id(self, task_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-        query: Dict[str, Any] = {"user_id": user_id, "task_id": task_id}
+    def _build_query(self, task_id: str, user_id: str) -> Dict[str, Any]:
+        conds: List[Dict[str, Any]] = [{"task_id": str(task_id)}, {"_id": str(task_id)}]
         if ObjectId.is_valid(task_id):
-            query = {"user_id": user_id, "$or": [{"_id": ObjectId(task_id)}, {"task_id": task_id}]}
+            conds.append({"_id": ObjectId(task_id)})
+        return {"user_id": str(user_id), "$or": conds}
+
+    async def get_by_id(self, task_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        query = self._build_query(task_id, user_id)
         doc = await self.collection.find_one(query)
         if doc:
             doc["_id"] = str(doc["_id"])
@@ -71,11 +75,24 @@ class TaskRepository:
             doc["id"] = str(doc.get("id") or doc["task_id"])
         return docs
 
+    async def create_indexes(self) -> None:
+        """Create required MongoDB indexes on daily_tasks collection."""
+        try:
+            await self.collection.create_index("user_id")
+            await self.collection.create_index("task_id")
+            await self.collection.create_index([("user_id", 1), ("date", 1)])
+            await self.collection.create_index([("user_id", 1), ("status", 1)])
+            await self.collection.create_index([("user_id", 1), ("roadmap_id", 1)])
+            await self.collection.create_index([("user_id", 1), ("roadmap_id", 1), ("date", 1)])
+        except Exception:
+            pass
+
     async def get_all_by_user(
         self,
         user_id: str,
         status: Optional[str] = None,
         category: Optional[str] = None,
+        date_str: Optional[str] = None,
         limit: int = 500,
     ) -> List[Dict[str, Any]]:
         query: Dict[str, Any] = {"user_id": user_id}
@@ -83,6 +100,8 @@ class TaskRepository:
             query["status"] = status
         if category:
             query["category"] = category
+        if date_str:
+            query["date"] = date_str
         cursor = self.collection.find(query).sort("created_at", -1)
         docs = await cursor.to_list(length=limit)
         for doc in docs:
@@ -95,10 +114,19 @@ class TaskRepository:
     async def update(self, task_id: str, user_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         now = datetime.now(timezone.utc)
         data["updated_at"] = now
-        query: Dict[str, Any] = {"user_id": user_id, "task_id": task_id}
-        if ObjectId.is_valid(task_id):
-            query = {"user_id": user_id, "$or": [{"_id": ObjectId(task_id)}, {"task_id": task_id}]}
+        if "status" in data:
+            status_val = data["status"]
+            if status_val == "completed":
+                data.setdefault("completed_at", now)
+                data["completion_percentage"] = 100.0
+            elif status_val == "in_progress":
+                data["completion_percentage"] = 50.0
+                data["completed_at"] = None
+            elif status_val in ("pending", "skipped"):
+                data["completion_percentage"] = 0.0
+                data["completed_at"] = None
 
+        query = self._build_query(task_id, user_id)
         await self.collection.update_one(query, {"$set": data})
         return await self.get_by_id(task_id, user_id)
 
@@ -120,24 +148,21 @@ class TaskRepository:
             update_data["completion_percentage"] = 100.0
         elif status == "in_progress":
             update_data["completion_percentage"] = 50.0
-        elif status == "pending":
+            update_data["completed_at"] = None
+        elif status in ("pending", "skipped"):
             update_data["completion_percentage"] = 0.0
+            update_data["completed_at"] = None
 
         if actual_minutes is not None:
             update_data["actual_minutes"] = actual_minutes
         if notes is not None:
             update_data["notes"] = notes
 
-        query: Dict[str, Any] = {"user_id": user_id, "task_id": task_id}
-        if ObjectId.is_valid(task_id):
-            query = {"user_id": user_id, "$or": [{"_id": ObjectId(task_id)}, {"task_id": task_id}]}
-
+        query = self._build_query(task_id, user_id)
         await self.collection.update_one(query, {"$set": update_data})
         return await self.get_by_id(task_id, user_id)
 
     async def delete(self, task_id: str, user_id: str) -> bool:
-        query: Dict[str, Any] = {"user_id": user_id, "task_id": task_id}
-        if ObjectId.is_valid(task_id):
-            query = {"user_id": user_id, "$or": [{"_id": ObjectId(task_id)}, {"task_id": task_id}]}
+        query = self._build_query(task_id, user_id)
         res = await self.collection.delete_one(query)
         return res.deleted_count > 0

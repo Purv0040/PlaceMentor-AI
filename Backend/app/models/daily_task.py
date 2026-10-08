@@ -1,6 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
+
+
+def _now_utc() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class DailyTaskModel(BaseModel):
@@ -9,7 +13,7 @@ class DailyTaskModel(BaseModel):
     user_id: str = Field(...)
     roadmap_id: Optional[str] = Field(default=None)
     date: str = Field(..., description="YYYY-MM-DD date string")
-    day_number: int = Field(default=1, ge=1, le=90)
+    day_number: int = Field(default=1, ge=1, le=365)
     title: str = Field(...)
     description: str = Field(...)
     category: str = Field(...)
@@ -24,8 +28,9 @@ class DailyTaskModel(BaseModel):
     notes: Optional[str] = Field(default=None)
     resource: Optional[Dict[str, Any]] = Field(default=None)
     route: Optional[str] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_now_utc)
+    updated_at: datetime = Field(default_factory=_now_utc)
 
     class Config:
         populate_by_name = True
+

@@ -1,10 +1,23 @@
 import logging
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+)
+
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.api.deps import get_db, get_current_user
+from app.api.deps import (
+    get_db,
+    get_current_user,
+)
+
 from app.schemas.daily_task import (
+    TasksTestResponseSchema,
     DailyTaskCreateSchema,
     DailyTaskUpdateSchema,
     DailyTaskStatusUpdateSchema,
@@ -13,80 +26,250 @@ from app.schemas.daily_task import (
     DailyTaskResponseSchema,
     TodayTasksResponseSchema,
 )
+
+from app.schemas.progress import (
+    ProgressSummaryResponseSchema,
+    StreakResponseSchema,
+)
+
 from app.services.task_service import TaskService
 from app.services.progress_service import ProgressService
+
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-def _get_user_id(current_user: Dict[str, Any]) -> str:
-    return str(current_user.get("id") or current_user.get("_id"))
+# ============================================================
+# HELPER
+# ============================================================
+
+def _get_user_id(
+    current_user: Dict[str, Any],
+) -> str:
+    """
+    Extract authenticated user ID from current user.
+    """
+
+    user_id = (
+        current_user.get("id")
+        or current_user.get("_id")
+    )
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated user ID not found.",
+        )
+
+    return str(user_id)
 
 
-@router.get("/test", status_code=status.HTTP_200_OK)
-async def tasks_test():
-    """Placeholder test endpoint for tasks router."""
-    return {"status": "success", "module": "tasks"}
+# ============================================================
+# TEST
+# ============================================================
+
+@router.get(
+    "/test",
+    response_model=TasksTestResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Tasks Test",
+    description="Test endpoint for the Tasks router.",
+)
+async def tasks_test() -> TasksTestResponseSchema:
+    """
+    Test endpoint for Tasks router.
+    """
+
+    return {
+        "status": "success",
+        "module": "tasks",
+    }
 
 
+# ============================================================
+# TODAY
+# ============================================================
 
-@router.get("/today", response_model=TodayTasksResponseSchema)
+@router.get(
+    "/today",
+    response_model=TodayTasksResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Get today's tasks",
+)
 async def get_today_tasks(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Fetch today's scheduled tasks for the authenticated student."""
-    user_id = _get_user_id(current_user)
+    """
+    Get today's dynamically generated tasks
+    for the authenticated user.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
-    return await service.get_today_tasks(user_id)
+
+    return await service.get_today_tasks(
+        user_id
+    )
 
 
-@router.get("/progress")
+# ============================================================
+# PROGRESS
+# ============================================================
+
+@router.get(
+    "/progress",
+    response_model=ProgressSummaryResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Get task progress",
+)
 async def get_tasks_progress(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Fetch user task completion progress summary."""
-    user_id = _get_user_id(current_user)
+    """
+    Get dynamically calculated task progress.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = ProgressService(db)
-    return await service.get_summary(user_id)
+
+    return await service.get_summary(
+        user_id
+    )
 
 
-@router.get("/streak")
+# ============================================================
+# STREAK
+# ============================================================
+
+@router.get(
+    "/streak",
+    response_model=StreakResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Get task streak",
+)
 async def get_tasks_streak(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Fetch current activity streak and active status."""
-    user_id = _get_user_id(current_user)
+    """
+    Get dynamically calculated task streak.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = ProgressService(db)
-    return await service.get_streak(user_id)
+
+    return await service.get_streak(
+        user_id
+    )
 
 
-@router.post("/generate")
+# ============================================================
+# GENERATE
+# ============================================================
+
+@router.post(
+    "/generate",
+    response_model=TodayTasksResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Generate today's tasks",
+)
 async def generate_daily_tasks(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Force generate today's tasks from active roadmap."""
-    user_id = _get_user_id(current_user)
+    """
+    Generate today's tasks from the user's
+    active roadmap.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
-    return await service.get_today_tasks(user_id)
+
+    return await service.generate_today_tasks(
+        user_id
+    )
 
 
-@router.get("", response_model=List[DailyTaskResponseSchema])
+# ============================================================
+# GET ALL TASKS
+# ============================================================
+
+@router.get(
+    "",
+    response_model=List[DailyTaskResponseSchema],
+    status_code=status.HTTP_200_OK,
+    summary="Get all tasks",
+)
 async def get_all_tasks(
-    status_filter: Optional[str] = Query(None, alias="status"),
-    category_filter: Optional[str] = Query(None, alias="category"),
-    date_filter: Optional[str] = Query(None, alias="date"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    status_filter: Optional[str] = Query(
+        default=None,
+        alias="status",
+        description="Filter tasks by status.",
+    ),
+    category_filter: Optional[str] = Query(
+        default=None,
+        alias="category",
+        description="Filter tasks by category.",
+    ),
+    date_filter: Optional[str] = Query(
+        default=None,
+        alias="date",
+        description="Filter tasks by date.",
+    ),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """List all daily tasks for the user with optional filters."""
-    user_id = _get_user_id(current_user)
+    """
+    Get all tasks for the authenticated user.
+
+    Optional filters:
+    - status
+    - category
+    - date
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
+
     return await service.get_all_tasks(
         user_id=user_id,
         status=status_filter,
@@ -95,60 +278,189 @@ async def get_all_tasks(
     )
 
 
-@router.get("/{task_id}", response_model=DailyTaskResponseSchema)
+# ============================================================
+# GET TASK BY ID
+# ============================================================
+
+@router.get(
+    "/{task_id}",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Get task by ID",
+)
 async def get_task_by_id(
     task_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Fetch task by ID."""
-    user_id = _get_user_id(current_user)
+    """
+    Get a specific task belonging to
+    the authenticated user.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
-    task = await service.get_task_by_id(task_id, user_id)
+
+    task = await service.get_task_by_id(
+        task_id,
+        user_id,
+    )
+
     if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found.",
+        )
+
     return task
 
 
-@router.post("", response_model=DailyTaskResponseSchema, status_code=status.HTTP_201_CREATED)
+# ============================================================
+# CREATE TASK
+# ============================================================
+
+@router.post(
+    "",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create task",
+)
 async def create_task(
     payload: DailyTaskCreateSchema,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Create a new custom daily task."""
-    user_id = _get_user_id(current_user)
+    """
+    Create a new task for the authenticated user.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
-    return await service.create_task(user_id, payload.model_dump())
+
+    return await service.create_task(
+        user_id=user_id,
+        task_data=payload.model_dump(
+            exclude_none=True
+        ),
+    )
 
 
-@router.patch("/{task_id}", response_model=DailyTaskResponseSchema)
+# ============================================================
+# UPDATE TASK
+# ============================================================
+
+@router.patch(
+    "/{task_id}",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Update task",
+)
 async def update_task(
     task_id: str,
     payload: DailyTaskUpdateSchema,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Update task details."""
-    user_id = _get_user_id(current_user)
+    """
+    Update task fields.
+
+    Supports fields such as:
+    - title
+    - description
+    - category
+    - difficulty
+    - estimated_minutes
+    - actual_minutes
+    - status
+    - notes
+    - resource
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
+    update_data = payload.model_dump(
+        exclude_none=True
+    )
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields provided for update.",
+        )
+
     service = TaskService(db)
-    update_data = {k: v for k, v in payload.model_dump().items() if v is not None}
-    updated = await service.update_task(task_id, user_id, update_data)
+
+    updated = await service.update_task(
+        task_id=task_id,
+        user_id=user_id,
+        update_data=update_data,
+    )
+
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found.",
+        )
+
     return updated
 
 
-@router.patch("/{task_id}/status", response_model=DailyTaskResponseSchema)
+# ============================================================
+# UPDATE STATUS
+# ============================================================
+
+@router.patch(
+    "/{task_id}/status",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Update task status",
+)
 async def update_task_status(
     task_id: str,
     payload: DailyTaskStatusUpdateSchema,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Update task status ('pending', 'in_progress', 'completed', 'skipped')."""
-    user_id = _get_user_id(current_user)
+    """
+    Update task status.
+
+    Supported statuses:
+    - pending
+    - in_progress
+    - completed
+    - skipped
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
     service = TaskService(db)
+
     updated = await service.update_task_status(
         task_id=task_id,
         user_id=user_id,
@@ -156,43 +468,124 @@ async def update_task_status(
         actual_minutes=payload.actual_minutes,
         notes=payload.notes,
     )
+
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found.",
+        )
+
     return updated
 
 
-@router.post("/{task_id}/complete", response_model=DailyTaskResponseSchema)
+# ============================================================
+# COMPLETE TASK
+# ============================================================
+
+@router.post(
+    "/{task_id}/complete",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Complete task",
+)
 async def complete_task(
     task_id: str,
-    payload: Optional[DailyTaskCompleteSchema] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    payload: Optional[
+        DailyTaskCompleteSchema
+    ] = None,
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Mark a task as completed."""
-    user_id = _get_user_id(current_user)
-    service = TaskService(db)
-    actual_mins = payload.actual_minutes if payload else None
-    notes = payload.notes if payload else None
-    updated = await service.complete_task(
-        task_id=task_id, user_id=user_id, actual_minutes=actual_mins, notes=notes
+    """
+    Mark a task as completed.
+    """
+
+    user_id = _get_user_id(
+        current_user
     )
+
+    actual_minutes = (
+        payload.actual_minutes
+        if payload
+        else None
+    )
+
+    notes = (
+        payload.notes
+        if payload
+        else None
+    )
+
+    service = TaskService(db)
+
+    updated = await service.complete_task(
+        task_id=task_id,
+        user_id=user_id,
+        actual_minutes=actual_minutes,
+        notes=notes,
+    )
+
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found.",
+        )
+
     return updated
 
 
-@router.post("/{task_id}/skip", response_model=DailyTaskResponseSchema)
+# ============================================================
+# SKIP TASK
+# ============================================================
+
+@router.post(
+    "/{task_id}/skip",
+    response_model=DailyTaskResponseSchema,
+    status_code=status.HTTP_200_OK,
+    summary="Skip task",
+)
 async def skip_task(
     task_id: str,
-    payload: Optional[DailyTaskSkipSchema] = None,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: AsyncIOMotorDatabase = Depends(get_db),
+    payload: Optional[
+        DailyTaskSkipSchema
+    ] = None,
+    current_user: Dict[str, Any] = Depends(
+        get_current_user
+    ),
+    db: AsyncIOMotorDatabase = Depends(
+        get_db
+    ),
 ):
-    """Mark a task as skipped."""
-    user_id = _get_user_id(current_user)
+    """
+    Skip a task.
+    """
+
+    user_id = _get_user_id(
+        current_user
+    )
+
+    reason = (
+        payload.reason
+        if payload
+        else None
+    )
+
     service = TaskService(db)
-    reason = payload.reason if payload else None
-    updated = await service.skip_task(task_id=task_id, user_id=user_id, reason=reason)
+
+    updated = await service.skip_task(
+        task_id=task_id,
+        user_id=user_id,
+        reason=reason,
+    )
+
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found.",
+        )
+
     return updated
