@@ -40,7 +40,7 @@ async def connect_github(
 ):
     """Connect a GitHub profile username to the authenticated student account."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.connect_github(
         user_id,
@@ -75,7 +75,7 @@ async def get_github_profile(
 ):
     """Retrieve connected GitHub profile metadata, statistics, and sync status."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.get_github_profile(user_id)
 
@@ -110,7 +110,7 @@ async def sync_github(
 ):
     """Synchronize GitHub profile and repositories from GitHub API."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.sync_github(user_id)
 
@@ -147,7 +147,7 @@ async def get_github_repositories(
 ):
     """Retrieve paginated list of user's synchronized GitHub repositories."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     repos, total = await service.get_github_repositories(
         user_id,
@@ -211,7 +211,7 @@ async def analyze_github(
 ):
     """Trigger AI analysis for the connected GitHub profile."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.analyze_github(user_id)
 
@@ -243,7 +243,7 @@ async def get_github_analysis(
 ):
     """Fetch stored AI analysis for connected GitHub profile."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_github_analysis(user_id)
 
@@ -272,7 +272,7 @@ async def disconnect_github(
 ):
     """Disconnect GitHub profile and delete stored repository metadata."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     deleted = await service.disconnect_github(user_id)
 

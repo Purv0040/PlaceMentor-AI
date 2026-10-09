@@ -25,8 +25,9 @@ export const PreferencesStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updatePreferences({ dailyGoalMinutes, mentorTone, studyCadence });
-    completeStep(5);
+    const preferencesData = { dailyGoalMinutes, mentorTone, studyCadence };
+    updatePreferences(preferencesData);
+    completeStep(5, { preferences: preferencesData });
     navigate('/onboarding/goals');
   };
 

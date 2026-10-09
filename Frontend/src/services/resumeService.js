@@ -162,13 +162,55 @@ export const resumeService = {
           analysis: {
             overall_score: 88,
             ats_score: { score: 88, status: 'pass' },
-            formatting_score: { score: 92, status: 'pass' },
+            formatting_score: { score: 95, status: 'pass' },
             experience_score: { score: 86, status: 'pass' },
+            projects_score: { score: 90, status: 'pass' },
             skills_score: { score: 84, status: 'pass' },
+            impact_score: { score: 82, status: 'pass' },
+            extracted_skills: {
+              languages: ["Python", "JavaScript", "TypeScript", "SQL"],
+              frameworks: ["React", "FastAPI", "Node.js", "Express"],
+              tools: ["Git", "Docker", "PostgreSQL", "MongoDB", "Linux"],
+              libraries: ["Tailwind CSS", "Redux", "Pandas"],
+              other: ["RESTful APIs", "Microservices Architecture"]
+            },
+            projects: [
+              {
+                name: "PlaceMentor AI",
+                technologies: ["React", "FastAPI", "MongoDB", "Docker"],
+                bullets: ["Built an AI resume intelligence engine using React and FastAPI, reducing parser latency by 35%."],
+                has_metrics: true
+              },
+              {
+                name: "Cloud Task Orchestrator",
+                technologies: ["Node.js", "PostgreSQL", "Docker"],
+                bullets: ["Implemented async worker queue handling 1,500+ tasks per minute with zero data loss."],
+                has_metrics: true
+              }
+            ],
+            experience: [
+              {
+                company: "Tech Solutions Inc.",
+                role: "Software Development Intern",
+                bullets: [
+                  "Optimized PostgreSQL query plans using indexing, improving endpoint throughput by 40% under peak load.",
+                  "Worked on REST APIs and fixed database queries."
+                ]
+              }
+            ],
+            weak_bullets: [
+              {
+                original_bullet: "Worked on REST APIs and fixed database queries.",
+                issues: ["Vague action verb", "Missing quantified outcome metric"],
+                suggestion: "Optimized 12+ PostgreSQL query plans using index tuning, improving endpoint throughput by 40% under peak load.",
+                evidence_used: ["PostgreSQL", "REST APIs"]
+              }
+            ],
+            keyword_gaps: ["Redis", "Kubernetes", "Kafka / RabbitMQ", "gRPC"],
             suggestions: [
-              "Quantified metric added to project experience bullets (+35% speed improvement).",
-              "Added explicit mention of Docker containerization and FastAPI endpoints.",
-              "Include Redis distributed caching pattern evidence for Tier-1 backend eligibility."
+              "Add explicit metrics to 2 experience bullets using the STAR framework.",
+              "Include Redis distributed caching pattern evidence for Tier-1 backend eligibility.",
+              "Highlight CI/CD deployment automation pipelines in your technical projects section."
             ]
           }
         }
@@ -194,12 +236,37 @@ export const resumeService = {
           analysis: {
             overall_score: 88,
             ats_score: { score: 88, status: 'pass' },
-            formatting_score: { score: 92, status: 'pass' },
+            formatting_score: { score: 95, status: 'pass' },
             experience_score: { score: 86, status: 'pass' },
+            projects_score: { score: 90, status: 'pass' },
             skills_score: { score: 84, status: 'pass' },
+            impact_score: { score: 82, status: 'pass' },
+            extracted_skills: {
+              languages: ["Python", "JavaScript", "TypeScript", "SQL"],
+              frameworks: ["React", "FastAPI", "Node.js", "Express"],
+              tools: ["Git", "Docker", "PostgreSQL", "MongoDB", "Linux"],
+              libraries: ["Tailwind CSS", "Redux", "Pandas"],
+              other: ["RESTful APIs", "Microservices Architecture"]
+            },
+            projects: [
+              {
+                name: "PlaceMentor AI",
+                technologies: ["React", "FastAPI", "MongoDB", "Docker"],
+                bullets: ["Built an AI resume intelligence engine using React and FastAPI, reducing parser latency by 35%."],
+                has_metrics: true
+              }
+            ],
+            weak_bullets: [
+              {
+                original_bullet: "Worked on REST APIs and fixed database queries.",
+                issues: ["Vague action verb", "Missing quantified outcome metric"],
+                suggestion: "Optimized 12+ PostgreSQL query plans using index tuning, improving endpoint throughput by 40% under peak load.",
+                evidence_used: ["PostgreSQL", "REST APIs"]
+              }
+            ],
+            keyword_gaps: ["Redis", "Kubernetes", "Kafka / RabbitMQ", "gRPC"],
             suggestions: [
-              "Quantified metric added to project experience bullets (+35% speed improvement).",
-              "Added explicit mention of Docker containerization and FastAPI endpoints.",
+              "Add explicit metrics to 2 experience bullets using the STAR framework.",
               "Include Redis distributed caching pattern evidence for Tier-1 backend eligibility."
             ]
           }

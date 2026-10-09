@@ -18,8 +18,13 @@ export const GoalsStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updateGoals({ targetCtc });
-    completeStep(6);
+    const goalsData = {
+      targetCtc,
+      targetDrive: onboardingData.goals?.targetDrive || 'August 2026 (Campus Phase 1)',
+      primaryGoal: onboardingData.goals?.primaryGoal || 'Master Technical Algorithms & System Architecture'
+    };
+    updateGoals(goalsData);
+    completeStep(6, { goals: goalsData });
     navigate('/onboarding/analysis');
   };
 

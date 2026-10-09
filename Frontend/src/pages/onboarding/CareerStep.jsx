@@ -27,8 +27,9 @@ export const CareerStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updateCareer({ targetRole, secondaryRole, companyTier });
-    completeStep(2);
+    const careerData = { targetRole, secondaryRole, companyTier };
+    updateCareer(careerData);
+    completeStep(2, { career: careerData });
     navigate('/onboarding/skills');
   };
 

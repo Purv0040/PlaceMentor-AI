@@ -4,10 +4,10 @@ from pydantic import BaseModel, Field
 
 
 class PersonalInfoModel(BaseModel):
-    name: str = "Alex Patel"
-    college: str = "CSPIT"
-    degree: str = "B.Tech IT"
-    graduationYear: str = "2027"
+    name: str = ""
+    college: str = ""
+    degree: str = ""
+    graduationYear: str = "2026"
     email: Optional[str] = None
     phone: Optional[str] = None
     location: Optional[str] = None
@@ -15,8 +15,8 @@ class PersonalInfoModel(BaseModel):
 
 
 class CareerInfoModel(BaseModel):
-    targetRole: str = "Backend Developer"
-    secondaryRole: Optional[str] = "AI/ML Engineer"
+    targetRole: str = "Full Stack Engineer"
+    secondaryRole: Optional[str] = "Cybersecurity Analyst & Engineer"
     companyTier: Optional[str] = "Tier-1 Product (MAANG / Unicorns)"
     career_goal: Optional[str] = None
     preferred_domain: Optional[str] = None
@@ -34,12 +34,12 @@ class SkillsInfoModel(BaseModel):
 
 
 class IntegrationsInfoModel(BaseModel):
-    githubConnected: bool = True
-    githubHandle: Optional[str] = "alexpatel-dev"
-    leetcodeConnected: bool = True
-    leetcodeHandle: Optional[str] = "alex_patel99"
-    resumeUploaded: bool = True
-    resumeFileName: Optional[str] = "Alex_Patel_Backend_Resume.pdf"
+    githubConnected: bool = False
+    githubHandle: Optional[str] = None
+    leetcodeConnected: bool = False
+    leetcodeHandle: Optional[str] = None
+    resumeUploaded: bool = False
+    resumeFileName: Optional[str] = None
 
 
 class PreferencesInfoModel(BaseModel):

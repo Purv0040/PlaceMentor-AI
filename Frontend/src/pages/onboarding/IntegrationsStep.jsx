@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Github, Code2, FileText, ArrowRight, ArrowLeft, CheckCircle2, Upload, Link2, Trash2, Loader2 } from 'lucide-react';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { resumeService } from '../../services/resumeService';
+import { githubService } from '../../services/githubService';
+import { leetcodeService } from '../../services/leetcodeService';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 
@@ -21,6 +23,16 @@ export const IntegrationsStep = () => {
   const [resumeFileName, setResumeFileName] = useState(onboardingData.integrations?.resumeFileName || '');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+
+  const sanitizeGithub = (val) => {
+    if (!val) return '';
+    return val.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\/+$/, '');
+  };
+
+  const sanitizeLeetcode = (val) => {
+    if (!val) return '';
+    return val.trim().replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, '').replace(/\/+$/, '');
+  };
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -62,15 +74,28 @@ export const IntegrationsStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updateIntegrations({
-      githubConnected: githubConnected || !!githubHandle,
-      githubHandle,
-      leetcodeConnected: leetcodeConnected || !!leetcodeHandle,
-      leetcodeHandle,
+
+    const cleanGh = sanitizeGithub(githubHandle);
+    const cleanLc = sanitizeLeetcode(leetcodeHandle);
+
+    if (cleanGh) {
+      githubService.connect(cleanGh).catch(() => {});
+    }
+    if (cleanLc) {
+      leetcodeService.connect(cleanLc).catch(() => {});
+    }
+
+    const integrationsData = {
+      githubConnected: githubConnected || !!cleanGh,
+      githubHandle: githubHandle.trim(),
+      leetcodeConnected: leetcodeConnected || !!cleanLc,
+      leetcodeHandle: leetcodeHandle.trim(),
       resumeUploaded,
       resumeFileName: resumeFileName || (resumeUploaded ? 'My_Uploaded_Resume.pdf' : '')
-    });
-    completeStep(4);
+    };
+
+    updateIntegrations(integrationsData);
+    completeStep(4, { integrations: integrationsData });
     navigate('/onboarding/preferences');
   };
 

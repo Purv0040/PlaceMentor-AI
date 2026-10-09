@@ -73,6 +73,34 @@ export const OnboardingProvider = ({ children }) => {
     }
   });
 
+  // Fetch initial onboarding state from backend if logged in
+  useEffect(() => {
+    const fetchBackendState = async () => {
+      try {
+        const res = await onboardingService.getOnboardingState();
+        if (res && res.success && res.data) {
+          const apiData = res.data;
+          setOnboardingData(prev => ({
+            ...prev,
+            profile: { ...prev.profile, ...(apiData.personal || {}) },
+            career: { ...prev.career, ...(apiData.career || {}) },
+            skills: { ...prev.skills, ...(apiData.skills || {}) },
+            integrations: { ...prev.integrations, ...(apiData.integrations || {}) },
+            preferences: { ...prev.preferences, ...(apiData.preferences || {}) },
+            goals: { ...prev.goals, ...(apiData.goals || {}) },
+            completedSteps: apiData.onboarding?.completed_steps?.length
+              ? apiData.onboarding.completed_steps
+              : prev.completedSteps,
+            currentStep: apiData.onboarding?.current_step || prev.currentStep
+          }));
+        }
+      } catch (e) {
+        console.warn('Could not retrieve remote onboarding state:', e);
+      }
+    };
+    fetchBackendState();
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(onboardingData));
@@ -123,16 +151,45 @@ export const OnboardingProvider = ({ children }) => {
     }));
   };
 
-  const completeStep = (stepNumber) => {
+  const completeStep = (stepNumber, stepDataPatch = {}) => {
     setOnboardingData(prev => {
       const completed = new Set(prev.completedSteps);
       completed.add(stepNumber);
-      return {
+
+      const merged = {
         ...prev,
-        completedSteps: Array.from(completed)
+        ...stepDataPatch,
+        profile: { ...prev.profile, ...(stepDataPatch.profile || {}) },
+        career: { ...prev.career, ...(stepDataPatch.career || {}) },
+        skills: { ...prev.skills, ...(stepDataPatch.skills || {}) },
+        integrations: { ...prev.integrations, ...(stepDataPatch.integrations || {}) },
+        preferences: { ...prev.preferences, ...(stepDataPatch.preferences || {}) },
+        goals: { ...prev.goals, ...(stepDataPatch.goals || {}) },
+        completedSteps: Array.from(completed),
+        currentStep: Math.max(stepNumber + 1, prev.currentStep)
       };
+
+      try {
+        localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(merged));
+      } catch (e) {}
+
+      // Dispatch step update payload to backend API
+      const payload = {
+        step_number: stepNumber,
+        profile: merged.profile,
+        career: merged.career,
+        skills: merged.skills,
+        integrations: merged.integrations,
+        preferences: merged.preferences,
+        goals: merged.goals
+      };
+
+      onboardingService.updateStep(stepNumber, payload).catch(err => {
+        console.warn(`Step ${stepNumber} saved locally, backend notification:`, err);
+      });
+
+      return merged;
     });
-    onboardingService.updateStep(stepNumber, onboardingData).catch(() => {});
   };
 
   const markOnboardingComplete = () => {

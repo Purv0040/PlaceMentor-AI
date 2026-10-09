@@ -1,10 +1,10 @@
 // Centralized mock data for GitHub Intelligence (8.html)
 
 export const initialGithubData = {
-  isConnected: true,
-  handle: "Purv0040",
-  profileUrl: "https://github.com/Purv0040",
-  lastSynced: "Just now",
+  isConnected: false,
+  handle: "",
+  profileUrl: "https://github.com",
+  lastSynced: "Never",
   
   metrics: {
     githubImpactScore: 82,

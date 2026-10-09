@@ -50,7 +50,7 @@ async def upload_resume(
 ):
     """Upload a new PDF resume for the authenticated student."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     contents = await file.read()
 
@@ -89,7 +89,7 @@ async def list_resumes(
 ):
     """List all resumes uploaded by the authenticated student."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     resumes = await service.get_user_resumes(user_id)
 
@@ -132,7 +132,7 @@ async def get_resume_detail(
 ):
     """Get detailed information for a specific resume."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     resume = await service.get_resume_by_id(
         resume_id,
@@ -173,7 +173,7 @@ async def download_resume_file(
 ):
     """Download/stream the PDF resume binary stored in GridFS."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     file_bytes, filename, content_type = (
         await service.get_resume_file_stream(
@@ -203,7 +203,7 @@ async def analyze_resume(
 ):
     """Trigger AI analysis for an uploaded resume."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     resume = await service.analyze_resume(
         resume_id,
@@ -240,7 +240,7 @@ async def get_resume_analysis(
 ):
     """Fetch existing AI analysis for a resume."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_resume_analysis(
         resume_id,
@@ -274,7 +274,7 @@ async def activate_resume(
 ):
     """Set the specified resume as the active resume for the student."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     resume = await service.activate_resume(
         resume_id,

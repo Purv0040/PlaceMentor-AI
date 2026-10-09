@@ -30,9 +30,10 @@ export const ProfileStep = () => {
     e.preventDefault();
     if (!validate()) return;
 
-    updateProfile({ name, college, degree, graduationYear });
-    updateUserProfile({ name, college, degree, graduationYear });
-    completeStep(1);
+    const profileData = { name, college, degree, graduationYear };
+    updateProfile(profileData);
+    updateUserProfile(profileData);
+    completeStep(1, { profile: profileData });
     navigate('/onboarding/career');
   };
 

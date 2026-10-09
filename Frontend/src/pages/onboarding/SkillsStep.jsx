@@ -91,14 +91,15 @@ export const SkillsStep = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
-    updateSkills({
+    const skillsData = {
       dsaLevel,
       sysDesignLevel,
       databaseLevel,
       frameworkLevel,
       selectedSkills
-    });
-    completeStep(3);
+    };
+    updateSkills(skillsData);
+    completeStep(3, { skills: skillsData });
     navigate('/onboarding/integrations');
   };
 

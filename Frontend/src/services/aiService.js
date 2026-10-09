@@ -353,57 +353,49 @@ export const aiService = {
         const selectedTechList = skills.selectedSkills || [];
 
         // 1. Dynamic baseline score computation across all 6 onboarding steps
-        let score = 38;
+        let score = 50;
 
-        // Academic profile completeness (+6 max)
-        if (profile.name && profile.college && profile.degree) score += 6;
-        else if (profile.name) score += 3;
+        // Academic profile completeness (+10 max)
+        if (profile.name && profile.college && profile.degree) score += 10;
+        else if (profile.name) score += 5;
 
-        // Step 2 & 3: DSA Level evaluation (+4 to +20)
+        // Step 2 & 3: DSA Level evaluation (+8 to +20)
         const dsa = skills.dsaLevel || 'Intermediate';
         if (dsa.includes('Expert') || dsa.includes('Master')) score += 20;
-        else if (dsa.includes('Advanced')) score += 16;
-        else if (dsa.includes('Intermediate')) score += 10;
-        else score += 4;
+        else if (dsa.includes('Advanced') || dsa.includes('Hard')) score += 18;
+        else if (dsa.includes('Intermediate')) score += 14;
+        else score += 8;
 
-        // System Design / Framework level (+3 to +14)
+        // System Design / Framework level (+4 to +12)
         const sys = skills.sysDesignLevel || skills.frameworkLevel || 'Beginner';
-        if (sys.includes('Advanced') || sys.includes('Expert')) score += 14;
+        if (sys.includes('Advanced') || sys.includes('Expert')) score += 12;
         else if (sys.includes('Intermediate')) score += 8;
-        else score += 3;
+        else score += 4;
 
         // Selected Tech Stack width (+2 per tech, max +10)
         score += Math.min(10, selectedTechList.length * 2);
 
-        // Step 4: Telemetry & Resume Integrations (+6 GitHub, +6 LeetCode, +7 Resume)
-        if (integrations.githubConnected || integrations.githubHandle) score += 6;
-        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 6;
-        if (integrations.resumeUploaded || integrations.resumeFileName) score += 7;
+        // Step 4: Telemetry & Resume Integrations (+5 GitHub, +5 LeetCode, +6 Resume)
+        if (integrations.githubConnected || integrations.githubHandle) score += 5;
+        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 5;
+        if (integrations.resumeUploaded || integrations.resumeFileName) score += 6;
 
-        // Step 5: Study Hours Commitment (+2 to +10)
+        // Step 5: Study Hours Commitment (+2 to +6)
         const mins = parseInt(preferences.dailyGoalMinutes || '90', 10);
-        if (mins >= 180) score += 10;
-        else if (mins >= 120) score += 8;
-        else if (mins >= 90) score += 6;
-        else if (mins >= 60) score += 4;
+        if (mins >= 180) score += 6;
+        else if (mins >= 90) score += 5;
+        else if (mins >= 45) score += 4;
         else score += 2;
 
-        // Step 6: Target Tier Alignment adjustment (-4 to +4)
-        if (companyTier.includes('Tier-1') && dsa.includes('Beginner')) {
-          score -= 4;
-        } else if (!companyTier.includes('Tier-1') && (dsa.includes('Intermediate') || dsa.includes('Advanced'))) {
-          score += 4;
-        }
-
-        // Clamp dynamically between 35 and 98
-        score = Math.min(98, Math.max(35, Math.round(score)));
+        // Clamp dynamically between 45 and 98
+        score = Math.min(98, Math.max(45, Math.round(score)));
 
         // 2. Synthesize Role & Skill-based Day 1 Roadmap Task
         let day1Task = 'LC 207: Course Schedule (Graph Cycle Detection)';
         const primarySkill = selectedTechList[0] || '';
 
         if (role.includes('AI/ML') || role.includes('Machine Learning')) {
-          day1Task = `LC 207: Course Schedule & ${primarySkill || 'PyTorch'} Tensor Math`;
+          day1Task = `LC 207: Course Schedule & ${primarySkill || 'PyTorch'} Neural Math`;
         } else if (role.includes('DevOps') || role.includes('Cloud') || role.includes('AWS')) {
           day1Task = `Docker Container Setup & LC 207 (Network Graph Routing)`;
         } else if (role.includes('Cybersecurity') || role.includes('Security')) {
@@ -411,48 +403,61 @@ export const aiService = {
         } else if (role.includes('Data')) {
           day1Task = `SQL Query Optimization & LC 207 (DAG Pipeline Scheduling)`;
         } else {
-          day1Task = `LC 207: Course Schedule & ${primarySkill || 'React/Node'} REST Integration`;
+          day1Task = `LC 207: Course Schedule & ${primarySkill || 'Python'} REST Services`;
         }
 
         // 3. Generate Tailored Key AI Recommendations from ALL 6 STEPS
         const aiRecommendations = [];
 
-        // Skill level gap recommendation (Step 3)
+        // Bullet 1: Skill level gap & tier calibration (Step 2 & 3)
         const dsaLevelStr = skills.dsaLevel || 'Intermediate';
+        const tierName = companyTier.split('(')[0].trim();
         if (dsaLevelStr.includes('Beginner')) {
           aiRecommendations.push(`Upgrade DSA mastery from Beginner to Intermediate with daily ${preferences.dailyGoalMinutes || 90}-min Graph & Tree problem sets.`);
+        } else if (dsaLevelStr.includes('Advanced') || dsaLevelStr.includes('Hard')) {
+          aiRecommendations.push(`Calibrate Advanced DSA proficiency for ${tierName} technical screening rounds.`);
         } else {
-          aiRecommendations.push(`Calibrate ${dsaLevelStr.split('(')[0].trim()} DSA proficiency for ${companyTier.split('(')[0].trim()} technical screening rounds.`);
+          aiRecommendations.push(`Calibrate ${dsaLevelStr.split('(')[0].trim()} DSA proficiency for ${tierName} technical screening rounds.`);
         }
 
-        // Integration / Telemetry recommendation (Step 4)
-        const missingIntegrations = [];
-        if (!integrations.githubHandle) missingIntegrations.push('GitHub');
-        if (!integrations.leetcodeHandle) missingIntegrations.push('LeetCode');
-        if (!integrations.resumeUploaded && !integrations.resumeFileName) missingIntegrations.push('ATS Resume');
-
-        if (missingIntegrations.length > 0) {
-          aiRecommendations.push(`Connect remaining telemetry (${missingIntegrations.join(', ')}) in Settings for real-time AST code auditing & ATS scoring.`);
+        // Bullet 2: Telemetry & Integrations (Step 4)
+        const cleanGhHandle = (integrations.githubHandle || '')
+          .replace(/^https?:\/\/(www\.)?github\.com\//i, '')
+          .replace(/^@/, '')
+          .replace(/\/.*$/, '')
+          .trim();
+        const cleanLcHandle = (integrations.leetcodeHandle || '')
+          .replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, '')
+          .replace(/^@/, '')
+          .replace(/\/.*$/, '')
+          .trim();
+        const gh = cleanGhHandle ? `@${cleanGhHandle}` : 'Connected';
+        const lc = cleanLcHandle ? `@${cleanLcHandle}` : 'Connected';
+        if (cleanGhHandle || cleanLcHandle || integrations.resumeUploaded || integrations.resumeFileName) {
+          aiRecommendations.push(`Telemetry active: GitHub (${gh}), LeetCode (${lc}), & ATS Resume synced for automated audits.`);
         } else {
-          aiRecommendations.push(`Telemetry active: GitHub (@${integrations.githubHandle}), LeetCode (@${integrations.leetcodeHandle}), & ATS Resume synced for automated audits.`);
+          aiRecommendations.push(`Telemetry active: GitHub, LeetCode, and ATS Resume ready for automated pipeline synchronization.`);
         }
 
-        // Role Specialization recommendation (Step 2 & 3)
-        const topSkillsStr = selectedTechList.slice(0, 3).join(', ') || 'Core Technologies';
+        // Bullet 3: Role & Architecture using user's actual selected skills (Step 2, 3, 6)
+        const topSkillsList = selectedTechList.length > 0
+          ? selectedTechList.slice(0, 3).join(', ')
+          : 'Python, Java, Data Structures';
+        
         if (role.includes('AI/ML')) {
-          aiRecommendations.push(`Construct production LLM / Neural Network pipeline using ${topSkillsStr} targeting ${targetCtc.split('(')[0].trim()} roles.`);
+          aiRecommendations.push(`Construct production LLM & neural network pipelines using ${topSkillsList} to meet ${tierName} expectations.`);
         } else if (role.includes('DevOps') || role.includes('Cloud')) {
-          aiRecommendations.push(`Construct multi-stage Docker & Terraform IaC pipeline using ${topSkillsStr} for cloud infrastructure readiness.`);
+          aiRecommendations.push(`Construct multi-stage Docker & Terraform IaC infrastructure using ${topSkillsList} for ${tierName} cloud readiness.`);
         } else if (role.includes('Cybersecurity')) {
-          aiRecommendations.push(`Execute hands-on Penetration Testing & SIEM logging drills with ${topSkillsStr} for security compliance.`);
+          aiRecommendations.push(`Execute hands-on Penetration Testing & SIEM logging drills with ${topSkillsList} to meet ${tierName} security standards.`);
         } else {
-          aiRecommendations.push(`Engineer scalable REST microservices architecture using ${topSkillsStr} to meet ${companyTier.split('(')[0].trim()} expectations.`);
+          aiRecommendations.push(`Engineer scalable REST microservices architecture using ${topSkillsList} to meet ${tierName} expectations.`);
         }
 
-        // Timeline & Cadence recommendation (Step 5 & 6)
-        if (goals.targetDrive) {
-          aiRecommendations.push(`Execute daily ${preferences.dailyGoalMinutes || 90}-min study cadence to peak before ${goals.targetDrive.split('(')[0].trim()} campus placement drives.`);
-        }
+        // Bullet 4: Timeline & Study Cadence (Step 5 & 6)
+        const driveStr = goals.targetDrive ? goals.targetDrive.split('(')[0].trim() : 'August 2026';
+        const cadenceMinutes = preferences.dailyGoalMinutes || '45';
+        aiRecommendations.push(`Execute daily ${cadenceMinutes}-min study cadence to peak before ${driveStr} campus placement drives.`);
 
         resolve({
           baselineScore: score,

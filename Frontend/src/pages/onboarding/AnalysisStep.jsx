@@ -6,6 +6,9 @@ import { useUser } from '../../context/UserContext';
 import { aiService } from '../../services/aiService';
 import { Button } from '../../components/common/Button';
 
+import { settingsService } from '../../services/settingsService';
+import { onboardingService } from '../../services/onboardingService';
+
 export const AnalysisStep = () => {
   const navigate = useNavigate();
   const { onboardingData, markOnboardingComplete } = useOnboarding();
@@ -36,27 +39,56 @@ export const AnalysisStep = () => {
     };
   }, [onboardingData]);
 
-  const handleFinish = () => {
-    // Sync onboarding values into UserContext
-    updateUserProfile({
-      name: onboardingData.profile.name,
-      college: onboardingData.profile.college,
-      degree: onboardingData.profile.degree,
-      graduationYear: onboardingData.profile.graduationYear,
-      targetRole: onboardingData.career.targetRole,
-      secondaryRole: onboardingData.career.secondaryRole,
-      companyTier: onboardingData.career.companyTier,
-      githubHandle: onboardingData.integrations.githubHandle,
-      leetcodeHandle: onboardingData.integrations.leetcodeHandle,
-      resumeFileName: onboardingData.integrations.resumeFileName,
-      overallReadinessScore: analysisResult?.baselineScore || 78,
-      dsaLevel: onboardingData.skills?.dsaLevel,
-      selectedSkills: onboardingData.skills?.selectedSkills,
-      mentorTone: onboardingData.preferences?.mentorTone,
-      dailyGoalMinutes: onboardingData.preferences?.dailyGoalMinutes,
-      targetDrive: onboardingData.goals?.targetDrive,
-      targetCtc: onboardingData.goals?.targetCtc
-    });
+  const handleFinish = async () => {
+    // Sync onboarding values into UserContext & localStorage
+    const profilePayload = {
+      name: onboardingData.profile?.name || '',
+      college: onboardingData.profile?.college || '',
+      degree: onboardingData.profile?.degree || '',
+      graduationYear: onboardingData.profile?.graduationYear || '2026',
+      targetRole: onboardingData.career?.targetRole || 'Full Stack Engineer',
+      secondaryRole: onboardingData.career?.secondaryRole || 'Cybersecurity Analyst & Engineer',
+      companyTier: onboardingData.career?.companyTier || 'Tier-1 Product (MAANG / Unicorns)',
+      githubHandle: onboardingData.integrations?.githubHandle || '',
+      leetcodeHandle: onboardingData.integrations?.leetcodeHandle || '',
+      resumeFileName: onboardingData.integrations?.resumeFileName || '',
+      overallReadinessScore: analysisResult?.baselineScore || 85,
+      dsaLevel: onboardingData.skills?.dsaLevel || 'Intermediate',
+      sysDesignLevel: onboardingData.skills?.sysDesignLevel || 'Beginner',
+      databaseLevel: onboardingData.skills?.databaseLevel || 'Intermediate',
+      frameworkLevel: onboardingData.skills?.frameworkLevel || 'Advanced',
+      selectedSkills: onboardingData.skills?.selectedSkills || [],
+      mentorTone: onboardingData.preferences?.mentorTone || 'Socratic Coach (Probing Questions)',
+      dailyGoalMinutes: onboardingData.preferences?.dailyGoalMinutes || '90',
+      studyCadence: onboardingData.preferences?.studyCadence || 'Daily Evening Sprint',
+      targetDrive: onboardingData.goals?.targetDrive || 'August 2026 (Campus Phase 1)',
+      targetCtc: onboardingData.goals?.targetCtc || '14 - 24 LPA (Product Tier)',
+      primaryGoal: onboardingData.goals?.primaryGoal || 'Master Technical Algorithms & System Architecture'
+    };
+
+    updateUserProfile(profilePayload);
+
+    try {
+      settingsService.saveSettings({
+        ...settingsService.getSettings(),
+        placement: {
+          targetRole: profilePayload.targetRole,
+          companyTier: profilePayload.companyTier,
+          targetCtc: profilePayload.targetCtc,
+          targetDrive: profilePayload.targetDrive
+        },
+        mentor: {
+          ...settingsService.getSettings()?.mentor,
+          mentorTone: profilePayload.mentorTone
+        }
+      });
+    } catch (e) {}
+
+    try {
+      await onboardingService.completeOnboarding();
+    } catch (err) {
+      console.warn('Backend complete sync note:', err);
+    }
 
     markOnboardingComplete();
     navigate('/dashboard', { replace: true });

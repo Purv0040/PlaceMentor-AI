@@ -40,7 +40,7 @@ async def connect_leetcode(
 ):
     """Connect a LeetCode username to the authenticated student account."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.connect_leetcode(
         user_id,
@@ -75,7 +75,7 @@ async def get_leetcode_profile(
 ):
     """Retrieve connected LeetCode profile metadata, statistics, and sync status."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.get_leetcode_profile(user_id)
 
@@ -113,7 +113,7 @@ async def disconnect_leetcode(
 ):
     """Disconnect LeetCode profile and delete stored data for authenticated user."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     deleted = await service.disconnect_leetcode(user_id)
 
@@ -134,7 +134,7 @@ async def sync_leetcode(
 ):
     """Synchronize LeetCode profile and problem statistics from LeetCode provider."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.sync_leetcode(user_id)
 
@@ -172,7 +172,7 @@ async def get_leetcode_statistics(
 ):
     """Fetch problem-solving statistics, difficulty breakdown, and contest ranking."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_leetcode_statistics(user_id)
 
@@ -201,7 +201,7 @@ async def get_leetcode_activity(
 ):
     """Fetch recent problem submission activity."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_leetcode_activity(user_id)
 
@@ -228,7 +228,7 @@ async def analyze_leetcode(
 ):
     """Trigger AI LeetCode Analyzer microservice for the connected profile."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     profile = await service.analyze_leetcode(user_id)
 
@@ -257,7 +257,7 @@ async def get_leetcode_analysis(
 ):
     """Fetch stored AI analysis for connected LeetCode profile."""
 
-    user_id = str(current_user["_id"])
+    user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_leetcode_analysis(user_id)
 
