@@ -104,6 +104,22 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const googleLogin = async (credential) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await authService.googleLogin(credential);
+      setUser(res.user);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return res;
+    } catch (err) {
+      setError(err.message);
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -115,6 +131,7 @@ export const AuthProvider = ({ children }) => {
         setError,
         login,
         signup,
+        googleLogin,
         resetPassword,
         logout
       }}

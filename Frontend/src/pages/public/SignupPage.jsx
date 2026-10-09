@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { User, Mail, ArrowRight, Sparkles, Github, Chrome } from 'lucide-react';
+import { User, Mail, ArrowRight, Sparkles, Github, Chrome, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUser } from '../../context/UserContext';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -9,9 +9,11 @@ import { PasswordInput } from '../../components/common/PasswordInput';
 import { FormError } from '../../components/common/FormError';
 import { Button } from '../../components/common/Button';
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 export const SignupPage = () => {
   const navigate = useNavigate();
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const { updateUserProfile } = useUser();
   const { updateProfile } = useOnboarding();
 
@@ -22,6 +24,74 @@ export const SignupPage = () => {
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleResponse = useCallback(async (response) => {
+    if (!response?.credential) {
+      setFormError('Google sign-up failed. Please try again.');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    setFormError('');
+    try {
+      const res = await googleLogin(response.credential);
+      const currentUser = res.user;
+      updateUserProfile(currentUser);
+      updateProfile({ name: currentUser.name || currentUser.full_name, email: currentUser.email });
+
+      const isOnboarded = currentUser?.is_onboarded === true ||
+        (currentUser?.is_onboarded !== false &&
+          localStorage.getItem('placementCopilotOnboardingComplete') === 'true');
+
+      if (isOnboarded) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/onboarding/profile', { replace: true });
+      }
+    } catch (err) {
+      setFormError(err.message || 'Google sign-up failed. Please try again.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  }, [googleLogin, updateUserProfile, updateProfile, navigate]);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) return;
+
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+  }, [handleGoogleResponse]);
+
+  const handleGoogleClick = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      setFormError('Google Sign-In is not configured.');
+      return;
+    }
+    if (!window.google?.accounts?.id) {
+      setFormError('Google Sign-In is loading. Please wait a moment and try again.');
+      return;
+    }
+    setFormError('');
+    window.google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        const tempDiv = document.createElement('div');
+        tempDiv.style.display = 'none';
+        document.body.appendChild(tempDiv);
+        window.google.accounts.id.renderButton(tempDiv, {
+          type: 'standard',
+          size: 'large',
+        });
+        const btn = tempDiv.querySelector('[role="button"]') || tempDiv.querySelector('div[tabindex]');
+        if (btn) btn.click();
+        setTimeout(() => document.body.removeChild(tempDiv), 100);
+      }
+    });
+  };
 
   const validate = () => {
     const errors = {};
@@ -91,10 +161,15 @@ export const SignupPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/onboarding/profile')}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0f131d] border border-[#232b3e] text-slate-300 hover:text-white hover:bg-[#1a2030] text-xs font-semibold transition-colors"
+            onClick={handleGoogleClick}
+            disabled={isGoogleLoading}
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#0f131d] border border-[#232b3e] text-slate-300 hover:text-white hover:bg-[#1a2030] text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Chrome className="w-4 h-4 text-rose-400" /> Google
+            {isGoogleLoading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Signing up...</>
+            ) : (
+              <><Chrome className="w-4 h-4 text-rose-400" /> Google</>
+            )}
           </button>
         </div>
 

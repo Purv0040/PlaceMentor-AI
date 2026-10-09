@@ -1,4 +1,8 @@
 from typing import Any, Dict, Optional
+import logging
+
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from app.core.exceptions import (
     ConflictException,
@@ -11,8 +15,11 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.core.config import settings
 from app.repositories.profile_repository import ProfileRepository
 from app.repositories.user_repository import UserRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -338,3 +345,116 @@ class AuthService:
                 ),
             },
         }
+
+    # ========================================================
+    # GOOGLE OAUTH AUTHENTICATION
+    # ========================================================
+
+    async def google_authenticate(
+        self,
+        credential: str,
+    ) -> Dict[str, Any]:
+        """
+        Authenticate a user via Google OAuth.
+
+        Verifies the Google ID token, finds or creates
+        the user, and returns JWT tokens.
+        """
+
+        # ----------------------------------------------------
+        # 1. Verify Google ID token
+        # ----------------------------------------------------
+        try:
+            idinfo = google_id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+            )
+        except ValueError as e:
+            logger.warning("Google token verification failed: %s", e)
+            raise UnauthorizedException(
+                "Invalid Google credentials. Please try again."
+            )
+
+        # ----------------------------------------------------
+        # 2. Extract user info from token
+        # ----------------------------------------------------
+        google_email = idinfo.get("email", "").strip().lower()
+        google_name = idinfo.get("name", "")
+        email_verified = idinfo.get("email_verified", False)
+
+        if not google_email or not email_verified:
+            raise UnauthorizedException(
+                "Google account email is not verified."
+            )
+
+        # ----------------------------------------------------
+        # 3. Find or create user
+        # ----------------------------------------------------
+        existing_user = await self.user_repo.get_by_email(
+            google_email
+        )
+
+        if existing_user:
+            # Existing user — log them in
+            user = existing_user
+            user_id = str(
+                user.get("id", user.get("_id"))
+            )
+            is_onboarded = user.get("is_onboarded", False)
+        else:
+            # New user — create account (no password for OAuth)
+            import secrets
+            random_password = secrets.token_urlsafe(32)
+            hashed = hash_password(random_password)
+
+            user_data = {
+                "email": google_email,
+                "hashed_password": hashed,
+                "full_name": google_name or google_email.split("@")[0],
+                "is_active": True,
+                "is_onboarded": False,
+                "auth_provider": "google",
+            }
+
+            created_user = await self.user_repo.create(user_data)
+            user_id = str(
+                created_user.get("id", created_user.get("_id"))
+            )
+            user = created_user
+            is_onboarded = False
+
+            # Create initial profile
+            if self.profile_repo:
+                await self.profile_repo.create_profile(
+                    user_id=user_id,
+                )
+
+        # ----------------------------------------------------
+        # 4. Generate JWT tokens
+        # ----------------------------------------------------
+        access_token = create_access_token(
+            subject=user_id,
+            extra_claims={
+                "email": google_email,
+            },
+        )
+
+        refresh_token = create_refresh_token(
+            subject=user_id,
+        )
+
+        # ----------------------------------------------------
+        # 5. Return result
+        # ----------------------------------------------------
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user_id,
+                "email": google_email,
+                "full_name": user.get("full_name", google_name),
+                "is_onboarded": is_onboarded,
+            },
+        }

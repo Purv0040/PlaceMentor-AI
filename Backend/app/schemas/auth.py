@@ -20,3 +20,7 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(..., description="Google ID token from Google Sign-In")

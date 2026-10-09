@@ -56,6 +56,14 @@ class Settings(BaseSettings):
     GITHUB_TOKEN: Optional[str] = None
 
     # ========================================================
+    # GOOGLE OAUTH
+    # ========================================================
+
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
+
+    # ========================================================
     # LEETCODE
     # ========================================================
 

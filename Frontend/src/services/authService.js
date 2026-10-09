@@ -82,6 +82,65 @@ export const authService = {
     }
   },
 
+  googleLogin: async (credential) => {
+    if (!credential) {
+      throw new Error('Google authentication failed. No credential received.');
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const payload = data.data || data;
+        const token = payload.access_token || payload.token;
+        const refreshToken = payload.refresh_token;
+        const backendUser = payload.user || {};
+
+        const isOnboarded = typeof backendUser.is_onboarded === 'boolean'
+          ? backendUser.is_onboarded
+          : (localStorage.getItem(ONBOARDING_COMPLETE_KEY) === 'true');
+
+        const user = {
+          id: backendUser.id || 'user_' + Date.now(),
+          name: backendUser.full_name || backendUser.name || 'Google User',
+          full_name: backendUser.full_name || backendUser.name || 'Google User',
+          email: backendUser.email || '',
+          is_onboarded: isOnboarded,
+        };
+
+        localStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+        if (refreshToken) {
+          localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+        }
+
+        if (isOnboarded) {
+          localStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+        } else {
+          localStorage.removeItem(ONBOARDING_COMPLETE_KEY);
+        }
+
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+        return { success: true, token, refreshToken, user };
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        const msg = errData?.error?.message || errData?.detail || 'Google authentication failed.';
+        throw new Error(msg);
+      }
+    } catch (err) {
+      if (err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+        throw err;
+      }
+      throw new Error('Unable to connect to the server. Please try again.');
+    }
+  },
+
   signup: async ({ name, email, password }) => {
     if (!name || !email || !password) {
       throw new Error('All fields are required.');

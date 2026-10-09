@@ -5,9 +5,26 @@ from app.api.deps import get_db, get_current_user
 from app.repositories.user_repository import UserRepository
 from app.repositories.profile_repository import ProfileRepository
 from app.services.auth_service import AuthService
-from app.schemas.auth import LoginRequest, RegisterRequest, RefreshTokenRequest, TokenResponse
+from app.schemas.auth import LoginRequest, RegisterRequest, RefreshTokenRequest, TokenResponse, GoogleAuthRequest
 
 router = APIRouter()
+
+
+@router.post("/google", status_code=status.HTTP_200_OK)
+async def google_auth(
+    req: GoogleAuthRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> Dict[str, Any]:
+    """Authenticate user via Google OAuth ID token."""
+    auth_service = AuthService(UserRepository(db), ProfileRepository(db))
+    result = await auth_service.google_authenticate(
+        credential=req.credential,
+    )
+    return {
+        "success": True,
+        "data": result,
+        "message": "Google authentication successful!",
+    }
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
