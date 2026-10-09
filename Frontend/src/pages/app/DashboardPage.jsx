@@ -40,7 +40,7 @@ export const DashboardPage = () => {
 
     readinessService.getSummary().then((summary) => {
       if (!summary) return;
-      if (typeof summary.overall_score === 'number' && !user?.overallReadinessScore) {
+      if (typeof summary.overall_score === 'number') {
         setReadinessScore(Math.round(summary.overall_score));
       }
       if (summary.vector_scores?.length) {

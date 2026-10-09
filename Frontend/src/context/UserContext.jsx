@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
+import { readinessService } from '../services/readinessService';
 
 const USER_KEY = 'placementor_user_data';
 
@@ -41,7 +42,7 @@ export const UserProvider = ({ children }) => {
       githubHandle: savedUser.githubHandle || integrations.githubHandle || '',
       leetcodeHandle: savedUser.leetcodeHandle || integrations.leetcodeHandle || '',
       resumeFileName: savedUser.resumeFileName || integrations.resumeFileName || sResume || '',
-      overallReadinessScore: savedUser.overallReadinessScore || 85,
+      overallReadinessScore: savedUser.overallReadinessScore ?? null,
       dsaLevel: savedUser.dsaLevel || skills.dsaLevel || 'Intermediate',
       sysDesignLevel: savedUser.sysDesignLevel || skills.sysDesignLevel || 'Beginner',
       databaseLevel: savedUser.databaseLevel || skills.databaseLevel || 'Intermediate',
@@ -68,41 +69,57 @@ export const UserProvider = ({ children }) => {
           name: prev.name || activeUser.name || activeUser.full_name || 'Student Candidate'
         }));
 
-        const apiProfile = await profileService.getProfileFromApi();
-        if (apiProfile) {
-          const personal = apiProfile.personal || {};
-          const career = apiProfile.career || {};
-          const skills = apiProfile.skills || {};
-          const integrations = apiProfile.integrations || {};
-          const preferences = apiProfile.preferences || {};
-          const goals = apiProfile.goals || {};
+        try {
+          const apiProfile = await profileService.getProfileFromApi();
+          if (apiProfile) {
+            const personal = apiProfile.personal || {};
+            const career = apiProfile.career || {};
+            const skills = apiProfile.skills || {};
+            const integrations = apiProfile.integrations || {};
+            const preferences = apiProfile.preferences || {};
+            const goals = apiProfile.goals || {};
 
-          setUser(prev => ({
-            ...prev,
-            ...apiProfile,
-            name: personal.name || apiProfile.full_name || apiProfile.name || prev.name,
-            email: personal.email || apiProfile.email || prev.email,
-            college: personal.college || prev.college,
-            degree: personal.degree || prev.degree,
-            graduationYear: personal.graduationYear || prev.graduationYear,
-            targetRole: career.targetRole || apiProfile.target_role || prev.targetRole,
-            secondaryRole: career.secondaryRole || prev.secondaryRole,
-            companyTier: career.companyTier || prev.companyTier,
-            dsaLevel: skills.dsaLevel || prev.dsaLevel,
-            sysDesignLevel: skills.sysDesignLevel || prev.sysDesignLevel,
-            databaseLevel: skills.databaseLevel || prev.databaseLevel,
-            frameworkLevel: skills.frameworkLevel || prev.frameworkLevel,
-            selectedSkills: skills.selectedSkills?.length ? skills.selectedSkills : prev.selectedSkills,
-            githubHandle: integrations.githubHandle || apiProfile.github_username || prev.githubHandle,
-            leetcodeHandle: integrations.leetcodeHandle || apiProfile.leetcode_username || prev.leetcodeHandle,
-            resumeFileName: integrations.resumeFileName || prev.resumeFileName,
-            mentorTone: preferences.mentorTone || prev.mentorTone,
-            dailyGoalMinutes: preferences.dailyGoalMinutes || prev.dailyGoalMinutes,
-            studyCadence: preferences.studyCadence || prev.studyCadence,
-            targetDrive: goals.targetDrive || prev.targetDrive,
-            targetCtc: goals.targetCtc || prev.targetCtc,
-            primaryGoal: goals.primaryGoal || prev.primaryGoal,
-          }));
+            setUser(prev => ({
+              ...prev,
+              ...apiProfile,
+              name: personal.name || apiProfile.full_name || apiProfile.name || prev.name,
+              email: personal.email || apiProfile.email || prev.email,
+              college: personal.college || prev.college,
+              degree: personal.degree || prev.degree,
+              graduationYear: personal.graduationYear || prev.graduationYear,
+              targetRole: career.targetRole || apiProfile.target_role || prev.targetRole,
+              secondaryRole: career.secondaryRole || prev.secondaryRole,
+              companyTier: career.companyTier || prev.companyTier,
+              dsaLevel: skills.dsaLevel || prev.dsaLevel,
+              sysDesignLevel: skills.sysDesignLevel || prev.sysDesignLevel,
+              databaseLevel: skills.databaseLevel || prev.databaseLevel,
+              frameworkLevel: skills.frameworkLevel || prev.frameworkLevel,
+              selectedSkills: skills.selectedSkills?.length ? skills.selectedSkills : prev.selectedSkills,
+              githubHandle: integrations.githubHandle || apiProfile.github_username || prev.githubHandle,
+              leetcodeHandle: integrations.leetcodeHandle || apiProfile.leetcode_username || prev.leetcodeHandle,
+              resumeFileName: integrations.resumeFileName || prev.resumeFileName,
+              mentorTone: preferences.mentorTone || prev.mentorTone,
+              dailyGoalMinutes: preferences.dailyGoalMinutes || prev.dailyGoalMinutes,
+              studyCadence: preferences.studyCadence || prev.studyCadence,
+              targetDrive: goals.targetDrive || prev.targetDrive,
+              targetCtc: goals.targetCtc || prev.targetCtc,
+              primaryGoal: goals.primaryGoal || prev.primaryGoal,
+            }));
+          }
+        } catch (e) {
+          console.error("Failed to fetch API profile in UserContext:", e);
+        }
+
+        try {
+          const readiness = await readinessService.getLatestReadiness();
+          if (readiness && typeof readiness.overall_score === 'number') {
+            setUser(prev => ({
+              ...prev,
+              overallReadinessScore: readiness.overall_score
+            }));
+          }
+        } catch (e) {
+          // Readiness may not exist yet if student just registered
         }
       }
     };

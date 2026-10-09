@@ -352,43 +352,89 @@ export const aiService = {
         const targetCtc = goals.targetCtc || '14 - 24 LPA (Product Tier)';
         const selectedTechList = skills.selectedSkills || [];
 
-        // 1. Dynamic baseline score computation across all 6 onboarding steps
-        let score = 50;
+        // 1. Dynamic baseline score computation across all 6 onboarding steps (Target range: 35 - 96)
+        let score = 0;
 
-        // Academic profile completeness (+10 max)
-        if (profile.name && profile.college && profile.degree) score += 10;
-        else if (profile.name) score += 5;
+        // Step 1: Academic profile completeness (Max 10 pts)
+        if (profile.name) score += 3;
+        if (profile.college) score += 3;
+        if (profile.degree) score += 2;
+        if (profile.graduationYear) score += 2;
 
-        // Step 2 & 3: DSA Level evaluation (+8 to +20)
+        // Step 3: Technical Skills Self-Assessment (Max 42 pts)
+        // DSA Level (6 to 22 pts)
         const dsa = skills.dsaLevel || 'Intermediate';
-        if (dsa.includes('Expert') || dsa.includes('Master')) score += 20;
+        if (dsa.includes('Expert') || dsa.includes('Master')) score += 22;
         else if (dsa.includes('Advanced') || dsa.includes('Hard')) score += 18;
-        else if (dsa.includes('Intermediate')) score += 14;
-        else score += 8;
+        else if (dsa.includes('Intermediate')) score += 12;
+        else score += 6; // Beginner
 
-        // System Design / Framework level (+4 to +12)
-        const sys = skills.sysDesignLevel || skills.frameworkLevel || 'Beginner';
-        if (sys.includes('Advanced') || sys.includes('Expert')) score += 12;
-        else if (sys.includes('Intermediate')) score += 8;
-        else score += 4;
-
-        // Selected Tech Stack width (+2 per tech, max +10)
-        score += Math.min(10, selectedTechList.length * 2);
-
-        // Step 4: Telemetry & Resume Integrations (+5 GitHub, +5 LeetCode, +6 Resume)
-        if (integrations.githubConnected || integrations.githubHandle) score += 5;
-        if (integrations.leetcodeConnected || integrations.leetcodeHandle) score += 5;
-        if (integrations.resumeUploaded || integrations.resumeFileName) score += 6;
-
-        // Step 5: Study Hours Commitment (+2 to +6)
-        const mins = parseInt(preferences.dailyGoalMinutes || '90', 10);
-        if (mins >= 180) score += 6;
-        else if (mins >= 90) score += 5;
-        else if (mins >= 45) score += 4;
+        // System Design / Domain 2 (2 to 7 pts)
+        const sys = skills.sysDesignLevel || 'Beginner';
+        if (sys.includes('Advanced')) score += 7;
+        else if (sys.includes('Intermediate')) score += 4;
         else score += 2;
 
-        // Clamp dynamically between 45 and 98
-        score = Math.min(98, Math.max(45, Math.round(score)));
+        // Database / Domain 3 (2 to 6 pts)
+        const db = skills.databaseLevel || 'Intermediate';
+        if (db.includes('Advanced')) score += 6;
+        else if (db.includes('Intermediate')) score += 4;
+        else score += 2;
+
+        // Framework / Domain 4 (2 to 7 pts)
+        const fw = skills.frameworkLevel || 'Intermediate';
+        if (fw.includes('Advanced')) score += 7;
+        else if (fw.includes('Intermediate')) score += 4;
+        else score += 2;
+
+        // Selected Skills Breadth (Max 6 pts)
+        const skillCount = selectedTechList.length;
+        if (skillCount >= 8) score += 6;
+        else if (skillCount >= 5) score += 4;
+        else if (skillCount >= 2) score += 2;
+
+        // Step 4: Telemetry & Integrations (Max 20 pts)
+        const cleanGh = (integrations.githubHandle || '').trim();
+        const cleanLc = (integrations.leetcodeHandle || '').trim();
+        const hasResume = !!(integrations.resumeUploaded || integrations.resumeFileName);
+
+        if (integrations.githubConnected || cleanGh) score += 6;
+        if (integrations.leetcodeConnected || cleanLc) score += 7;
+        if (hasResume) score += 7;
+
+        // Step 5: Study Hours Commitment (Max 14 pts)
+        const mins = parseInt(preferences.dailyGoalMinutes || '90', 10);
+        if (mins >= 180) score += 14;
+        else if (mins >= 120) score += 11;
+        else if (mins >= 90) score += 9;
+        else if (mins >= 45) score += 6;
+        else score += 3;
+
+        // Step 2 & 6: Target Ambition vs Current Skill Alignment (Tier benchmark factor & calibration)
+        if (companyTier.includes('IT Services') || companyTier.includes('Campus Recruiters')) {
+          score += 14; // Accessible baseline
+        } else if (companyTier.includes('Tier-2') || companyTier.includes('Mid-Size')) {
+          score += 10;
+        } else {
+          // Tier-1 Product / MAANG
+          score += 6;
+        }
+
+        // Tier Skill-Alignment Adjustment (+/- points based on suitability for company tier)
+        if (companyTier.includes('Tier-1') || companyTier.includes('MAANG')) {
+          if (dsa.includes('Beginner')) score -= 8;
+          else if (dsa.includes('Intermediate')) score -= 2;
+          else if (dsa.includes('Advanced') || dsa.includes('Expert')) score += 6;
+        } else if (companyTier.includes('Tier-2')) {
+          if (dsa.includes('Beginner')) score -= 4;
+          else if (dsa.includes('Advanced') || dsa.includes('Expert')) score += 4;
+        } else {
+          // IT Services
+          if (dsa.includes('Intermediate') || dsa.includes('Advanced')) score += 4;
+        }
+
+        // Clamp dynamically between 35 and 96
+        score = Math.min(96, Math.max(35, Math.round(score)));
 
         // 2. Synthesize Role & Skill-based Day 1 Roadmap Task
         let day1Task = 'LC 207: Course Schedule (Graph Cycle Detection)';

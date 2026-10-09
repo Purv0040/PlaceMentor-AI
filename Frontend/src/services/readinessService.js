@@ -1,9 +1,9 @@
-// Readiness Service aggregating real Backend API endpoints with local fallback support
+// Centralized Readiness Service connecting to v2.0 deterministic readiness endpoints
 
 import { apiRequest } from "./api";
 import { initialReadinessData } from "../data/readinessData";
 
-function transformBackendReadiness(backendData) {
+export function transformBackendReadiness(backendData) {
   if (!backendData) return initialReadinessData;
 
   const cats = backendData.categories || {};
@@ -13,36 +13,61 @@ function transformBackendReadiness(backendData) {
   const roleAlignment = backendData.role_alignment || {};
   const staleData = backendData.stale_data || [];
 
-  const overallScore = Math.round(backendData.overall_score || 0);
+  const overallScore = backendData.overall_score !== null && backendData.overall_score !== undefined
+    ? Math.round(backendData.overall_score)
+    : 0;
 
-  // Vector scores for UI progress list
-  const categoryMap = [
-    { key: "dsa_leetcode", name: "DSA & LeetCode", target: 85, defaultScore: 75, weight: "20%" },
-    { key: "projects", name: "Project Architecture", target: 80, defaultScore: 70, weight: "20%" },
-    { key: "resume", name: "Resume & ATS Integrity", target: 85, defaultScore: 80, weight: "15%" },
-    { key: "cs_fundamentals", name: "CS Fundamentals", target: 75, defaultScore: 65, weight: "15%" },
-    { key: "github", name: "GitHub Impact & Code", target: 80, defaultScore: 70, weight: "10%" },
-    { key: "communication", name: "Communication Skills", target: 75, defaultScore: 60, weight: "10%" },
-    { key: "interview", name: "Mock Technical Interview", target: 75, defaultScore: 60, weight: "10%" },
+  // 7-Vector Diagnostic Configuration matching Backend v2.0 Contract
+  const categoryConfigs = [
+    { key: "Resume", altKey: "resume", name: "Resume Intelligence", target: 85, defaultWeight: "15%", route: "/resume" },
+    { key: "DSA", altKey: "dsa", name: "DSA & Problem Solving", target: 85, defaultWeight: "20%", route: "/leetcode" },
+    { key: "Projects", altKey: "projects", name: "Project Architecture", target: 80, defaultWeight: "20%", route: "/projects" },
+    { key: "GitHub", altKey: "github", name: "GitHub Impact & Code", target: 80, defaultWeight: "10%", route: "/github" },
+    { key: "CS Fundamentals", altKey: "cs_fundamentals", name: "CS Fundamentals", target: 75, defaultWeight: "15%", route: "/tasks" },
+    { key: "Communication", altKey: "communication", name: "Communication Skills", target: 75, defaultWeight: "10%", route: "/communication" },
+    { key: "Interview", altKey: "interview", name: "Mock Technical Interview", target: 75, defaultWeight: "10%", route: "/interviews" },
   ];
 
-  const vectorScores = categoryMap.map((meta) => {
-    const c = cats[meta.key];
-    const s = c && c.status === "scored" ? c.score : meta.defaultScore;
-    const st = c ? (c.status === "scored" ? (s >= meta.target ? "Strong" : "Developing") : "Insufficient Data") : "Pending";
+  const vectorScores = categoryConfigs.map((cfg) => {
+    const cat = cats[cfg.key] || cats[cfg.altKey] || {};
+    const hasScore = cat.score !== null && cat.score !== undefined;
+    const score = hasScore ? Math.round(cat.score) : 0;
+    
+    // Status formatting
+    let statusLabel = "Not Assessed";
+    if (cat.status === "assessed" || cat.status === "scored") {
+      statusLabel = score >= cfg.target ? "Strong" : "Assessed";
+    } else if (cat.status === "provisional") {
+      statusLabel = "Provisional";
+    } else if (cat.status === "stale") {
+      statusLabel = "Stale Evidence";
+    }
+
+    const weightPercent = cat.weight ? `${Math.round(cat.weight * 100)}%` : cfg.defaultWeight;
+
     return {
-      name: meta.name,
-      score: s,
-      target: meta.target,
-      weight: meta.weight,
-      status: st
+      name: cfg.name,
+      key: cfg.key,
+      score: score,
+      hasScore,
+      target: cfg.target,
+      weight: weightPercent,
+      status: statusLabel,
+      rawStatus: cat.status || "not_assessed",
+      confidence: cat.confidence || 0.0,
+      reason: cat.reason || (hasScore ? `${score}/100 based on verified evidence` : "No evidence submitted yet"),
+      rubricDetail: cat.rubric_detail || "",
+      evidence: cat.evidence || [],
+      missingData: cat.missing_data || [],
+      recommendations: cat.recommendations || [],
+      route: cfg.route
     };
   });
 
   // Radar chart data structure
   const radarData = vectorScores.map((v) => ({
     vector: v.name,
-    Score: v.score,
+    Score: v.hasScore ? v.score : 0,
     Benchmark: v.target
   }));
 
@@ -51,85 +76,115 @@ function transformBackendReadiness(backendData) {
     {
       id: "dim-resume",
       name: "Resume Intelligence",
-      score: cats.resume?.score || 80,
-      status: cats.resume?.status === "scored" ? "ATS Audited" : "Data Pending",
+      score: cats.Resume?.score ?? cats.resume?.score ?? null,
+      status: cats.Resume?.status ?? cats.resume?.status ?? "not_assessed",
       route: "/resume",
-      detail: cats.resume?.evidence?.[0] || `${cats.resume?.score || 80}/100 · Resume structure evaluated`
+      detail: (cats.Resume || cats.resume)?.evidence?.[0] || "ATS structure and keywords evaluated"
     },
     {
-      id: "dim-github",
-      name: "GitHub Intelligence",
-      score: cats.github?.score || 75,
-      status: cats.github?.status === "scored" ? "Activity Synced" : "Data Pending",
-      route: "/github",
-      detail: cats.github?.evidence?.[0] || `${cats.github?.score || 75}/100 · Repository footprint verified`
-    },
-    {
-      id: "dim-leetcode",
-      name: "LeetCode Intelligence",
-      score: cats.dsa_leetcode?.score || 78,
-      status: cats.dsa_leetcode?.status === "scored" ? "Problem Metrics Synced" : "Data Pending",
+      id: "dim-dsa",
+      name: "LeetCode & DSA",
+      score: cats.DSA?.score ?? cats.dsa?.score ?? null,
+      status: cats.DSA?.status ?? cats.dsa?.status ?? "not_assessed",
       route: "/leetcode",
-      detail: cats.dsa_leetcode?.evidence?.[0] || `${cats.dsa_leetcode?.score || 78}/100 · Problem solving index verified`
+      detail: (cats.DSA || cats.dsa)?.evidence?.[0] || "Algorithmic problem solving verified"
     },
     {
       id: "dim-projects",
       name: "Project Intelligence",
-      score: cats.projects?.score || 75,
-      status: cats.projects?.status === "scored" ? "Portfolio Audited" : "Data Pending",
+      score: cats.Projects?.score ?? cats.projects?.score ?? null,
+      status: cats.Projects?.status ?? cats.projects?.status ?? "not_assessed",
       route: "/projects",
-      detail: cats.projects?.evidence?.[0] || `${cats.projects?.score || 75}/100 · Code quality & features evaluated`
+      detail: (cats.Projects || cats.projects)?.evidence?.[0] || "Code complexity and deployment checked"
+    },
+    {
+      id: "dim-github",
+      name: "GitHub Intelligence",
+      score: cats.GitHub?.score ?? cats.github?.score ?? null,
+      status: cats.GitHub?.status ?? cats.github?.status ?? "not_assessed",
+      route: "/github",
+      detail: (cats.GitHub || cats.github)?.evidence?.[0] || "Repository depth and stars synced"
     }
   ];
 
-  // Map AI priority recommendations
-  const priorityRemediations = recommendations.map((rec, idx) => ({
-    id: `rec-${idx}`,
-    vector: rec.category ? rec.category.toUpperCase() : "HIGH IMPACT",
-    priority: rec.priority || "High",
-    title: rec.action || rec.title || "Remediation Task",
-    description: rec.detail || rec.description || rec.impact || "",
-    actionRoute: rec.category === "resume" ? "/resume" : rec.category === "dsa_leetcode" ? "/leetcode" : rec.category === "projects" ? "/projects" : rec.category === "github" ? "/github" : "/tasks",
-    actionLabel: "Execute Remediation →"
-  }));
+  // Actionable recommendations mapping
+  const priorityRemediations = recommendations.map((recText, idx) => {
+    let recCategory = "HIGH IMPACT";
+    let actionRoute = "/tasks";
 
-  const defaultRemediations = initialReadinessData.priorityRemediations;
+    const lower = typeof recText === "string" ? recText.toLowerCase() : "";
+    if (lower.includes("resume") || lower.includes("ats")) {
+      recCategory = "RESUME";
+      actionRoute = "/resume";
+    } else if (lower.includes("leetcode") || lower.includes("dsa") || lower.includes("graph") || lower.includes("hard")) {
+      recCategory = "DSA";
+      actionRoute = "/leetcode";
+    } else if (lower.includes("project") || lower.includes("deploy") || lower.includes("readme")) {
+      recCategory = "PROJECTS";
+      actionRoute = "/projects";
+    } else if (lower.includes("github") || lower.includes("commit") || lower.includes("repository")) {
+      recCategory = "GITHUB";
+      actionRoute = "/github";
+    } else if (lower.includes("communication") || lower.includes("speaking") || lower.includes("star")) {
+      recCategory = "COMMUNICATION";
+      actionRoute = "/communication";
+    } else if (lower.includes("mock") || lower.includes("interview")) {
+      recCategory = "INTERVIEWS";
+      actionRoute = "/interviews";
+    }
+
+    return {
+      id: `rec-${idx}`,
+      vector: recCategory,
+      priority: idx === 0 ? "Critical" : "High",
+      title: typeof recText === "string" ? recText : "Placement Remediation Task",
+      description: typeof recText === "string" ? recText : "",
+      actionRoute,
+      actionLabel: "Execute Remediation →"
+    };
+  });
 
   return {
     ...initialReadinessData,
     id: backendData.id,
     overallScore,
+    previousScore: backendData.previous_score,
+    scoreDelta: backendData.score_delta,
+    coveragePercentage: backendData.coverage_percentage ?? 0,
+    readinessStatus: backendData.readiness_status || "assessed",
     scoreStatus: backendData.readiness_label || "Developing",
     lastSynced: backendData.updated_at ? new Date(backendData.updated_at).toLocaleString() : "Just now",
-    targetBenchmark: backendData.target_role || "Backend Developer",
+    targetBenchmark: backendData.target_role || "Software Engineer",
     confidenceIndex: `${Math.round((backendData.overall_confidence || 0.8) * 100)}%`,
     percentileRank: `Top ${Math.max(5, 100 - overallScore)}% Candidate Cohort`,
     radarData,
     vectorScores,
     dimensionsSummary,
-    priorityRemediations: priorityRemediations.length > 0 ? priorityRemediations : defaultRemediations,
+    priorityRemediations: priorityRemediations.length > 0 ? priorityRemediations : initialReadinessData.priorityRemediations,
     strengths,
     priorityGaps,
     roleAlignment,
-    staleData
+    staleData,
+    calculationVersion: backendData.calculation_version || "2.0"
   };
 }
 
 export const readinessService = {
   getLatestReadiness: async () => {
     const res = await apiRequest('/readiness');
-    if (res && res.status === 'success' && res.data) {
+    if (res && (res.success || res.status === 'success') && res.data) {
       return transformBackendReadiness(res.data);
     }
     return transformBackendReadiness(null);
   },
 
-  calculateReadiness: async () => {
+  calculateReadiness: async (targetRoleOverride = null) => {
+    const body = targetRoleOverride ? { target_role: targetRoleOverride } : {};
     const res = await apiRequest('/readiness/analyze', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify(body)
     });
-    if (res && res.status === 'success' && res.data) {
+    if (res && (res.success || res.status === 'success') && res.data) {
       return transformBackendReadiness(res.data);
     }
     return readinessService.getLatestReadiness();
@@ -137,15 +192,15 @@ export const readinessService = {
 
   getSummary: async () => {
     const res = await apiRequest('/readiness/summary');
-    if (res && res.status === 'success' && res.data) {
+    if (res && (res.success || res.status === 'success') && res.data) {
       return res.data;
     }
     return null;
   },
 
-  getHistory: async () => {
-    const res = await apiRequest('/readiness/history');
-    if (res && res.status === 'success' && res.data) {
+  getHistory: async (limit = 10) => {
+    const res = await apiRequest(`/readiness/history?limit=${limit}`);
+    if (res && (res.success || res.status === 'success') && res.data) {
       return res.data;
     }
     return [];

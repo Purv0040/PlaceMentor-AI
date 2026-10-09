@@ -40,6 +40,10 @@ class ReadinessRepository:
             "overall_score": analysis_dict.get("overall_score"),
             "overall_confidence": analysis_dict.get("overall_confidence", 0.0),
             "readiness_label": analysis_dict.get("readiness_label", "Insufficient Evidence"),
+            "readiness_status": analysis_dict.get("readiness_status", "assessed"),
+            "coverage_percentage": analysis_dict.get("coverage_percentage", 0.0),
+            "previous_score": analysis_dict.get("previous_score"),
+            "score_delta": analysis_dict.get("score_delta"),
             "categories": analysis_dict.get("categories", {}),
             "weights_used": analysis_dict.get("weights_used", {}),
             "scored_categories_count": analysis_dict.get("scored_categories_count", 0),
@@ -51,7 +55,7 @@ class ReadinessRepository:
             "data_completeness": analysis_dict.get("data_completeness"),
             "stale_data": analysis_dict.get("stale_data", []),
             "provenance": analysis_dict.get("provenance", {}),
-            "calculation_version": analysis_dict.get("calculation_version", "1.0"),
+            "calculation_version": analysis_dict.get("calculation_version", "2.0"),
             "created_at": now,
             "updated_at": now
         }

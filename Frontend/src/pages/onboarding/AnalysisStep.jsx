@@ -86,6 +86,7 @@ export const AnalysisStep = () => {
 
     try {
       await onboardingService.completeOnboarding();
+      await readinessService.calculateReadiness(profilePayload.targetRole);
     } catch (err) {
       console.warn('Backend complete sync note:', err);
     }

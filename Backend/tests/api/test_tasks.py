@@ -592,7 +592,7 @@ def test_generate_tasks_with_active_roadmap_mocked(client: TestClient, auth_head
         "roadmap_id": roadmap_id,
         "user_id": user_id,
         "status": "active",
-        "start_date": datetime.now(timezone.utc).isoformat(),
+        "start_date": datetime.now().astimezone().isoformat(),
         "phases": [
             {
                 "phase_number": 1,

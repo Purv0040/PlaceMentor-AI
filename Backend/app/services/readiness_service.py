@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from fastapi import HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ReadinessService:
-    """Orchestrates multi-module student telemetry collection, deterministic scoring, and AI analysis."""
+    """Orchestrates multi-module student telemetry collection, deterministic v2.0 scoring, and AI analysis."""
 
     def __init__(
         self,
@@ -43,7 +43,11 @@ class ReadinessService:
         user_id: str,
         target_role_override: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Collect telemetry from all modules, compute deterministic readiness, enrich with AI, and persist."""
+        """Collect telemetry from all modules, compute deterministic readiness, enrich with AI, track score deltas, and persist."""
+        # 0. Fetch previous snapshot to compute score deltas
+        previous_doc = await self.repo.get_latest_by_user(user_id)
+        prev_score = previous_doc.get("overall_score") if previous_doc else None
+
         # 1. Fetch Student Profile & Determine Target Role
         student_profile = await self.profile_repo.get_by_user_id(user_id)
 
@@ -121,6 +125,13 @@ class ReadinessService:
         )
         computed_result["stale_data"] = stale_warnings
 
+        # Set score deltas against previous snapshot
+        computed_result["previous_score"] = prev_score
+        if prev_score is not None and computed_result.get("overall_score") is not None:
+            computed_result["score_delta"] = computed_result["overall_score"] - prev_score
+        else:
+            computed_result["score_delta"] = None
+
         # 9. Enrich with external AI microservice interpretation if available
         try:
             if target_role:
@@ -165,6 +176,10 @@ class ReadinessService:
             "user_id": user_id,
             "overall_score": latest.get("overall_score"),
             "readiness_label": latest.get("readiness_label"),
+            "readiness_status": latest.get("readiness_status", "assessed"),
+            "coverage_percentage": latest.get("coverage_percentage", 0.0),
+            "previous_score": latest.get("previous_score"),
+            "score_delta": latest.get("score_delta"),
             "overall_confidence": latest.get("overall_confidence"),
             "target_role": latest.get("target_role"),
             "scored_categories_count": latest.get("scored_categories_count"),
