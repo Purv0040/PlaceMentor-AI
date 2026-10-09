@@ -98,6 +98,25 @@ class OnboardingService:
         except Exception as e:
             logger.warning("Error evaluating achievements after onboarding completion: %s", e)
 
+        # Generate personalized 90-day placement roadmap and calculate initial readiness
+        try:
+            from app.services.roadmap_service import RoadmapService
+            from app.services.readiness_service import ReadinessService
+            target_role = career.get("targetRole") or career.get("target_role")
+            daily_mins = int(profile.get("preferences", {}).get("dailyGoalMinutes") or 90)
+            roadmap_service = RoadmapService(self.profile_repo.db)
+            await roadmap_service.generate_roadmap(
+                user_id=user_id,
+                target_role=target_role,
+                available_minutes_per_day=daily_mins,
+                force_regenerate=True
+            )
+
+            readiness_service = ReadinessService(self.profile_repo.db)
+            await readiness_service.analyze_readiness(user_id=user_id, target_role_override=target_role)
+        except Exception as e:
+            logger.warning("Error generating initial roadmap or calculating readiness on onboarding completion: %s", e)
+
         return {
             "user_id": user_id,
             "onboarding_completed": True,

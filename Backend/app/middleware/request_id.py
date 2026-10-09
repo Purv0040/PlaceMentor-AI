@@ -11,6 +11,9 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """Middleware to inject unique Request ID header and log request execution time."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         request.state.request_id = request_id
 

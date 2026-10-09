@@ -18,7 +18,18 @@ export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
   };
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    } catch (networkErr) {
+      // If localhost failed (e.g. IPv6 resolution on Windows), try 127.0.0.1 fallback
+      if (API_BASE_URL.includes('localhost:8000')) {
+        const fallbackUrl = API_BASE_URL.replace('localhost:8000', '127.0.0.1:8000');
+        response = await fetch(`${fallbackUrl}${endpoint}`, config);
+      } else {
+        throw networkErr;
+      }
+    }
 
     if (response.status === 401 && !isRetry) {
       const newToken = await authService.refreshToken();

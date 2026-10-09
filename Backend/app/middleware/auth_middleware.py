@@ -11,6 +11,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """Authentication middleware stub for parsing Authorization Bearer tokens into request state."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         authorization: Optional[str] = request.headers.get("Authorization")
         request.state.user_id = None
         request.state.token_payload = None

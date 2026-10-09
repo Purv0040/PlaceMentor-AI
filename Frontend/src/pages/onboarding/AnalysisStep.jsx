@@ -8,6 +8,8 @@ import { Button } from '../../components/common/Button';
 
 import { settingsService } from '../../services/settingsService';
 import { onboardingService } from '../../services/onboardingService';
+import { readinessService } from '../../services/readinessService';
+import { planningService } from '../../services/planningService';
 
 export const AnalysisStep = () => {
   const navigate = useNavigate();
@@ -82,6 +84,10 @@ export const AnalysisStep = () => {
           mentorTone: profilePayload.mentorTone
         }
       });
+    } catch (e) {}
+
+    try {
+      planningService.resetForRole(profilePayload.targetRole, profilePayload.selectedSkills);
     } catch (e) {}
 
     try {

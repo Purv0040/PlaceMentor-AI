@@ -84,6 +84,22 @@ export const planningService = {
     };
   },
 
+  resetForRole: (targetRole, selectedSkills) => {
+    const freshTasks = getDynamicTasks(targetRole, selectedSkills, 1);
+    const newState = {
+      roadmap: initialRoadmapData,
+      tasks: freshTasks,
+      progress: {
+        ...initialProgressData,
+        completedTasksCount: 0,
+        totalTasksCount: freshTasks.length,
+        overallProgressPercent: 12
+      }
+    };
+    planningService.saveState(newState);
+    return newState;
+  },
+
   saveState: (state) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));

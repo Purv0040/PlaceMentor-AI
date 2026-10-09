@@ -15,6 +15,9 @@ import {
   Trophy,
   User,
   Settings,
+  Bot,
+  Mic,
+  Video,
   X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -28,7 +31,8 @@ export const Sidebar = () => {
     {
       title: 'Main',
       items: [
-        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }
+        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { label: 'AI Placement Mentor', path: '/mentor', icon: Bot }
       ]
     },
     {
@@ -37,7 +41,9 @@ export const Sidebar = () => {
         { label: 'Resume Intelligence', path: '/resume', icon: FileText },
         { label: 'GitHub Intelligence', path: '/github', icon: Github },
         { label: 'LeetCode Analytics', path: '/leetcode', icon: Code2 },
-        { label: 'Projects Audit', path: '/projects', icon: FolderKanban }
+        { label: 'Projects Audit', path: '/projects', icon: FolderKanban },
+        { label: 'Communication Lab', path: '/communication', icon: Mic },
+        { label: 'Mock Interview', path: '/interviews', icon: Video }
       ]
     },
     {
