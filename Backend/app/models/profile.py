@@ -7,10 +7,15 @@ class PersonalInfoModel(BaseModel):
     name: str = ""
     college: str = ""
     degree: str = ""
+    branch: Optional[str] = "Computer Science / IT"
     graduationYear: str = "2026"
+    cgpa: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     location: Optional[str] = None
+    bio: Optional[str] = None
+    linkedinUrl: Optional[str] = None
+    portfolioUrl: Optional[str] = None
     profile_image: Optional[str] = None
 
 
