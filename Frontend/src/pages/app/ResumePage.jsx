@@ -154,6 +154,22 @@ export const ResumePage = () => {
     }
   };
 
+  const formatRelativeTime = (isoString) => {
+    if (!isoString) return 'Just now';
+    try {
+      const date = new Date(isoString);
+      const diffMinutes = Math.round((new Date() - date) / (1000 * 60));
+      if (diffMinutes < 2) return 'Just now';
+      if (diffMinutes < 60) return `${diffMinutes} mins ago`;
+      const diffHours = Math.round(diffMinutes / 60);
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      const diffDays = Math.round(diffHours / 24);
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } catch {
+      return 'Recently';
+    }
+  };
+
   const fetchResumes = async () => {
     try {
       const res = await resumeService.getResumes();
@@ -171,6 +187,8 @@ export const ResumePage = () => {
             ...prev,
             fileName: activeName,
             fileSize: `${(active.size / (1024 * 1024)).toFixed(1)} MB`,
+            pageCount: active.page_count || prev.pageCount || 1,
+            lastAnalyzed: formatRelativeTime(active.analyzed_at || active.uploaded_at),
             status: active.status === 'completed' ? 'ATS Verified' : active.status
           }));
           if (active.has_analysis) {
@@ -204,14 +222,14 @@ export const ResumePage = () => {
     try {
       const res = await resumeService.getResumeAnalysis(resumeId);
       if (res && res.success && res.data && res.data.analysis) {
-        applyAnalysisData(res.data.analysis);
+        applyAnalysisData(res.data.analysis, res.data.analyzed_at);
       }
     } catch (e) {
       console.warn("Failed to fetch analysis:", e);
     }
   };
 
-  const applyAnalysisData = (analysis) => {
+  const applyAnalysisData = (analysis, analyzedAt = null) => {
     if (!analysis) return;
 
     const overall = analysis.overall_score || 85;
@@ -326,7 +344,7 @@ export const ResumePage = () => {
     setResumeData((prev) => ({
       ...prev,
       overallScore: overall,
-      lastAnalyzed: 'Just now',
+      lastAnalyzed: analyzedAt ? formatRelativeTime(analyzedAt) : prev.lastAnalyzed || 'Just now',
       status: 'ATS Verified',
       sections: dynamicSections,
       detectedSkills: finalDetected,
@@ -393,17 +411,64 @@ export const ResumePage = () => {
     setTimeout(() => setCopiedBulletId(null), 2000);
   };
 
-  const handleFixBulletWithAI = (id) => {
+  const handleFixBulletWithAI = async (id) => {
+    const targetBullet = resumeData.bulletAudits.find((b) => b.id === id);
+    if (!targetBullet) return;
+
     setFixingBulletId(id);
-    setTimeout(() => {
-      setResumeData((prev) => ({
-        ...prev,
-        bulletAudits: prev.bulletAudits.map((b) =>
-          b.id === id ? { ...b, score: 98, isWeak: false } : b
-        )
-      }));
+    try {
+      const res = await resumeService.optimizeBullet(
+        targetBullet.original,
+        resumeData.targetRole,
+        targetBullet.section
+      );
+
+      if (res && res.success && res.data) {
+        setResumeData((prev) => {
+          const updatedAudits = prev.bulletAudits.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  improved: res.data.improved,
+                  rationale: res.data.rationale,
+                  score: res.data.score || 96,
+                  isWeak: false,
+                }
+              : b
+          );
+          // Recalculate bullet actionability metric
+          const weakCount = updatedAudits.filter((b) => b.isWeak).length;
+          const totalCount = updatedAudits.length || 1;
+          const newActionability = Math.round(((totalCount - weakCount) / totalCount) * 100);
+
+          return {
+            ...prev,
+            bulletAudits: updatedAudits,
+            metrics: {
+              ...prev.metrics,
+              bulletActionability: Math.max(prev.metrics.bulletActionability, newActionability),
+            },
+          };
+        });
+      }
+    } catch (err) {
+      console.warn("Optimize bullet error:", err);
+    } finally {
       setFixingBulletId(null);
-    }, 800);
+    }
+  };
+
+  const handleFixAllWithAI = async () => {
+    const weakBullets = resumeData.bulletAudits.filter((b) => b.isWeak);
+    if (weakBullets.length === 0) {
+      setActiveTab('bullets');
+      return;
+    }
+
+    setActiveTab('bullets');
+    for (const b of weakBullets) {
+      await handleFixBulletWithAI(b.id);
+    }
   };
 
   return (
@@ -676,7 +741,7 @@ export const ResumePage = () => {
                 <p className="text-xs text-slate-400">Review every section against your target role.</p>
               </div>
               <button
-                onClick={() => navigate('/skill-gaps')}
+                onClick={() => navigate('/skill-gaps', { state: { targetRole: resumeData.targetRole } })}
                 className="px-4 py-2 rounded-xl bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-indigo-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#232b3e] shrink-0 self-start sm:self-auto"
               >
                 <span>View Detailed Analysis</span>
@@ -707,7 +772,7 @@ export const ResumePage = () => {
                 <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{insight.description}</p>
                 {insight.actionRoute ? (
                   <button
-                    onClick={() => navigate(insight.actionRoute)}
+                    onClick={() => navigate(insight.actionRoute, { state: { targetRole: resumeData.targetRole } })}
                     className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1"
                   >
                     <span>{insight.actionLabel}</span>
@@ -741,11 +806,13 @@ export const ResumePage = () => {
             </div>
             <button
               type="button"
-              onClick={() => setActiveTab('bullets')}
-              className="self-start sm:self-auto px-4 py-2 rounded-xl bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-indigo-300 text-xs font-semibold border border-[#232b3e]"
+              onClick={handleFixAllWithAI}
+              className="self-start sm:self-auto px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 border border-indigo-400/30 transition-all flex items-center gap-1.5"
             >
-              Fix All with AI
+              <Sparkles className="w-3.5 h-3.5 text-purple-200" />
+              <span>Fix All with AI</span>
             </button>
+
           </div>
         </div>
         </div>
@@ -886,15 +953,24 @@ export const ResumePage = () => {
               {resumeData.missingSkills.map((skill, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-[#0f131d] border border-amber-500/30 flex items-center justify-between text-xs"
+                  className="p-3 rounded-xl bg-[#0f131d] border border-amber-500/30 flex items-center justify-between text-xs gap-2"
                 >
-                  <div>
-                    <span className="font-bold text-white block">{skill.name}</span>
-                    <span className="text-[11px] text-slate-400">{skill.roleReq}</span>
+                  <div className="truncate">
+                    <span className="font-bold text-white block truncate">{skill.name}</span>
+                    <span className="text-[11px] text-slate-400 block truncate">{skill.roleReq}</span>
                   </div>
-                  <span className="px-2.5 py-1 rounded text-[10px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    {skill.importance} Priority
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => navigate('/skill-gaps', { state: { targetRole: resumeData.targetRole, searchSkill: skill.name } })}
+                      className="px-2 py-1 rounded bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-white text-[11px] font-semibold border border-[#232b3e] transition-colors"
+                      title="Bridge gap in Skill Gaps"
+                    >
+                      Bridge Gap
+                    </button>
+                    <span className="px-2.5 py-1 rounded text-[10px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      {skill.importance} Priority
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

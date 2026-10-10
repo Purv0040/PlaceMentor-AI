@@ -323,6 +323,10 @@ class ProfileUpdate(BaseModel):
 
     onboarding: Optional[OnboardingStatusSchema] = None
 
+    overallReadinessScore: Optional[float] = None
+
+    baseline_score: Optional[float] = None
+
 
 # ============================================================
 # PROFILE RESPONSE

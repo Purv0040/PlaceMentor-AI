@@ -18,6 +18,7 @@ class ResumeFileMetadata(BaseModel):
     filename: str
     content_type: str = "application/pdf"
     size: int
+    page_count: Optional[int] = 1
     storage_type: str = "gridfs"
     file_id: str
 

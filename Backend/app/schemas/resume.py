@@ -14,6 +14,7 @@ class ResumeUploadResponse(BaseModel):
     user_id: str
     filename: str
     size: int
+    page_count: Optional[int] = 1
     content_type: str
     status: ResumeStatus
     is_active: bool
@@ -25,6 +26,7 @@ class ResumeMetadataResponse(BaseModel):
     user_id: str
     filename: str
     size: int
+    page_count: Optional[int] = 1
     content_type: str
     status: ResumeStatus
     is_active: bool
@@ -76,3 +78,17 @@ class ResumeAnalysisResponse(BaseModel):
 
 class ResumeActivateRequest(BaseModel):
     resume_id: Optional[str] = None
+
+
+class BulletOptimizeRequest(BaseModel):
+    bullet: str
+    target_role: Optional[str] = "Backend SDE-1 (Tier 1)"
+    context: Optional[str] = None
+
+
+class BulletOptimizeResponse(BaseModel):
+    original: str
+    improved: str
+    rationale: str
+    score: int = 96
+    action_verbs: List[str] = Field(default_factory=list)
