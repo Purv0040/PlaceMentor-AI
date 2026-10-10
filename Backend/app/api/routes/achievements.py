@@ -68,6 +68,16 @@ async def check_achievements(
     }
 
 
+@router.post("/daily-claim")
+async def claim_daily_xp(
+    current_user: dict = Depends(get_current_user),
+    service: AchievementService = Depends(get_achievement_service),
+):
+    """Claim daily streak bonus XP (+50 XP)."""
+    user_id = _extract_user_id(current_user)
+    return await service.claim_daily_xp(user_id, points=50)
+
+
 @router.get("/test")
 async def test_achievements_route() -> dict:
     """Placeholder health endpoint for test suite compatibility."""

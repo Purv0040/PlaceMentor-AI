@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePlanning } from '../../context/PlanningContext';
 import { achievementService } from '../../services/achievementService';
 import { AchievementHeader } from '../../components/achievements/AchievementHeader';
@@ -10,18 +10,58 @@ export const AchievementsPage = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isDailyClaimed, setIsDailyClaimed] = useState(() => achievementService.isDailyXpClaimed());
+  
+  // Real database-driven data state with fallback
+  const [data, setData] = useState(() => {
+    const fallbackList = achievementService.getAchievements(planningState);
+    return {
+      achievements: fallbackList,
+      stats: {
+        ...achievementService.getStats(fallbackList),
+        isDailyClaimed: achievementService.isDailyXpClaimed()
+      }
+    };
+  });
 
-  // Derive achievements dynamically from real application context
-  const achievements = achievementService.getAchievements(planningState);
+  useEffect(() => {
+    let isMounted = true;
+    const loadAchievements = async () => {
+      const res = await achievementService.fetchAchievements(planningState);
+      if (res && isMounted) {
+        setData({
+          achievements: res.achievements,
+          stats: {
+            ...res.stats,
+            isDailyClaimed: res.stats?.isDailyClaimed ?? achievementService.isDailyXpClaimed()
+          }
+        });
+        if (typeof res.stats?.isDailyClaimed === 'boolean') {
+          setIsDailyClaimed(res.stats.isDailyClaimed);
+        }
+      }
+    };
+    loadAchievements();
+    return () => { isMounted = false; };
+  }, [planningState]);
+
+  const achievements = data.achievements;
   const stats = {
-    ...achievementService.getStats(achievements),
+    ...data.stats,
     isDailyClaimed
   };
 
-  const handleClaimDailyXp = () => {
-    const success = achievementService.claimDailyXp();
+  const handleClaimDailyXp = async () => {
+    const success = await achievementService.claimDailyXp();
     if (success) {
       setIsDailyClaimed(true);
+      setData(prev => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          earnedXp: (prev.stats?.earnedXp || 0) + 50,
+          isDailyClaimed: true
+        }
+      }));
       return true;
     }
     return false;

@@ -13,16 +13,20 @@ const DAILY_XP_KEY = 'placementCopilotDailyXpClaimedDate';
 
 export const achievementService = {
   // Fetch achievements & stats from Backend API or derive locally if offline
-  fetchAchievements: async () => {
+  fetchAchievements: async (planningState = null) => {
     try {
       const res = await apiRequest('/achievements');
-      if (res && res.achievements) {
+      if (res && res.achievements && res.achievements.length > 0) {
         return res;
       }
     } catch (e) {
       console.warn('Backend unavailable for fetchAchievements, falling back to local derivation.', e);
     }
-    return null;
+    const localAchievements = achievementService.getAchievements(planningState);
+    return {
+      achievements: localAchievements,
+      stats: achievementService.getStats(localAchievements)
+    };
   },
 
   // Derive achievements dynamically based on real state
@@ -125,13 +129,16 @@ export const achievementService = {
     }
   },
 
-  claimDailyXp: () => {
+  claimDailyXp: async () => {
     try {
+      const res = await apiRequest('/achievements/daily-claim', { method: 'POST' });
+      const today = new Date().toDateString();
+      localStorage.setItem(DAILY_XP_KEY, today);
+      return res?.success !== false;
+    } catch (e) {
       const today = new Date().toDateString();
       localStorage.setItem(DAILY_XP_KEY, today);
       return true;
-    } catch (e) {
-      return false;
     }
   }
 };

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import logging
 from typing import Optional, Dict, Any, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -125,13 +126,17 @@ class AchievementService:
         context = await self._build_telemetry_context(user_id)
         evaluated = self.engine.evaluate_user_achievements(definitions, unlocked_codes, context)
 
-        # 3. Calculate summary stats
+        # 3. Calculate summary stats including daily bonus XP
+        daily_xp = await self.achievement_repo.get_total_daily_xp(user_id)
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        is_daily_claimed = await self.achievement_repo.has_claimed_daily(user_id, today_str)
+
         unlocked_count = len([a for a in evaluated if a.get("unlocked")])
         total_count = len(evaluated)
-        earned_xp = sum([a.get("xp", 100) for a in evaluated if a.get("unlocked")])
+        earned_xp = sum([a.get("xp", 100) for a in evaluated if a.get("unlocked")]) + daily_xp
         total_xp = 3000
         level = max(1, (earned_xp // 300) + 1)
-        level_title = "Consistent Builder" if level >= 8 else ("Active Competitor" if level >= 5 else "Initiate")
+        level_title = "Placement Ready SDE" if level >= 6 else ("Active Competitor" if level >= 5 else "Initiate")
         xp_in_level = earned_xp % 300
         xp_remaining = 300 - xp_in_level
 
@@ -145,12 +150,23 @@ class AchievementService:
             "xpInCurrentLevel": xp_in_level,
             "xpRemaining": xp_remaining,
             "completionPercentage": round((unlocked_count / max(1, total_count)) * 100),
+            "isDailyClaimed": is_daily_claimed,
         }
 
         return {
             "achievements": evaluated,
             "stats": stats,
         }
+
+    async def claim_daily_xp(self, user_id: str, points: int = 50) -> Dict[str, Any]:
+        """Claim daily bonus XP for user."""
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        already_claimed = await self.achievement_repo.has_claimed_daily(user_id, today_str)
+        if already_claimed:
+            return {"success": False, "message": "Daily bonus already claimed for today.", "points": 0}
+
+        await self.achievement_repo.record_daily_claim(user_id, today_str, points)
+        return {"success": True, "message": f"+{points} Daily XP successfully claimed!", "points": points}
 
     async def get_unlocked_achievements(self, user_id: str) -> List[Dict[str, Any]]:
         """Fetch only unlocked achievements for user."""

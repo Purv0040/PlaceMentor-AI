@@ -185,6 +185,7 @@ class AchievementRepository:
         self.db = db
         self.definitions = db["achievement_definitions"]
         self.user_achievements = db["user_achievements"]
+        self.user_daily_claims = db["user_daily_claims"]
 
     async def ensure_indexes(self) -> None:
         """Create database indexes."""
@@ -192,6 +193,7 @@ class AchievementRepository:
             await self.definitions.create_index("code", unique=True)
             await self.user_achievements.create_index("user_id")
             await self.user_achievements.create_index([("user_id", 1), ("code", 1)], unique=True)
+            await self.user_daily_claims.create_index([("user_id", 1), ("date_str", 1)], unique=True)
             logger.info("AchievementRepository indexes created/verified.")
         except Exception as e:
             logger.warning("Error creating indexes in AchievementRepository: %s", e)
@@ -249,3 +251,33 @@ class AchievementRepository:
         achievement_data["_id"] = str(result.inserted_id)
         achievement_data["id"] = str(result.inserted_id)
         return self._convert_doc(achievement_data)
+
+    async def has_claimed_daily(self, user_id: str, date_str: str) -> bool:
+        """Check if user has claimed XP for date."""
+        doc = await self.user_daily_claims.find_one({"user_id": user_id, "date_str": date_str})
+        return doc is not None
+
+    async def record_daily_claim(self, user_id: str, date_str: str, points: int = 50) -> Dict[str, Any]:
+        """Record daily XP claim in MongoDB."""
+        now = datetime.now(timezone.utc)
+        claim_doc = {
+            "user_id": user_id,
+            "date_str": date_str,
+            "claimed_at": now,
+            "points": points,
+        }
+        await self.user_daily_claims.update_one(
+            {"user_id": user_id, "date_str": date_str},
+            {"$set": claim_doc},
+            upsert=True,
+        )
+        return claim_doc
+
+    async def get_total_daily_xp(self, user_id: str) -> int:
+        """Get sum of daily claim XP earned by user."""
+        try:
+            cursor = self.user_daily_claims.find({"user_id": user_id})
+            docs = await cursor.to_list(length=500)
+            return sum([d.get("points", 50) for d in docs if d])
+        except Exception:
+            return 0

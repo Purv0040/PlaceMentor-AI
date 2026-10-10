@@ -38,3 +38,15 @@ class UserAchievementModel(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class UserDailyClaimModel(BaseModel):
+    id: Optional[str] = Field(default=None, alias="_id")
+    user_id: str
+    date_str: str  # YYYY-MM-DD
+    claimed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    points: int = 50
+    streak_count: int = 1
+
+    class Config:
+        populate_by_name = True

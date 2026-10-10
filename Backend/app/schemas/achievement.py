@@ -29,6 +29,7 @@ class AchievementStatsSchema(BaseModel):
     xpInCurrentLevel: int = Field(..., example=50)
     xpRemaining: int = Field(..., example=250)
     completionPercentage: int = Field(..., example=67)
+    isDailyClaimed: bool = Field(False, example=False)
 
 
 class AchievementsResponseSchema(BaseModel):

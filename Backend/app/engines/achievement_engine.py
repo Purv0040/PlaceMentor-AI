@@ -47,32 +47,34 @@ class AchievementEngine:
             already_unlocked = code in unlocked_codes
             current_count = 0
 
-            if code == "FIRST_STEP":
+            if code in ["FIRST_STEP"]:
                 current_count = 1 if profile.get("is_onboarded") or profile else 0
-            elif code == "FIRST_RESUME":
+            elif code in ["FIRST_RESUME", "ATS_RESUME_VERIFIED"]:
                 current_count = ats_score if ats_score > 0 else (1 if resume else 0)
-            elif code == "GITHUB_CONNECTED":
-                current_count = 1 if github.get("connected") or github.get("github_username") or github else 0
-            elif code == "LEETCODE_CONNECTED":
+            elif code in ["GITHUB_CONNECTED", "PRODUCTION_GITHUB"]:
+                current_count = total_commits if total_commits > 0 else (1 if github.get("connected") or github.get("github_username") or github else 0)
+            elif code in ["LEETCODE_CONNECTED", "KNIGHT_RANK_LEETCODE"]:
                 current_count = total_solved if total_solved > 0 else (1 if leetcode.get("username") or leetcode else 0)
-            elif code == "FIRST_PROJECT":
+            elif code in ["FIRST_PROJECT", "PROJECT_BUILDER", "SYSTEM_ARCHITECT_PORTFOLIO"]:
                 current_count = project_count
-            elif code == "PROJECT_BUILDER":
-                current_count = project_count
-            elif code == "ROADMAP_STARTED":
-                current_count = 1 if roadmap else 0
-            elif code == "TASK_STARTER":
+            elif code in ["ROADMAP_STARTED", "ROADMAP_90_DAYS"]:
+                current_count = current_day if current_day > 0 else (1 if roadmap else 0)
+            elif code in ["TASK_STARTER", "TASK_10"]:
                 current_count = completed_tasks_count
-            elif code == "TASK_10":
-                current_count = completed_tasks_count
-            elif code == "WEEK_WARRIOR":
+            elif code in ["WEEK_WARRIOR", "CONSISTENCY_14_DAYS"]:
                 current_count = current_streak
-            elif code == "FIRST_INTERVIEW":
+            elif code in ["FIRST_INTERVIEW"]:
                 current_count = interview_count
-            elif code == "COMMUNICATION_START":
+            elif code in ["COMMUNICATION_START"]:
                 current_count = comm_count
-            elif code == "READINESS_TIER_1":
+            elif code in ["READINESS_TIER_1", "TIER_1_DIAGNOSTIC"]:
                 current_count = overall_readiness
+            elif code in ["GRAPH_SPECIALIST"]:
+                current_count = 1 if total_solved >= 10 else 0
+            elif code in ["REDIS_CACHING_MASTER"]:
+                current_count = 1 if any("redis" in str(p).lower() for p in projects) else 0
+            elif code in ["DP_2D_CONQUEROR"]:
+                current_count = min(28, completed_tasks_count)
 
             # Determine unlocked state
             is_unlocked = already_unlocked or (current_count >= req_count and current_count > 0)
