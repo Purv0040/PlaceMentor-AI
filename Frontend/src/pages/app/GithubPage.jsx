@@ -230,12 +230,6 @@ export const GithubPage = () => {
       {/* 1. HERO BANNER */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 shadow-2xl">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-semibold border border-indigo-500/30">
-              <Zap className="w-3.5 h-3.5 text-indigo-400" />
-              Telemetry V4.2 • AST Engine
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">GitHub Intelligence</h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
             Understand how your GitHub profile represents your technical skills, code complexity, and project experience against Tier-1 SDE benchmarks.
@@ -317,10 +311,6 @@ export const GithubPage = () => {
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-white font-mono">{data.metrics.githubImpactScore}</span>
             <span className="text-xs text-slate-400 font-mono">/ 100</span>
-          </div>
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400 font-mono font-semibold">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>{data.metrics.scorePercentile}</span>
           </div>
         </div>
 
@@ -490,9 +480,6 @@ export const GithubPage = () => {
                     {repo.name}
                   </a>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
-                  AST {repo.astScore}%
-                </span>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">

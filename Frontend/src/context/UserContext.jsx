@@ -180,7 +180,8 @@ export const UserProvider = ({ children }) => {
           targetDrive: updated.targetDrive || 'August 2026 (Campus Phase 1)',
           targetCtc: updated.targetCtc || '14 - 24 LPA (Product Tier)',
           primaryGoal: updated.primaryGoal || 'Master Technical Algorithms & System Architecture'
-        }
+        },
+        overallReadinessScore: updated.overallReadinessScore || undefined
       };
 
       profileService.updateProfileInApi(structuredPayload).catch(() => {});

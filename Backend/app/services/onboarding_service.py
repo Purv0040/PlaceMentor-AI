@@ -57,6 +57,10 @@ class OnboardingService:
             for k, v in step_update.goals.model_dump(exclude_none=True).items():
                 update_fields[f"goals.{k}"] = v
 
+        if step_update.overallReadinessScore is not None:
+            update_fields["overallReadinessScore"] = step_update.overallReadinessScore
+            update_fields["baseline_score"] = step_update.overallReadinessScore
+
         # Update step tracking
         completed_steps = set(profile.get("onboarding", {}).get("completed_steps", [1]))
         completed_steps.add(step_num)

@@ -195,12 +195,28 @@ class DeterministicReadinessEngine:
                     lc_handle = profile_data.get("leetcodeHandle") or ""
 
             if dsa_level or lc_handle:
-                dsa_map = {"Master": 94, "Expert": 92, "Advanced": 88, "Intermediate": 78, "Beginner": 60}
-                base_score = 78
+                dsa_map = {"Master": 94, "Expert": 92, "Advanced": 86, "Intermediate": 74, "Beginner": 52}
+                base_score = 74
                 for k, v in dsa_map.items():
                     if k.lower() in dsa_level.lower():
                         base_score = v
                         break
+                
+                tier = ""
+                if profile_data and isinstance(profile_data, dict):
+                    c_info = profile_data.get("career", {})
+                    if isinstance(c_info, dict):
+                        tier = c_info.get("companyTier", "")
+                
+                if "Tier-1" in tier or "MAANG" in tier:
+                    if "beginner" in dsa_level.lower():
+                        base_score = max(35, base_score - 16)
+                    elif "advanced" in dsa_level.lower() or "expert" in dsa_level.lower():
+                        base_score = min(98, base_score + 4)
+                elif "IT Services" in tier or "Campus" in tier:
+                    if "intermediate" in dsa_level.lower() or "advanced" in dsa_level.lower():
+                        base_score = min(96, base_score + 6)
+
                 if lc_handle:
                     base_score = min(98, base_score + 4)
 
@@ -321,7 +337,8 @@ class DeterministicReadinessEngine:
     @staticmethod
     def evaluate_projects(
         projects_list: Optional[List[Dict[str, Any]]],
-        profile_data: Optional[Dict[str, Any]] = None
+        profile_data: Optional[Dict[str, Any]] = None,
+        required_role_skills: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Evaluate Projects category from audited active portfolio projects, AST complexity, and verification links."""
         valid_projects = [p for p in (projects_list or []) if p.get("status") != "archived"] if projects_list else []
@@ -336,7 +353,13 @@ class DeterministicReadinessEngine:
 
             if skills_list:
                 count = len(skills_list)
-                proj_score = min(94, max(75, 75 + min(15, count * 3)))
+                if required_role_skills and len(required_role_skills) > 0:
+                    matched = sum(1 for s in skills_list if any(req.lower() in str(s).lower() or str(s).lower() in req.lower() for req in required_role_skills))
+                    ratio = matched / max(1, len(required_role_skills))
+                    base_proj = int(45 + (ratio * 40)) + min(12, count * 2)
+                else:
+                    base_proj = 62 + min(20, count * 3)
+                proj_score = min(94, max(42, base_proj))
                 return {
                     "category": "Projects",
                     "key": "projects",
@@ -573,15 +596,21 @@ class DeterministicReadinessEngine:
                 db_level = profile_data.get("databaseLevel") or ""
 
         if sys_level or db_level or detected_topics:
-            base_cs = 78
-            if "advanced" in sys_level.lower() or "advanced" in db_level.lower():
+            base_cs = 58
+            if "advanced" in sys_level.lower():
+                base_cs += 14
+            elif "intermediate" in sys_level.lower():
                 base_cs += 8
-            elif "intermediate" in sys_level.lower() or "intermediate" in db_level.lower():
-                base_cs += 4
+            
+            if "advanced" in db_level.lower():
+                base_cs += 14
+            elif "intermediate" in db_level.lower():
+                base_cs += 8
+
             if detected_topics:
                 base_cs += min(6, len(detected_topics) * 2)
 
-            proxy_score = min(96, max(60, base_cs))
+            proxy_score = min(96, max(45, base_cs))
             return {
                 "category": "CS Fundamentals",
                 "key": "cs_fundamentals",
@@ -862,7 +891,7 @@ class DeterministicReadinessEngine:
         # 2. Evaluate 7 Diagnostic Categories with rigorous rubrics & profile fallback
         c_resume = self.evaluate_resume(resume_data, required_role_skills, profile_data=profile_data)
         c_dsa = self.evaluate_leetcode(leetcode_data, profile_data=profile_data)
-        c_projects = self.evaluate_projects(projects_list or [], profile_data=profile_data)
+        c_projects = self.evaluate_projects(projects_list or [], profile_data=profile_data, required_role_skills=required_role_skills)
         c_github = self.evaluate_github(github_data, profile_data=profile_data)
         c_cs = self.evaluate_cs_fundamentals(profile_data, resume_data)
         c_comm = self.evaluate_communication(resume_data, communication_data, profile_data=profile_data)
@@ -927,6 +956,9 @@ class DeterministicReadinessEngine:
                 all_provisional = all(c.get("status") == "provisional" for c in scored_cats)
                 if all_provisional:
                     overall_score = int(round(explicit_baseline))
+            elif required_role_skills and len(required_role_skills) > 0 and alignment_score is not None:
+                # Blended readiness: 75% category telemetry + 25% target role competency alignment
+                overall_score = int(round(weighted_sum * 0.75 + alignment_score * 0.25))
 
             # Determine readiness status & label
             has_stale = any(c.get("status") == "stale" or not c.get("is_fresh", True) for c in scored_cats)

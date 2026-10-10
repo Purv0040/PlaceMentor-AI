@@ -91,6 +91,22 @@ export const AnalysisStep = () => {
     } catch (e) {}
 
     try {
+      await onboardingService.updateStep(7, {
+        step_number: 7,
+        career: {
+          targetRole: profilePayload.targetRole,
+          secondaryRole: profilePayload.secondaryRole,
+          companyTier: profilePayload.companyTier
+        },
+        skills: {
+          dsaLevel: profilePayload.dsaLevel,
+          sysDesignLevel: profilePayload.sysDesignLevel,
+          databaseLevel: profilePayload.databaseLevel,
+          frameworkLevel: profilePayload.frameworkLevel,
+          selectedSkills: profilePayload.selectedSkills
+        },
+        overallReadinessScore: profilePayload.overallReadinessScore
+      });
       await onboardingService.completeOnboarding();
       await readinessService.calculateReadiness(profilePayload.targetRole);
     } catch (err) {

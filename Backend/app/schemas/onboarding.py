@@ -20,6 +20,7 @@ class OnboardingStepUpdate(BaseModel):
     integrations: Optional[IntegrationsInfoSchema] = None
     preferences: Optional[PreferencesInfoSchema] = None
     goals: Optional[GoalsInfoSchema] = None
+    overallReadinessScore: Optional[int] = None
 
 
 class OnboardingCompleteResponse(BaseModel):
