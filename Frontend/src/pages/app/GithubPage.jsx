@@ -21,26 +21,44 @@ import {
   Info,
   AlertCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const LANGUAGE_COLORS = {
-  TypeScript: '#3178c6',
   JavaScript: '#f1e05a',
   Python: '#3572A5',
-  Go: '#00ADD8',
   Java: '#b07219',
+  TypeScript: '#3178c6',
+  'Jupyter Notebook': '#DA5B0B',
   'C++': '#f34b7d',
   C: '#555555',
-  Rust: '#dea584',
+  'C#': '#178600',
   HTML: '#e34c26',
   CSS: '#563d7c',
-  Ruby: '#701516',
+  Go: '#00ADD8',
+  Rust: '#dea584',
   PHP: '#4F5D95',
+  Ruby: '#701516',
   Kotlin: '#A97BFF',
   Swift: '#F05138',
+  Dart: '#00B4AB',
   Shell: '#89e051',
-  Dart: '#00B4AB'
+  Vue: '#41b883',
+  SQL: '#e38c00',
+  R: '#198CE7'
+};
+
+const getLanguageColor = (name) => {
+  if (LANGUAGE_COLORS[name]) return LANGUAGE_COLORS[name];
+  // Deterministic vibrant color generator for unlisted languages
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash % 360);
+  return `hsl(${hue}, 70%, 55%)`;
 };
 
 const computeLanguageDistribution = (rawLangs) => {
@@ -48,20 +66,12 @@ const computeLanguageDistribution = (rawLangs) => {
   const total = entries.reduce((acc, curr) => acc + curr.count, 0);
   if (total === 0) return [];
 
-  // If <= 6 languages, show all of them. If > 6 languages, display top 5 and aggregate remainder into "Other"
-  let displayEntries = [];
-  if (entries.length <= 6) {
-    displayEntries = [...entries].sort((a, b) => b.count - a.count);
-  } else {
-    const sorted = [...entries].sort((a, b) => b.count - a.count);
-    const top5 = sorted.slice(0, 5);
-    const otherCount = sorted.slice(5).reduce((acc, curr) => acc + curr.count, 0);
-    displayEntries = [...top5, { name: 'Other', count: otherCount }];
-  }
+  // Sort all actual languages by count/bytes descending
+  const sortedEntries = [...entries].sort((a, b) => b.count - a.count);
 
-  // Largest Remainder Method for mathematically exact 100% sum
+  // Largest Remainder Method for mathematically exact 100% sum across all languages
   let intSum = 0;
-  const withRemainders = displayEntries.map(entry => {
+  const withRemainders = sortedEntries.map(entry => {
     const rawPct = (entry.count / total) * 100;
     const intPct = Math.floor(rawPct);
     intSum += intPct;
@@ -70,7 +80,7 @@ const computeLanguageDistribution = (rawLangs) => {
       count: entry.count,
       percentage: intPct,
       remainder: rawPct - intPct,
-      color: LANGUAGE_COLORS[entry.name] || (entry.name === 'Other' ? '#94a3b8' : '#6366f1')
+      color: getLanguageColor(entry.name)
     };
   });
 
@@ -100,6 +110,7 @@ export const GithubPage = () => {
   const [connectError, setConnectError] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
+  const [isReposExpanded, setIsReposExpanded] = useState(false);
 
   const fetchGithubData = async () => {
     try {
@@ -136,13 +147,15 @@ export const GithubPage = () => {
 
         // Fetch AI analysis if available
         let analysisData = null;
-        try {
-          const analysisRes = await githubService.getAnalysis();
-          if (analysisRes && analysisRes.data) {
-            analysisData = analysisRes.data.analysis;
+        if (pData.has_analysis) {
+          try {
+            const analysisRes = await githubService.getAnalysis();
+            if (analysisRes && analysisRes.data) {
+              analysisData = analysisRes.data.analysis;
+            }
+          } catch (e) {
+            // Analysis not yet run
           }
-        } catch (e) {
-          // Analysis not yet run
         }
 
         // Calculate dynamic language distribution from actual backend data
@@ -150,24 +163,10 @@ export const GithubPage = () => {
         let calculatedLangs = [];
 
         if (Array.isArray(stats.language_distribution) && stats.language_distribution.length > 0) {
-          const dist = stats.language_distribution;
-          if (dist.length <= 6) {
-            calculatedLangs = dist.map(item => ({
-              ...item,
-              color: LANGUAGE_COLORS[item.name] || '#6366f1'
-            }));
-          } else {
-            const top5 = dist.slice(0, 5).map(item => ({
-              ...item,
-              color: LANGUAGE_COLORS[item.name] || '#6366f1'
-            }));
-            const otherPct = dist.slice(5).reduce((acc, curr) => acc + curr.percentage, 0);
-            const otherCount = dist.slice(5).reduce((acc, curr) => acc + (curr.count || 0), 0);
-            calculatedLangs = [
-              ...top5,
-              { name: 'Other', count: otherCount, percentage: otherPct, color: '#94a3b8' }
-            ];
-          }
+          calculatedLangs = stats.language_distribution.map(item => ({
+            ...item,
+            color: getLanguageColor(item.name)
+          }));
         } else if (Object.keys(rawLangs).length > 0) {
           calculatedLangs = computeLanguageDistribution(rawLangs);
         } else if (repos.length > 0) {
@@ -178,20 +177,30 @@ export const GithubPage = () => {
           calculatedLangs = computeLanguageDistribution(counts);
         }
 
+        const complexityMap = {};
+        (analysisData?.complexity_analyses || []).forEach(ca => {
+          if (ca && ca.repo_name) complexityMap[ca.repo_name.toLowerCase()] = ca;
+        });
+
         // Map dynamic repositories from actual backend data
-        const mappedRepos = repos.map((r) => ({
-          id: r.id || r.repo_id || r.name,
-          name: r.name || 'Repository',
-          description: r.description || 'No description provided.',
-          language: r.language || 'Not specified',
-          stars: r.stars || 0,
-          forks: r.forks || 0,
-          qualityScore: r.quality_score || r.ast_score || 0,
-          qualityTier: r.quality_tier || 'Active Project',
-          tags: Array.isArray(r.tags) && r.tags.length > 0 ? r.tags : (r.language ? [r.language] : []),
-          url: r.html_url || `https://github.com/${handle}/${r.name}`,
-          pushedAt: r.pushed_at
-        }));
+        const mappedRepos = repos.map((r) => {
+          const ca = complexityMap[r.name?.toLowerCase()];
+          return {
+            id: r.id || r.repo_id || r.name,
+            name: r.name || 'Repository',
+            description: r.description || 'No description provided.',
+            language: r.language && r.language !== 'Not specified' ? r.language : null,
+            stars: r.stars || 0,
+            forks: r.forks || 0,
+            qualityScore: r.quality_score || r.ast_score || 0,
+            qualityTier: r.quality_tier || 'Active Project',
+            complexityLevel: ca?.complexity_level || null,
+            complexityConfidence: ca?.confidence || null,
+            tags: Array.isArray(r.tags) && r.tags.length > 0 ? r.tags : (r.language && r.language !== 'Not specified' ? [r.language] : []),
+            url: r.html_url || `https://github.com/${handle}/${r.name}`,
+            pushedAt: r.pushed_at
+          };
+        });
 
         // Actual weekly commit cadence from backend events
         const weeklyCadence = Array.isArray(stats.weekly_activity) && stats.weekly_activity.length > 0
@@ -233,6 +242,10 @@ export const GithubPage = () => {
           weeklyCadence: weeklyCadence,
           strengths: strengths,
           improvements: improvements,
+          evidenceSummary: analysisData?.evidence_summary || null,
+          technicalCategories: (analysisData?.technical_categories || []).filter(c => c.detected),
+          technicalPatterns: analysisData?.technical_patterns || [],
+          hasAiAnalysis: Boolean(analysisData),
           impactBreakdown: stats.impact_breakdown || null,
           primaryLanguage: stats.primary_language || (calculatedLangs[0]?.name || 'Not specified'),
           metrics: {
@@ -241,7 +254,7 @@ export const GithubPage = () => {
             activeStreakDays: stats.active_streak_days ?? 0,
             longestStreakDays: stats.longest_streak_days ?? 0,
             repoQualityIndex: stats.repo_quality_score ?? 0,
-            languageCount: Object.keys(rawLangs).length || calculatedLangs.length,
+            languageCount: calculatedLangs.length,
             reposAnalyzedCount: repos.length || stats.total_repositories || 0,
             starsEarned: totalStarsVal
           }
@@ -304,6 +317,11 @@ export const GithubPage = () => {
     try {
       const cleanUser = inputUsername.trim().replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/.*$/, '').replace(/^@/, '');
       await githubService.connect(cleanUser);
+      try {
+        await githubService.analyzeProfile();
+      } catch (aiErr) {
+        console.info('Auto AI profile analysis notice:', aiErr.message);
+      }
       if (updateUserProfile) {
         updateUserProfile({
           integrations: {
@@ -567,46 +585,114 @@ export const GithubPage = () => {
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
               <div>
-                <h3 className="font-bold text-white text-base">Weekly Commit Activity</h3>
-                <p className="text-xs text-slate-400">Weekly push commit volume across recent 6-week window</p>
+                <h3 className="font-bold text-white text-base">Weekly Push Activity</h3>
+                <p className="text-xs text-slate-400">Weekly public push activity over the last 6 weeks</p>
               </div>
               <span className="text-xs font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg border border-indigo-500/20">
-                Public Events
+                Public Push Events
               </span>
             </div>
 
-            {hasCommitCadence ? (
-              <div className="h-56 w-full mt-3">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data.weeklyCadence} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.5} />
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <XAxis dataKey="week" stroke="#64748b" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#121624',
-                        borderColor: '#232b3e',
-                        borderRadius: '12px',
-                        color: '#ffffff',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val) => [val, 'Commits']}
-                    />
-                    <Area type="monotone" dataKey="commits" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#commitGrad)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+            {!isConnected ? (
+              <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                <Clock className="w-8 h-8 text-slate-500 opacity-50" />
+                <p className="text-xs text-slate-300 font-mono font-semibold">GitHub History Unavailable</p>
+                <p className="text-[11px] text-slate-400 max-w-md">
+                  Connect your GitHub account to load real public push activity over the last 6 weeks.
+                </p>
+              </div>
+            ) : data.weeklyCadence.length === 0 ? (
+              <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                <Clock className="w-8 h-8 text-slate-500 opacity-50" />
+                <p className="text-xs text-slate-300 font-mono font-semibold">Push History Unavailable</p>
+                <p className="text-[11px] text-slate-400 max-w-md">
+                  No public push activity was retrieved from the GitHub Events API. Click "Refresh Analysis" to query public events.
+                </p>
+              </div>
+            ) : hasCommitCadence ? (
+              <div className="space-y-3 mt-3">
+                <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data.weeklyCadence} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="commitGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.5} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="week" stroke="#64748b" fontSize={11} tickLine={false} />
+                      <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} tickFormatter={(val) => Math.round(val)} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#121624',
+                          borderColor: '#232b3e',
+                          borderRadius: '12px',
+                          color: '#ffffff',
+                          fontSize: '12px',
+                        }}
+                        formatter={(val, name, item) => {
+                          const w = item?.payload || {};
+                          const count = parseInt(val, 10);
+                          if (w.status === 'incomplete_history') {
+                            return ['Unverified (Before oldest event)', 'Coverage'];
+                          }
+                          const pushLabel = count === 1 ? 'push event' : 'push events';
+                          return [`${count} ${pushLabel} (${w.status === 'verified_zero' ? 'Verified 0' : 'Recorded'})`, 'Activity'];
+                        }}
+                        labelFormatter={(label, items) => {
+                          const w = items?.[0]?.payload;
+                          if (w && w.start_date && w.end_date) {
+                            return `${label}: ${w.start_date} to ${w.end_date}`;
+                          }
+                          return `${label} (7-day window)`;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="commits"
+                        stroke="#6366f1"
+                        strokeWidth={2.5}
+                        fillOpacity={1}
+                        fill="url(#commitGrad)"
+                        dot={{ r: 3, fill: '#6366f1' }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Integer counts badges per week with date range tooltips and status */}
+                <div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#232b3e]/60 text-[11px] font-mono text-slate-400">
+                    {data.weeklyCadence.map((w, idx) => (
+                      <span
+                        key={idx}
+                        className="flex items-center gap-1 cursor-help"
+                        title={w.start_date && w.end_date ? `${w.week}: ${w.start_date} to ${w.end_date} (${w.status})` : ''}
+                      >
+                        <span className="text-slate-500">{w.week}:</span>
+                        {w.status === 'incomplete_history' ? (
+                          <span className="text-amber-400 font-semibold text-[10px]" title="History prior to oldest recorded event is unverified by GitHub Events API">Unverified*</span>
+                        ) : (
+                          <span className={w.commits > 0 ? "text-indigo-400 font-bold" : "text-slate-500"}>
+                            {parseInt(w.commits, 10)}
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  {data.weeklyCadence.some(w => w.status === 'incomplete_history') && (
+                    <p className="text-[10px] text-slate-500 font-mono mt-1.5 text-right">
+                      * Weeks prior to oldest recorded event are marked Unverified due to GitHub event horizon.
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="h-56 flex flex-col items-center justify-center text-center p-6 space-y-2">
                 <Clock className="w-8 h-8 text-slate-500 opacity-50" />
-                <p className="text-xs text-slate-300 font-mono font-semibold">No public commit events recorded in the last 6 weeks.</p>
+                <p className="text-xs text-slate-300 font-mono font-semibold">No public push events recorded in the last 6 weeks.</p>
                 <p className="text-[11px] text-slate-400 max-w-md">
-                  GitHub's public events API tracks recent activity within a 90-day window. Push commits to public repositories or refresh after committing.
+                  Zero push events were detected across the 42-day window in Asia/Kolkata timezone. Push code to your repositories to see weekly trends.
                 </p>
               </div>
             )}
@@ -617,71 +703,127 @@ export const GithubPage = () => {
       {/* 5. REPOSITORY AUDIT GRID */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-white text-lg">Audited Repositories</h3>
+          <div className="flex items-center gap-2.5">
+            <h3 className="font-bold text-white text-lg">Audited Repositories</h3>
+            {data.repositories.length > 2 && (
+              <button
+                onClick={() => setIsReposExpanded(!isReposExpanded)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 text-xs font-semibold font-mono border border-indigo-500/20 transition-all cursor-pointer"
+                title={isReposExpanded ? "Collapse to 2 repositories" : `Expand to see all ${data.repositories.length} repositories`}
+              >
+                <span>{isReposExpanded ? 'Show Less' : `See All (${data.repositories.length})`}</span>
+                {isReposExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            )}
+          </div>
           <span className="text-xs font-mono text-slate-400">
-            {data.repositories.length > 0 ? `Showing ${data.repositories.length} Repositories` : 'No Repositories'}
+            {data.repositories.length > 0
+              ? (isReposExpanded
+                  ? `Showing all ${data.repositories.length} Repositories`
+                  : `Showing 2 of ${data.repositories.length} Repositories`)
+              : 'No Repositories'}
           </span>
         </div>
 
         {data.repositories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.repositories.map((repo) => (
-              <div
-                key={repo.id}
-                className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 hover:border-indigo-500/40 transition-colors shadow-xl"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <GitBranch className="w-5 h-5 text-indigo-400 shrink-0" />
-                    <a
-                      href={repo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-bold text-white text-base hover:text-indigo-400 transition-colors cursor-pointer"
-                    >
-                      {repo.name}
-                    </a>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(isReposExpanded ? data.repositories : data.repositories.slice(0, 2)).map((repo) => (
+                <div
+                  key={repo.id}
+                  className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 hover:border-indigo-500/40 transition-colors shadow-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <GitBranch className="w-5 h-5 text-indigo-400 shrink-0" />
+                      <a
+                        href={repo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-white text-base hover:text-indigo-400 transition-colors cursor-pointer"
+                      >
+                        {repo.name}
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {repo.complexityLevel && (
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider border ${
+                            repo.complexityLevel.toLowerCase() === 'advanced'
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                              : repo.complexityLevel.toLowerCase() === 'intermediate'
+                              ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          }`}
+                          title={repo.complexityConfidence ? `Complexity: ${repo.complexityLevel} (${Math.round(repo.complexityConfidence * 100)}% confidence)` : `Complexity: ${repo.complexityLevel}`}
+                        >
+                          {repo.complexityLevel}
+                        </span>
+                      )}
+                      <span className="text-xs font-mono text-indigo-400 font-semibold px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
+                        {repo.qualityScore}/100
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs font-mono text-indigo-400 font-semibold px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">
-                    {repo.qualityScore}/100
+
+                  <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
+                    {repo.description}
+                  </p>
+
+                  {/* Tech Tags */}
+                  {repo.tags && repo.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {repo.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 rounded-lg bg-[#0f131d] text-slate-200 text-[11px] font-mono border border-[#232b3e]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-[#232b3e] flex items-center justify-between text-xs text-slate-400 font-mono">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1 text-slate-200 font-semibold">
+                        <Star className="w-3.5 h-3.5 text-amber-400" />
+                        {repo.stars}
+                      </span>
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <GitFork className="w-3.5 h-3.5 text-slate-400" />
+                        {repo.forks}
+                      </span>
+                      {repo.language && repo.language !== 'Not specified' && (
+                        <span className="text-slate-400">{repo.language}</span>
+                      )}
+                    </div>
+                    <span className="text-indigo-400 font-bold">{repo.qualityTier}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {data.repositories.length > 2 && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => setIsReposExpanded(!isReposExpanded)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#121624] hover:bg-[#1a2133] text-indigo-400 hover:text-indigo-300 text-xs font-semibold font-mono border border-[#232b3e] hover:border-indigo-500/40 transition-all shadow-md group cursor-pointer"
+                >
+                  <span>
+                    {isReposExpanded
+                      ? 'Show Less'
+                      : `See All Repositories (${data.repositories.length})`}
                   </span>
-                </div>
-
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-                  {repo.description}
-                </p>
-
-                {/* Tech Tags */}
-                <div className="flex flex-wrap gap-1.5">
-                  {repo.tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2.5 py-1 rounded-lg bg-[#0f131d] text-slate-200 text-[11px] font-mono border border-[#232b3e]"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="pt-3 border-t border-[#232b3e] flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-slate-200 font-semibold">
-                      <Star className="w-3.5 h-3.5 text-amber-400" />
-                      {repo.stars}
-                    </span>
-                    <span className="flex items-center gap-1 text-slate-300">
-                      <GitFork className="w-3.5 h-3.5 text-slate-400" />
-                      {repo.forks}
-                    </span>
-                    {repo.language && repo.language !== 'Not specified' && (
-                      <span className="text-slate-400">{repo.language}</span>
-                    )}
-                  </div>
-                  <span className="text-indigo-400 font-bold">{repo.qualityTier}</span>
-                </div>
+                  {isReposExpanded ? (
+                    <ChevronUp className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+                  )}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="p-8 rounded-2xl bg-[#121624] border border-[#232b3e] text-center space-y-2">
             <GitBranch className="w-8 h-8 text-slate-500 mx-auto opacity-50" />
@@ -700,8 +842,43 @@ export const GithubPage = () => {
             <Sparkles className="w-5 h-5 text-indigo-400" />
             <h3 className="font-bold text-white text-lg">Evidence-Based GitHub Insights</h3>
           </div>
-          <span className="text-xs font-mono text-slate-400">Deterministic & AI Audit</span>
+          <span className="text-xs font-mono text-slate-400">
+            {data.hasAiAnalysis ? 'Deterministic & AI Verified' : 'Deterministic Audit'}
+          </span>
         </div>
+
+        {/* AI Evidence Narrative if present */}
+        {data.evidenceSummary && (
+          <div className="p-5 rounded-2xl bg-[#121624] border border-indigo-500/30 shadow-xl space-y-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <h4 className="font-bold text-white text-sm">Portfolio Evidence Narrative</h4>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {data.evidenceSummary}
+            </p>
+          </div>
+        )}
+
+        {/* Verified Technical Domains */}
+        {data.technicalCategories && data.technicalCategories.length > 0 && (
+          <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] flex flex-wrap items-center gap-2">
+            <span className="text-xs font-mono text-slate-400 mr-1">Verified Technical Domains:</span>
+            {data.technicalCategories.map((cat, idx) => (
+              <span
+                key={idx}
+                className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-mono border border-indigo-500/20 flex items-center gap-1.5"
+                title={`Verified in: ${(cat.evidence_repos || []).join(', ') || 'repositories'}`}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                <span>{cat.category}</span>
+                {cat.evidence_repos && cat.evidence_repos.length > 0 && (
+                  <span className="text-[10px] text-indigo-400/80 font-bold">({cat.evidence_repos.length})</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Strengths */}

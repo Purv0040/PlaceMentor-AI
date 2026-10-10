@@ -176,26 +176,42 @@ class GitHubAPIClient:
     async def get_user_events(
         self,
         username: str,
+        max_pages: int = 3,
         per_page: int = 100
     ) -> List[Dict[str, Any]]:
-        """Fetch recent public events for user to calculate commit activity and streak."""
+        """Fetch recent public events across pages (up to 300 max per GitHub API limits), deduplicated."""
         clean_user = username.strip().lstrip("@")
-        url = f"{self.base_url}/users/{clean_user}/events?per_page={per_page}"
-        logger.info("Fetching public GitHub events for '%s'", clean_user)
+        all_events: List[Dict[str, Any]] = []
+        seen_ids: Set[str] = set()
 
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                res = await client.get(url, headers=self._get_headers())
-                if res.status_code == 200:
-                    data = res.json()
-                    if isinstance(data, list):
-                        return data
-                elif res.status_code in (403, 429):
-                    logger.warning("GitHub rate limit hit when fetching public events for %s", clean_user)
-                return []
+                for page in range(1, max_pages + 1):
+                    url = f"{self.base_url}/users/{clean_user}/events?page={page}&per_page={per_page}"
+                    res = await client.get(url, headers=self._get_headers())
+                    if res.status_code == 200:
+                        page_events = res.json()
+                        if not isinstance(page_events, list) or len(page_events) == 0:
+                            break
+                        for evt in page_events:
+                            evt_id = str(evt.get("id")) if evt.get("id") else None
+                            if evt_id and evt_id in seen_ids:
+                                continue
+                            if evt_id:
+                                seen_ids.add(evt_id)
+                            all_events.append(evt)
+                        if len(page_events) < per_page:
+                            break
+                    elif res.status_code in (403, 429):
+                        logger.warning("GitHub rate limit reached on events page %d for %s", page, clean_user)
+                        break
+                    else:
+                        break
+            logger.info("Retrieved %d unique public events for '%s'", len(all_events), clean_user)
+            return all_events
         except Exception as e:
             logger.warning("Could not fetch public GitHub events for %s: %s", clean_user, e)
-            return []
+            return all_events
 
 
 # Alias for backward compatibility with pre-existing integration exports

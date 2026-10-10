@@ -78,28 +78,83 @@ def calculate_repo_quality(repo: Dict[str, Any]) -> Tuple[int, str]:
 
 
 def calculate_event_metrics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Calculate commit counts, active streak, and weekly cadence from public events in Asia/Kolkata timezone."""
+    """
+    Calculate verified commit counts, streak, and weekly cadence from public events in Asia/Kolkata timezone.
+    Deduplicates events, assigns to 6 non-overlapping 7-day rolling buckets, and marks coverage status.
+    """
     now_local = datetime.now(APP_TIMEZONE)
     today_local = now_local.date()
     yesterday_local = today_local - timedelta(days=1)
 
-    push_events = [e for e in events if e.get("type") == "PushEvent"]
+    # 1. Deduplicate events by id (if id exists)
+    unique_events: List[Dict[str, Any]] = []
+    seen_event_ids: Set[str] = set()
+    for e in events:
+        raw_e_id = e.get("id")
+        if raw_e_id is not None:
+            e_id_str = str(raw_e_id)
+            if e_id_str in seen_event_ids:
+                continue
+            seen_event_ids.add(e_id_str)
+        unique_events.append(e)
+
+    # 2. Extract push events deduplicated by push_id (if push_id or id exists)
+    push_events: List[Dict[str, Any]] = []
+    seen_push_ids: Set[str] = set()
+    for e in unique_events:
+        if e.get("type") == "PushEvent":
+            payload = e.get("payload", {})
+            raw_p_id = payload.get("push_id") if payload.get("push_id") is not None else e.get("id")
+            if raw_p_id is not None:
+                p_id_str = str(raw_p_id)
+                if p_id_str in seen_push_ids:
+                    continue
+                seen_push_ids.add(p_id_str)
+            push_events.append(e)
 
     total_commits = 0
     commits_30d = 0
     commit_dates: Set[date] = set()
     last_active_dt = None
+    oldest_event_dt = None
 
     weekly_buckets = [0] * 6
-    week_labels = [f"W{i + 1}" for i in range(6)]
+
+    # 6 rolling 7-day windows covering exactly 42 days:
+    # W1: [today - 41, today - 35]
+    # W2: [today - 34, today - 28]
+    # W3: [today - 27, today - 21]
+    # W4: [today - 20, today - 14]
+    # W5: [today - 13, today - 7]
+    # W6: [today - 6, today]
+    week_windows = []
+    for i in range(6):
+        days_end = (5 - i) * 7
+        days_start = days_end + 6
+        start_d = today_local - timedelta(days=days_start)
+        end_d = today_local - timedelta(days=days_end)
+        week_windows.append({
+            "week": f"W{i + 1}",
+            "start_date": start_d.isoformat(),
+            "end_date": end_d.isoformat(),
+            "days_ago_start": days_start,
+            "days_ago_end": days_end
+        })
 
     for e in push_events:
         created_str = e.get("created_at")
         payload = e.get("payload", {})
-        count = payload.get("size")
-        if count is None:
-            count = len(payload.get("commits", []))
-        if count == 0:
+
+        # Count actual commits pushed
+        raw_size = payload.get("size")
+        commits_list = payload.get("commits")
+        if raw_size is not None and isinstance(raw_size, int) and raw_size > 0:
+            count = raw_size
+        elif isinstance(commits_list, list) and len(commits_list) > 0:
+            count = len(commits_list)
+        else:
+            # When GitHub's public events API omits commit payload details,
+            # each PushEvent represents a verified push containing at least 1 commit
             count = 1
 
         total_commits += count
@@ -114,12 +169,14 @@ def calculate_event_metrics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
 
                 if last_active_dt is None or dt_local > last_active_dt:
                     last_active_dt = dt_local
+                if oldest_event_dt is None or dt_local < oldest_event_dt:
+                    oldest_event_dt = dt_local
 
                 days_ago = (today_local - event_date).days
                 if 0 <= days_ago <= 30:
                     commits_30d += count
 
-                # Bucket into 6 rolling 7-day windows (42 days total)
+                # Bucket into 6 rolling 7-day windows (0 to 41 days ago)
                 if 0 <= days_ago < 42:
                     week_idx = 5 - (days_ago // 7)
                     if 0 <= week_idx < 6:
@@ -131,14 +188,14 @@ def calculate_event_metrics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     longest_streak = 0
 
     if commit_dates:
-        # Current streak: only active if the developer committed today or yesterday
+        # Current streak: only active if developer committed today or yesterday
         if today_local in commit_dates or yesterday_local in commit_dates:
             check_date = today_local if today_local in commit_dates else yesterday_local
             while check_date in commit_dates:
                 active_streak += 1
                 check_date -= timedelta(days=1)
 
-        # Longest streak across the 90-day window
+        # Longest streak across all qualifying dates
         sorted_dates = sorted(commit_dates)
         current_run = 0
         prev_date = None
@@ -151,10 +208,36 @@ def calculate_event_metrics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
             if current_run > longest_streak:
                 longest_streak = current_run
 
-    weekly_activity = [
-        {"week": week_labels[i], "commits": weekly_buckets[i]}
-        for i in range(6)
-    ]
+    # Determine data coverage and verified status
+    is_truncated = (len(events) >= 300)
+    days_covered = (today_local - oldest_event_dt.date()).days if oldest_event_dt else 0
+
+    weekly_activity = []
+    for i in range(6):
+        w_meta = week_windows[i]
+        count = weekly_buckets[i]
+        
+        if len(events) == 0:
+            status = "unavailable"
+        elif count > 0:
+            status = "complete"
+        else:
+            # Do not assume fewer than 300 events means full 42-day coverage.
+            # If the event stream does not reach back to the beginning of this week, history is incomplete/unverified.
+            if oldest_event_dt is None or w_meta["days_ago_start"] > days_covered:
+                status = "incomplete_history"
+            else:
+                status = "verified_zero"
+
+        weekly_activity.append({
+            "week": w_meta["week"],
+            "pushes": count,
+            "commits": count,  # alias for backward compatibility
+            "start_date": w_meta["start_date"],
+            "end_date": w_meta["end_date"],
+            "status": status,
+            "metric_type": "public_push_events"
+        })
 
     return {
         "total_commits": total_commits,
@@ -163,6 +246,13 @@ def calculate_event_metrics(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         "longest_streak": longest_streak,
         "last_active_date": last_active_dt.isoformat() if last_active_dt else None,
         "weekly_activity": weekly_activity,
+        "coverage": {
+            "days_covered": days_covered,
+            "oldest_event_date": oldest_event_dt.isoformat() if oldest_event_dt else None,
+            "is_truncated": is_truncated,
+            "events_analyzed": len(events),
+            "push_events_analyzed": len(push_events)
+        }
     }
 
 
@@ -623,15 +713,12 @@ class GitHubService:
 
         return await self.get_github_profile(user_id)
 
-    async def get_github_analysis(self, user_id: str) -> Dict[str, Any]:
+    async def get_github_analysis(self, user_id: str) -> Optional[Dict[str, Any]]:
         """Get stored GitHub AI analysis result."""
         profile = await self.get_github_profile(user_id)
         analysis = profile.get("analysis")
         if not analysis:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="GitHub AI analysis has not been generated yet. Please trigger analysis first."
-            )
+            return None
         return {
             "user_id": user_id,
             "github_username": profile["github_username"],
@@ -639,6 +726,7 @@ class GitHubService:
             "analyzed_at": profile.get("updated_at"),
             "analysis": analysis
         }
+
 
     async def disconnect_github(self, user_id: str) -> bool:
         """Disconnect and delete GitHub profile and repo data for user."""

@@ -227,6 +227,101 @@ def test_deterministic_scoring_functions():
         }
     ]
     evt_metrics = calculate_event_metrics(sample_events)
+    assert evt_metrics["total_commits"] == 5
+    assert len(evt_metrics["weekly_activity"]) == 6
+
+
+def test_push_activity_metrics_and_coverage():
+    """Comprehensive test for push-event counts, commit distinctions, deduplication, date boundaries, and incomplete history."""
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    from app.services.github_service import calculate_event_metrics, APP_TIMEZONE
+
+    today = datetime.now(APP_TIMEZONE).date()
+
+    # Event 1: Recent push with 3 distinct commits in W6 (2 days ago)
+    d_w6 = datetime.now(APP_TIMEZONE) - timedelta(days=2)
+    e1 = {
+        "id": "push-w6-1",
+        "type": "PushEvent",
+        "created_at": d_w6.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "payload": {
+            "push_id": 1001,
+            "size": 3,
+            "commits": [{"sha": "a1"}, {"sha": "a2"}, {"sha": "a3"}]
+        }
+    }
+    # Duplicate of e1 with same id
+    e1_dup_id = {
+        "id": "push-w6-1",
+        "type": "PushEvent",
+        "created_at": d_w6.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "payload": {"push_id": 1001, "size": 3}
+    }
+    # Duplicate with same push_id but different id
+    e1_dup_push = {
+        "id": "push-w6-different-id",
+        "type": "PushEvent",
+        "created_at": d_w6.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "payload": {"push_id": 1001, "size": 3}
+    }
+
+    # Event 2: Push event in W4 (18 days ago) where GitHub API omits commits/size
+    d_w4 = datetime.now(APP_TIMEZONE) - timedelta(days=18)
+    e2 = {
+        "id": "push-w4-1",
+        "type": "PushEvent",
+        "created_at": d_w4.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "payload": {
+            "push_id": 1002,
+            "ref": "refs/heads/main"
+        }
+    }
+
+    # Non-push event (should be completely excluded)
+    e_watch = {
+        "id": "watch-1",
+        "type": "WatchEvent",
+        "created_at": d_w6.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+    events = [e1, e1_dup_id, e1_dup_push, e2, e_watch]
+    metrics = calculate_event_metrics(events)
+
+    # 1. Event deduplication: Only 2 unique push events should be counted
+    assert metrics["coverage"]["push_events_analyzed"] == 2
+    # e1 has 3 commits, e2 omits size so it defaults to 1 commit -> 4 total commits
+    assert metrics["total_commits"] == 4
+
+    # 2. Date boundaries: Exactly 6 consecutive weeks covering 42 days
+    wa = metrics["weekly_activity"]
+    assert len(wa) == 6
+    assert wa[0]["week"] == "W1"
+    assert wa[5]["week"] == "W6"
+
+    # Verify W6 activity
+    assert wa[5]["pushes"] == 3  # Counted based on commit/push payload
+    assert wa[5]["status"] == "complete"
+    assert wa[5]["metric_type"] == "public_push_events"
+
+    # Verify W5 (7-13 days ago): Zero activity, but within the 18-day coverage horizon
+    assert wa[4]["pushes"] == 0
+    assert wa[4]["status"] == "verified_zero"
+
+    # Verify W4 (14-20 days ago): Has event e2 (18 days ago)
+    assert wa[3]["pushes"] == 1
+    assert wa[3]["status"] == "complete"
+
+    # Verify W1, W2, W3: Occur before 18 days ago (the oldest event)
+    # Their history is unverified and MUST be marked 'incomplete_history'
+    assert wa[0]["status"] == "incomplete_history"
+    assert wa[1]["status"] == "incomplete_history"
+    assert wa[2]["status"] == "incomplete_history"
+
+    # Coverage metadata
+    assert metrics["coverage"]["days_covered"] == 18
+    assert metrics["coverage"]["is_truncated"] is False
+
 def test_language_distribution_largest_remainder_method():
     """Verify that language distribution percentages sum to exactly 100% using Largest Remainder Method."""
     from app.services.github_service import calculate_language_distribution
@@ -275,6 +370,63 @@ def test_activity_streak_zero_when_older_push():
     # Most recent weeks (week index 5 and 4) have 0 commits
     assert metrics["weekly_activity"][-1]["commits"] == 0
     assert metrics["weekly_activity"][-2]["commits"] == 0
+    assert metrics["weekly_activity"][-1]["status"] == "verified_zero"
+    assert "start_date" in metrics["weekly_activity"][0]
+    assert "end_date" in metrics["weekly_activity"][0]
+
+
+def test_event_deduplication_and_boundary_integrity():
+    """Verify that duplicate push events are ignored, week buckets are non-overlapping, and history coverage is marked."""
+    from app.services.github_service import calculate_event_metrics
+
+    # Duplicate push events with identical push_id or id
+    events = [
+        {"id": "evt-1", "type": "PushEvent", "created_at": "2026-10-09T10:00:00Z", "payload": {"push_id": 999, "size": 3}},
+        {"id": "evt-1", "type": "PushEvent", "created_at": "2026-10-09T10:00:00Z", "payload": {"push_id": 999, "size": 3}}, # duplicate event
+        {"id": "evt-2", "type": "PushEvent", "created_at": "2026-10-09T10:00:00Z", "payload": {"push_id": 999, "size": 3}}, # duplicate push_id
+        {"id": "evt-3", "type": "PushEvent", "created_at": "2026-10-08T10:00:00Z", "payload": {"push_id": 888, "size": 2}},
+    ]
+    metrics = calculate_event_metrics(events)
+    # Only 2 unique pushes (size 3 and size 2) -> 5 commits
+    assert metrics["total_commits"] == 5
+
+    # Check that 6 weeks have consecutive non-overlapping date boundaries
+    wa = metrics["weekly_activity"]
+    assert len(wa) == 6
+    for i in range(5):
+        # End date of W(i) is immediately before start date of W(i+1)
+        curr_end = wa[i]["end_date"]
+        next_start = wa[i + 1]["start_date"]
+        from datetime import date, timedelta
+        d_end = date.fromisoformat(curr_end)
+        d_next = date.fromisoformat(next_start)
+        assert d_next == d_end + timedelta(days=1)
+
+
+def test_missing_payload_graceful_handling():
+    """Verify that when GitHub API omits payload.size and payload.commits, each push event counts as 1 commit."""
+    from app.services.github_service import calculate_event_metrics
+
+    # GitHub public event payload format (omits size and commits)
+    events = [
+        {
+            "id": "p-1",
+            "type": "PushEvent",
+            "created_at": "2026-10-09T12:00:00Z",
+            "payload": {
+                "repository_id": 12345,
+                "push_id": 11111,
+                "ref": "refs/heads/main",
+                "head": "abc",
+                "before": "xyz"
+            }
+        }
+    ]
+    metrics = calculate_event_metrics(events)
+    assert metrics["total_commits"] == 1
+    assert metrics["weekly_activity"][-1]["commits"] == 1
+    assert metrics["weekly_activity"][-1]["status"] == "complete"
+
 
 
 def test_impact_score_repo_quality_consistency():

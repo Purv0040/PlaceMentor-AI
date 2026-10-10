@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, Query, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -235,7 +235,7 @@ async def analyze_github(
 
 @router.get(
     "/analysis",
-    response_model=ResponseModel[GitHubAnalysisResponse],
+    response_model=ResponseModel[Optional[GitHubAnalysisResponse]],
 )
 async def get_github_analysis(
     current_user: Dict[str, Any] = Depends(get_current_user),
@@ -246,6 +246,12 @@ async def get_github_analysis(
     user_id = str(current_user.get("id") or current_user.get("_id"))
 
     result = await service.get_github_analysis(user_id)
+    if not result:
+        return ResponseModel(
+            success=True,
+            data=None,
+            message="No GitHub AI analysis available yet.",
+        )
 
     data = GitHubAnalysisResponse(
         user_id=user_id,
@@ -260,6 +266,7 @@ async def get_github_analysis(
         data=data,
         message="GitHub AI analysis retrieved successfully.",
     )
+
 
 
 @router.delete(

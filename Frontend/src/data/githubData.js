@@ -23,5 +23,9 @@ export const initialGithubData = {
   aiInsights: [],
   impactBreakdown: null,
   strengths: [],
-  improvements: []
+  improvements: [],
+  evidenceSummary: null,
+  technicalCategories: [],
+  technicalPatterns: [],
+  hasAiAnalysis: false
 };

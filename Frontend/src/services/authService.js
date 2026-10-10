@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const TOKEN_KEY = 'placementor_auth_token';
 const ACCESS_TOKEN_KEY = 'access_token';
