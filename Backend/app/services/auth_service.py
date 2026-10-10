@@ -1,8 +1,10 @@
 from typing import Any, Dict, Optional
 import logging
 
-from google.oauth2 import id_token as google_id_token
-from google.auth.transport import requests as google_requests
+# pyrefly: ignore [missing-import]
+from google.oauth2 import id_token as google_id_token  # type: ignore
+# pyrefly: ignore [missing-import]
+from google.auth.transport import requests as google_requests  # type: ignore
 
 from app.core.exceptions import (
     ConflictException,
@@ -482,4 +484,4 @@ class AuthService:
                 "full_name": user.get("full_name", google_name),
                 "is_onboarded": is_onboarded,
             },
-        }
+        }
