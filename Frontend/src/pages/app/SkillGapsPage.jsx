@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { usePlanning } from '../../context/PlanningContext';
 import { initialSkillGapData } from '../../data/skillGapData';
@@ -23,17 +23,20 @@ import {
 
 export const SkillGapsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, updateUserProfile } = useUser();
   const { addSkillToRoadmap, toastNotification } = usePlanning();
   const [data, setData] = useState(initialSkillGapData);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState('All');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState(() => {
+    return location.state?.category || 'All';
+  });
   const [isEditingRole, setIsEditingRole] = useState(false);
   const [customRoleInput, setCustomRoleInput] = useState('');
   const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
 
-  // Derive target role from UserContext if available
-  const displayTargetRole = user?.targetRole || user?.career?.targetRole || 'Backend SDE-1 (Tier 1)';
+  // Derive target role from navigation state or UserContext
+  const displayTargetRole = location.state?.targetRole || user?.targetRole || user?.career?.targetRole || 'Backend SDE-1 (Tier 1)';
 
   const handleRoleChange = async (newRole) => {
     if (newRole === 'custom') {

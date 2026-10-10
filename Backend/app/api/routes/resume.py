@@ -24,6 +24,8 @@ from app.schemas.resume import (
     ResumeListResponse,
     ResumeDetailResponse,
     ResumeAnalysisResponse,
+    BulletOptimizeRequest,
+    BulletOptimizeResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +68,7 @@ async def upload_resume(
         user_id=user_id,
         filename=created["file"]["filename"],
         size=created["file"]["size"],
+        page_count=created["file"].get("page_count", 1),
         content_type=created["file"]["content_type"],
         status=created["status"],
         is_active=created["is_active"],
@@ -99,6 +102,7 @@ async def list_resumes(
             user_id=user_id,
             filename=resume["file"]["filename"],
             size=resume["file"]["size"],
+            page_count=resume["file"].get("page_count", 1),
             content_type=resume["file"]["content_type"],
             status=resume["status"],
             is_active=resume["is_active"],
@@ -328,3 +332,34 @@ async def delete_resume(
         data={"deleted": deleted},
         message="Resume deleted successfully.",
     )
+
+
+@router.post(
+    "/optimize-bullet",
+    response_model=ResponseModel[BulletOptimizeResponse],
+)
+async def optimize_resume_bullet(
+    payload: BulletOptimizeRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    service: ResumeService = Depends(get_resume_service),
+):
+    """Generate STAR-format enhancement with quantifiable engineering impact for a bullet point."""
+    result = await service.optimize_bullet(
+        bullet=payload.bullet,
+        target_role=payload.target_role or "Backend SDE-1 (Tier 1)",
+        context=payload.context,
+    )
+
+    data = BulletOptimizeResponse(
+        original=result["original"],
+        improved=result["improved"],
+        rationale=result["rationale"],
+        score=result.get("score", 96),
+        action_verbs=result.get("action_verbs", []),
+    )
+
+    return ResponseModel(
+        success=True,
+        data=data,
+        message="Bullet optimized successfully.",
+    )
