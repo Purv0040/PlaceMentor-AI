@@ -80,7 +80,7 @@ async def get_github_profile(
     profile = await service.get_github_profile(user_id)
 
     data = GitHubProfileResponse(
-        id=str(profile["id"]),
+        id=str(profile.get("id") or profile.get("_id") or ""),
         user_id=user_id,
         github_username=profile["github_username"],
         is_connected=True,
@@ -115,7 +115,7 @@ async def sync_github(
     profile = await service.sync_github(user_id)
 
     data = GitHubProfileResponse(
-        id=str(profile["id"]),
+        id=str(profile.get("id") or profile.get("_id") or ""),
         user_id=user_id,
         github_username=profile["github_username"],
         is_connected=True,
@@ -157,7 +157,7 @@ async def get_github_repositories(
 
     items = [
         GitHubRepoItem(
-            id=str(repo["id"]),
+            id=str(repo.get("id") or repo.get("_id") or ""),
             repo_id=repo.get("repo_id"),
             name=repo.get("name", ""),
             full_name=repo.get(

@@ -75,6 +75,8 @@ export const OnboardingProvider = ({ children }) => {
 
   // Fetch initial onboarding state from backend if logged in
   useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+
     const fetchBackendState = async () => {
       try {
         const res = await onboardingService.getOnboardingState();

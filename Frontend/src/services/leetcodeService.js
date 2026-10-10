@@ -106,5 +106,64 @@ export const leetcodeService = {
     });
     if (!response.ok) return null;
     return await response.json();
+  },
+
+  getDailyPlan: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/daily-plan`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  toggleDailyTask: async (taskId) => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/daily-plan/${taskId}/toggle`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || err.message || 'Failed to update task status');
+    }
+    return await response.json();
+  },
+
+  getActivityHistory: async (days = 30) => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/history?days=${days}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  getFocusAreas: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/focus-areas`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  },
+
+  getReadinessBreakdown: async () => {
+    const response = await fetch(`${API_BASE_URL}/leetcode/readiness-breakdown`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) return null;
+    return await response.json();
   }
 };

@@ -28,9 +28,12 @@ class ProfileRepository:
 
     async def get_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve student profile document by user_id."""
-        doc = await self.collection.find_one({"user_id": user_id})
-        if doc and "_id" in doc:
-            doc["_id"] = str(doc["_id"])
+        doc = await self.collection.find_one({"user_id": str(user_id)})
+        if doc:
+            if "_id" in doc:
+                doc["_id"] = str(doc["_id"])
+            if "id" not in doc and "_id" in doc:
+                doc["id"] = doc["_id"]
         return doc
 
     async def create_profile(self, user_id: str, initial_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

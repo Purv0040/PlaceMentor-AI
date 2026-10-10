@@ -88,9 +88,17 @@ class AuthService:
             "is_onboarded": False,
         }
 
-        created_user = await self.user_repo.create(
-            user_data
-        )
+        try:
+            created_user = await self.user_repo.create(
+                user_data
+            )
+        except Exception as e:
+            if "duplicate" in str(e).lower() or "e11000" in str(e).lower():
+                raise ConflictException(
+                    "A user with this email already exists."
+                )
+            logger.error("Failed to create user during registration: %s", e)
+            raise
 
         user_id = str(
             created_user.get(
@@ -375,6 +383,11 @@ class AuthService:
             raise UnauthorizedException(
                 "Invalid Google credentials. Please try again."
             )
+        except Exception as e:
+            logger.error("Google authentication network or verification error: %s", e)
+            raise UnauthorizedException(
+                "Unable to verify Google credentials at this time. Please try again or sign up with email and password."
+            )
 
         # ----------------------------------------------------
         # 2. Extract user info from token
@@ -417,7 +430,19 @@ class AuthService:
                 "auth_provider": "google",
             }
 
-            created_user = await self.user_repo.create(user_data)
+            try:
+                created_user = await self.user_repo.create(user_data)
+            except Exception as e:
+                if "duplicate" in str(e).lower() or "e11000" in str(e).lower():
+                    existing_user = await self.user_repo.get_by_email(google_email)
+                    if existing_user:
+                        created_user = existing_user
+                    else:
+                        raise ConflictException("An account with this email already exists.")
+                else:
+                    logger.error("Failed to create OAuth user: %s", e)
+                    raise
+
             user_id = str(
                 created_user.get("id", created_user.get("_id"))
             )

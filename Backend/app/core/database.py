@@ -81,7 +81,13 @@ db_manager = DatabaseManager()
 async def get_database() -> AsyncIOMotorDatabase:
     """Dependency helper to retrieve database instance."""
     if db_manager.db is None:
-        raise RuntimeError("Database connection is not initialized.")
+        try:
+            await db_manager.connect_to_mongo()
+        except Exception as e:
+            logger.error("Auto-reconnect to MongoDB failed: %s", type(e).__name__)
+    if db_manager.db is None:
+        from app.core.exceptions import ServiceUnavailableException
+        raise ServiceUnavailableException("Database service is temporarily unavailable. Please try again.")
     return db_manager.db
 
 

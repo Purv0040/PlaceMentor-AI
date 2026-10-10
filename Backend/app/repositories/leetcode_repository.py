@@ -60,6 +60,8 @@ class LeetCodeRepository:
             }
             if profile_info is not None:
                 update_fields["profile"] = profile_info
+                if profile_info.get("submission_calendar") is not None:
+                    update_fields["submission_calendar"] = profile_info.get("submission_calendar")
             if statistics is not None:
                 update_fields["statistics"] = statistics
             if contest_info is not None:
@@ -84,6 +86,7 @@ class LeetCodeRepository:
                 "contest": contest_info or {},
                 "topic_statistics": topic_stats or [],
                 "recent_activity": recent_activity or [],
+                "submission_calendar": (profile_info or {}).get("submission_calendar"),
                 "analysis": None,
                 "sync": {
                     "status": "not_synced",

@@ -59,12 +59,23 @@ export const LoginPage = () => {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) return;
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
+    try {
+      window.__gsiLoginCallback = handleGoogleResponse;
+      if (!window.__gsiInitialized) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (res) => {
+            if (window.__gsiSignupCallback) window.__gsiSignupCallback(res);
+            else if (window.__gsiLoginCallback) window.__gsiLoginCallback(res);
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        window.__gsiInitialized = true;
+      }
+    } catch (e) {
+      console.warn('Google One Tap init warning:', e);
+    }
   }, [handleGoogleResponse]);
 
   const handleGoogleClick = () => {
