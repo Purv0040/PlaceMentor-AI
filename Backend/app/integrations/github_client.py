@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import httpx
 from typing import Dict, List, Optional, Any
 from app.core.config import settings
@@ -111,8 +112,38 @@ class GitHubAPIClient:
                 if not isinstance(raw_repos, list):
                     return []
 
+                # Determine README presence with verified check
+                async def check_readme_presence(r: Dict[str, Any]) -> bool:
+                    if "has_readme" in r:
+                        return bool(r["has_readme"])
+                    if r.get("size", 0) == 0:
+                        return False
+                    full_name = r.get("full_name") or f"{clean_user}/{r.get('name', '')}"
+                    if not full_name or "/" not in full_name:
+                        return False
+                    try:
+                        async with httpx.AsyncClient(timeout=4.0) as check_client:
+                            head_res = await check_client.head(
+                                f"https://raw.githubusercontent.com/{full_name}/HEAD/README.md",
+                                headers={"User-Agent": "AI-Placement-Copilot-Backend/1.0"}
+                            )
+                            if head_res.status_code == 200:
+                                return True
+                            # Check lowercase readme.md fallback
+                            head_lower = await check_client.head(
+                                f"https://raw.githubusercontent.com/{full_name}/HEAD/readme.md",
+                                headers={"User-Agent": "AI-Placement-Copilot-Backend/1.0"}
+                            )
+                            return head_lower.status_code == 200
+                    except Exception:
+                        return False
+
+                # Check readmes concurrently for repos that do not already have has_readme
+                readme_checks = await asyncio.gather(*[check_readme_presence(repo) for repo in raw_repos], return_exceptions=True)
+
                 parsed_repos: List[Dict[str, Any]] = []
-                for repo in raw_repos:
+                for idx, repo in enumerate(raw_repos):
+                    has_readme_val = readme_checks[idx] if isinstance(readme_checks[idx], bool) else False
                     parsed_repos.append({
                         "repo_id": repo.get("id"),
                         "name": repo.get("name", ""),
@@ -124,7 +155,7 @@ class GitHubAPIClient:
                         "stars": repo.get("stargazers_count", 0),
                         "forks": repo.get("forks_count", 0),
                         "topics": repo.get("topics", []),
-                        "has_readme": bool(repo.get("has_readme", True)),
+                        "has_readme": has_readme_val,
                         "is_fork": repo.get("fork", False),
                         "size": repo.get("size", 0),
                         "created_at": repo.get("created_at"),
@@ -141,6 +172,30 @@ class GitHubAPIClient:
                 raise e
             logger.error("Unexpected error fetching GitHub repos: %s", e)
             raise GitHubAPIError(f"Failed to fetch GitHub repositories: {str(e)}")
+
+    async def get_user_events(
+        self,
+        username: str,
+        per_page: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch recent public events for user to calculate commit activity and streak."""
+        clean_user = username.strip().lstrip("@")
+        url = f"{self.base_url}/users/{clean_user}/events?per_page={per_page}"
+        logger.info("Fetching public GitHub events for '%s'", clean_user)
+
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.get(url, headers=self._get_headers())
+                if res.status_code == 200:
+                    data = res.json()
+                    if isinstance(data, list):
+                        return data
+                elif res.status_code in (403, 429):
+                    logger.warning("GitHub rate limit hit when fetching public events for %s", clean_user)
+                return []
+        except Exception as e:
+            logger.warning("Could not fetch public GitHub events for %s: %s", clean_user, e)
+            return []
 
 
 # Alias for backward compatibility with pre-existing integration exports

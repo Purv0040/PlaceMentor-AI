@@ -29,11 +29,25 @@ class GitHubStatisticsDetail(BaseModel):
     total_stars: int = 0
     total_forks: int = 0
     languages: Dict[str, int] = Field(default_factory=dict)
+    language_distribution: List[Dict[str, Any]] = Field(default_factory=list)
     public_repositories: int = 0
     forked_repositories: int = 0
     non_fork_repositories: int = 0
     repos_with_readme: int = 0
+    repos_with_description: int = 0
     primary_language: Optional[str] = None
+    impact_score: int = 0
+    repo_quality_score: int = 0
+    total_recent_commits: int = 0
+    commits_last_30_days: int = 0
+    active_streak_days: int = 0
+    longest_streak_days: int = 0
+    last_active_date: Optional[str] = None
+    impact_breakdown: Dict[str, Any] = Field(default_factory=dict)
+    weekly_activity: List[Dict[str, Any]] = Field(default_factory=list)
+    strengths: List[str] = Field(default_factory=list)
+    improvements: List[str] = Field(default_factory=list)
+    data_scope: Dict[str, Any] = Field(default_factory=dict)
 
 
 class GitHubSyncInfo(BaseModel):
@@ -80,8 +94,9 @@ class GitHubRepoItem(BaseModel):
     has_readme: bool = False
     is_fork: bool = False
     size: int = 0
-    ast_score: int = 85
-    quality_tier: str = "Verified"
+    ast_score: int = 0
+    quality_score: int = 0
+    quality_tier: str = "Active Project"
     tags: List[str] = Field(default_factory=list)
     created_at: Optional[str] = None
     updated_at: Optional[str] = None

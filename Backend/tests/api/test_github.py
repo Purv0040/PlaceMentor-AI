@@ -163,3 +163,174 @@ def test_github_ai_analysis_failure_handling(client: TestClient, auth_headers: d
     # Cleanup
     client.delete("/api/v1/github", headers=auth_headers)
 
+
+def test_deterministic_scoring_functions():
+    """Unit test scoring formulas, streak calculations, and boundary conditions."""
+    from app.services.github_service import (
+        calculate_repo_quality,
+        calculate_event_metrics,
+        calculate_impact_and_quality
+    )
+
+    # 1. Boundary: Empty repositories
+    empty_events = {"total_commits": 0, "commits_30d": 0, "active_streak": 0, "longest_streak": 0, "last_active_date": None, "weekly_activity": []}
+    score, breakdown, avg_q, strengths, improvements = calculate_impact_and_quality([], empty_events)
+    assert score == 0
+    assert avg_q == 0
+    assert "repository_quality" in breakdown
+    assert len(improvements) > 0
+
+    # 2. Individual repository quality
+    high_q_repo = {
+        "name": "enterprise-platform",
+        "description": "Production-grade microservices system built with TypeScript and Docker.",
+        "has_readme": True,
+        "is_fork": False,
+        "pushed_at": "2026-10-01T12:00:00Z",
+        "stars": 15,
+        "forks": 5,
+        "size": 5000
+    }
+    q_score, q_tier = calculate_repo_quality(high_q_repo)
+    assert 80 <= q_score <= 100
+    assert q_tier == "Production Grade"
+
+    low_q_repo = {
+        "name": "temp-fork",
+        "description": "",
+        "has_readme": False,
+        "is_fork": True,
+        "pushed_at": "2020-01-01T00:00:00Z",
+        "stars": 0,
+        "forks": 0,
+        "size": 0
+    }
+    low_score, low_tier = calculate_repo_quality(low_q_repo)
+    assert low_score < 40
+    assert low_tier == "Early Prototype"
+
+    # 3. Events & Streak calculation
+    sample_events = [
+        {
+            "type": "PushEvent",
+            "created_at": "2026-10-09T10:00:00Z",
+            "payload": {"size": 3, "commits": [{}, {}, {}]}
+        },
+        {
+            "type": "PushEvent",
+            "created_at": "2026-10-08T15:00:00Z",
+            "payload": {"size": 2, "commits": [{}, {}]}
+        },
+        {
+            "type": "WatchEvent",  # Non-push event should be ignored
+            "created_at": "2026-10-07T10:00:00Z"
+        }
+    ]
+    evt_metrics = calculate_event_metrics(sample_events)
+def test_language_distribution_largest_remainder_method():
+    """Verify that language distribution percentages sum to exactly 100% using Largest Remainder Method."""
+    from app.services.github_service import calculate_language_distribution
+
+    # Typical multi-language portfolio
+    repos = [
+        {"languages": {"Python": 50000, "TypeScript": 30000, "JavaScript": 15000}},
+        {"languages": {"HTML": 3000, "CSS": 2000, "Go": 500}},
+    ]
+    dist = calculate_language_distribution(repos)
+    assert len(dist) == 6
+    total_percentage = sum(item["percentage"] for item in dist)
+    assert total_percentage == 100
+    assert dist[0]["name"] == "Python"
+    assert dist[0]["bytes"] == 50000
+
+    # Edge case: Empty repos
+    empty_dist = calculate_language_distribution([])
+    assert empty_dist == []
+
+    # Edge case: Zero bytes
+    zero_dist = calculate_language_distribution([{"languages": {"Python": 0}}])
+    assert zero_dist == []
+
+
+def test_activity_streak_zero_when_older_push():
+    """Verify that when last push is > 1 day ago in Asia/Kolkata, active_streak is 0 while longest_streak is preserved."""
+    from app.services.github_service import calculate_event_metrics
+
+    # Simulate 4 consecutive push events 15-18 days ago
+    # 2026-09-22 to 2026-09-25 (assuming current date is 2026-10-10)
+    events = [
+        {"type": "PushEvent", "created_at": "2026-09-25T10:00:00Z", "payload": {"size": 2, "commits": [{}, {}]}},
+        {"type": "PushEvent", "created_at": "2026-09-24T12:00:00Z", "payload": {"size": 1, "commits": [{}]}},
+        {"type": "PushEvent", "created_at": "2026-09-23T08:00:00Z", "payload": {"size": 3, "commits": [{}, {}, {}]}},
+        {"type": "PushEvent", "created_at": "2026-09-22T14:00:00Z", "payload": {"size": 1, "commits": [{}]}},
+    ]
+    metrics = calculate_event_metrics(events)
+    # Active streak must be 0 because no push today or yesterday
+    assert metrics["active_streak"] == 0
+    # Longest streak preserves the 4-day run
+    assert metrics["longest_streak"] == 4
+    assert metrics["total_commits"] == 7
+    # 6-week activity array exists and has length 6
+    assert len(metrics["weekly_activity"]) == 6
+    # Most recent weeks (week index 5 and 4) have 0 commits
+    assert metrics["weekly_activity"][-1]["commits"] == 0
+    assert metrics["weekly_activity"][-2]["commits"] == 0
+
+
+def test_impact_score_repo_quality_consistency():
+    """Verify that repo_quality_score matches the repository_quality breakdown score identically."""
+    from app.services.github_service import calculate_impact_and_quality
+
+    repos = [
+        {
+            "name": "project-one",
+            "description": "Full-stack application",
+            "has_readme": True,
+            "is_fork": False,
+            "pushed_at": "2026-10-01T00:00:00Z",
+            "stars": 10,
+            "forks": 2,
+            "size": 3000,
+            "languages": {"Python": 10000, "TypeScript": 5000}
+        },
+        {
+            "name": "project-two",
+            "description": "Utility script",
+            "has_readme": False,
+            "is_fork": False,
+            "pushed_at": "2026-09-01T00:00:00Z",
+            "stars": 1,
+            "forks": 0,
+            "size": 500,
+            "languages": {"Python": 2000}
+        }
+    ]
+    event_metrics = {
+        "total_commits": 20,
+        "commits_30d": 15,
+        "active_streak": 0,
+        "longest_streak": 3,
+        "last_active_date": "2026-10-01",
+        "weekly_activity": [{"week": f"W{i}", "commits": 3} for i in range(1, 7)]
+    }
+
+    score, breakdown, avg_q, strengths, improvements = calculate_impact_and_quality(repos, event_metrics)
+
+    # Repository Quality Index must exactly equal breakdown["repository_quality"]["score"]
+    assert avg_q == breakdown["repository_quality"]["score"]
+    # All dimension scores must be within [0, 100]
+    for dim_key in ["repository_quality", "activity_freshness", "language_breadth", "community_engagement"]:
+        dim_score = breakdown[dim_key]["score"]
+        assert 0 <= dim_score <= 100
+
+    # Impact score must match the weighted formula: round(0.35 * Q + 0.25 * A + 0.20 * L + 0.20 * C)
+    expected_impact = round(
+        0.35 * breakdown["repository_quality"]["score"]
+        + 0.25 * breakdown["activity_freshness"]["score"]
+        + 0.20 * breakdown["language_breadth"]["score"]
+        + 0.20 * breakdown["community_engagement"]["score"]
+    )
+    assert score == expected_impact
+
+
+

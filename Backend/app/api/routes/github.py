@@ -173,9 +173,9 @@ async def get_github_repositories(
             topics=repo.get("topics", []),
             has_readme=repo.get("has_readme", False),
             is_fork=repo.get("is_fork", False),
-            size=repo.get("size", 0),
-            ast_score=85,
-            qualityTier="Verified",
+            ast_score=repo.get("ast_score") or repo.get("quality_score", 0),
+            quality_score=repo.get("quality_score") or repo.get("ast_score", 0),
+            quality_tier=repo.get("quality_tier", "Active Project"),
             tags=repo.get(
                 "topics",
                 [repo["language"]]

@@ -19,6 +19,7 @@ export const AnalysisStep = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(1);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Step progression timer
@@ -42,6 +43,9 @@ export const AnalysisStep = () => {
   }, [onboardingData]);
 
   const handleFinish = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     // Sync onboarding values into UserContext & localStorage
     const profilePayload = {
       name: onboardingData.profile?.name || '',
@@ -68,7 +72,9 @@ export const AnalysisStep = () => {
       primaryGoal: onboardingData.goals?.primaryGoal || 'Master Technical Algorithms & System Architecture'
     };
 
-    updateUserProfile(profilePayload);
+    try {
+      updateUserProfile(profilePayload);
+    } catch (e) {}
 
     try {
       settingsService.saveSettings({
@@ -90,30 +96,38 @@ export const AnalysisStep = () => {
       planningService.resetForRole(profilePayload.targetRole, profilePayload.selectedSkills);
     } catch (e) {}
 
+    // Mark completed locally so client route guards never block entry
+    markOnboardingComplete();
+
+    // Trigger backend synchronization with strict timeout so backend latency or unavailability never traps user
     try {
-      await onboardingService.updateStep(7, {
-        step_number: 7,
-        career: {
-          targetRole: profilePayload.targetRole,
-          secondaryRole: profilePayload.secondaryRole,
-          companyTier: profilePayload.companyTier
-        },
-        skills: {
-          dsaLevel: profilePayload.dsaLevel,
-          sysDesignLevel: profilePayload.sysDesignLevel,
-          databaseLevel: profilePayload.databaseLevel,
-          frameworkLevel: profilePayload.frameworkLevel,
-          selectedSkills: profilePayload.selectedSkills
-        },
-        overallReadinessScore: profilePayload.overallReadinessScore
-      });
-      await onboardingService.completeOnboarding();
-      await readinessService.calculateReadiness(profilePayload.targetRole);
+      await Promise.race([
+        Promise.allSettled([
+          onboardingService.updateStep(7, {
+            step_number: 7,
+            career: {
+              targetRole: profilePayload.targetRole,
+              secondaryRole: profilePayload.secondaryRole,
+              companyTier: profilePayload.companyTier
+            },
+            skills: {
+              dsaLevel: profilePayload.dsaLevel,
+              sysDesignLevel: profilePayload.sysDesignLevel,
+              databaseLevel: profilePayload.databaseLevel,
+              frameworkLevel: profilePayload.frameworkLevel,
+              selectedSkills: profilePayload.selectedSkills
+            },
+            overallReadinessScore: profilePayload.overallReadinessScore
+          }),
+          onboardingService.completeOnboarding(),
+          readinessService.calculateReadiness(profilePayload.targetRole)
+        ]),
+        new Promise((resolve) => setTimeout(resolve, 1200))
+      ]);
     } catch (err) {
       console.warn('Backend complete sync note:', err);
     }
 
-    markOnboardingComplete();
     navigate('/dashboard', { replace: true });
   };
 
@@ -245,8 +259,23 @@ export const AnalysisStep = () => {
           </div>
 
           <div className="pt-4 text-center">
-            <Button onClick={handleFinish} variant="purple" className="w-full py-3.5 text-sm">
-              Enter Copilot Dashboard <ArrowRight className="w-4.5 h-4.5 ml-2" />
+            <Button
+              onClick={handleFinish}
+              variant="purple"
+              className="w-full py-3.5 text-sm flex items-center justify-center gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                  <span>Entering Dashboard...</span>
+                </>
+              ) : (
+                <>
+                  <span>Enter Copilot Dashboard</span>
+                  <ArrowRight className="w-4.5 h-4.5 ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </div>
