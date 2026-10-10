@@ -233,14 +233,14 @@ def test_deterministic_scoring_functions():
 
 def test_push_activity_metrics_and_coverage():
     """Comprehensive test for push-event counts, commit distinctions, deduplication, date boundaries, and incomplete history."""
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     from zoneinfo import ZoneInfo
     from app.services.github_service import calculate_event_metrics, APP_TIMEZONE
 
     today = datetime.now(APP_TIMEZONE).date()
 
     # Event 1: Recent push with 3 distinct commits in W6 (2 days ago)
-    d_w6 = datetime.now(APP_TIMEZONE) - timedelta(days=2)
+    d_w6 = datetime.now(timezone.utc) - timedelta(days=2)
     e1 = {
         "id": "push-w6-1",
         "type": "PushEvent",
@@ -267,7 +267,7 @@ def test_push_activity_metrics_and_coverage():
     }
 
     # Event 2: Push event in W4 (18 days ago) where GitHub API omits commits/size
-    d_w4 = datetime.now(APP_TIMEZONE) - timedelta(days=18)
+    d_w4 = datetime.now(timezone.utc) - timedelta(days=18)
     e2 = {
         "id": "push-w4-1",
         "type": "PushEvent",
