@@ -63,22 +63,50 @@ export const ResumePage = () => {
 
   const ROLE_BENCHMARKS = {
     'Backend SDE-1 (Tier 1)': [
-      { name: 'Redis', category: 'Databases', importance: 'High', roleReq: 'Required for SDE-1 Caching' },
-      { name: 'Kubernetes', category: 'DevOps', importance: 'Medium', roleReq: 'Preferred Tier-1 Skill' },
-      { name: 'Kafka / RabbitMQ', category: 'Architecture', importance: 'High', roleReq: 'Pub-Sub Messaging' },
-      { name: 'gRPC', category: 'Networking', importance: 'Low', roleReq: 'Microservices Inter-comm' },
+      { name: 'Redis', category: 'Databases', importance: 'High', roleReq: 'Required for SDE-1 Distributed Caching' },
+      { name: 'Kubernetes', category: 'DevOps', importance: 'Medium', roleReq: 'Preferred Tier-1 Container Orchestration' },
+      { name: 'Kafka / RabbitMQ', category: 'Architecture', importance: 'High', roleReq: 'Asynchronous Pub-Sub Messaging' },
+      { name: 'gRPC', category: 'Networking', importance: 'Low', roleReq: 'Microservices Inter-service Communication' },
+      { name: 'System Design', category: 'Architecture', importance: 'High', roleReq: 'Scalable System Architecture & SLAs' },
+      { name: 'PostgreSQL / SQL', category: 'Databases', importance: 'High', roleReq: 'Relational Schema Design & Query Optimization' },
+    ],
+    'Backend Developer': [
+      { name: 'FastAPI / Express', category: 'Frameworks', importance: 'High', roleReq: 'Production REST API Development' },
+      { name: 'Redis', category: 'Databases', importance: 'High', roleReq: 'Distributed Caching & Session Management' },
+      { name: 'PostgreSQL / MongoDB', category: 'Databases', importance: 'High', roleReq: 'Database Indexing & Persistence' },
+      { name: 'Docker', category: 'DevOps', importance: 'Medium', roleReq: 'Containerized Deployment' },
+      { name: 'System Design', category: 'Architecture', importance: 'High', roleReq: 'Microservices & Scalability' },
+      { name: 'Kafka / RabbitMQ', category: 'Architecture', importance: 'Medium', roleReq: 'Event-driven Architecture' },
     ],
     'AI/ML Engineer': [
-      { name: 'PyTorch / TensorFlow', category: 'Deep Learning', importance: 'High', roleReq: 'Core Model Training' },
+      { name: 'PyTorch / TensorFlow', category: 'Deep Learning', importance: 'High', roleReq: 'Core Model Training & Fine-tuning' },
       { name: 'Vector DB (FAISS/Pinecone)', category: 'Databases', importance: 'High', roleReq: 'RAG & Semantic Retrieval' },
       { name: 'LangChain / LlamaIndex', category: 'Frameworks', importance: 'High', roleReq: 'LLM Agent Pipelines' },
-      { name: 'MLflow / MLOps', category: 'DevOps', importance: 'Medium', roleReq: 'Model Tracking & Deploy' },
+      { name: 'MLflow / MLOps', category: 'DevOps', importance: 'Medium', roleReq: 'Model Tracking & Serving' },
+      { name: 'Scikit-learn', category: 'Libraries', importance: 'High', roleReq: 'Supervised & Unsupervised ML' },
+      { name: 'NumPy / Pandas', category: 'Data Analysis', importance: 'High', roleReq: 'Feature Engineering & Data Manipulation' },
+    ],
+    'Full Stack Engineer': [
+      { name: 'React / Next.js', category: 'Frontend', importance: 'High', roleReq: 'Modern Reactive UI & SSR' },
+      { name: 'Node.js / FastAPI', category: 'Backend', importance: 'High', roleReq: 'Server-side API Engineering' },
+      { name: 'TypeScript', category: 'Languages', importance: 'High', roleReq: 'End-to-end Type Safety' },
+      { name: 'PostgreSQL / MongoDB', category: 'Databases', importance: 'High', roleReq: 'Data Persistence & Queries' },
+      { name: 'Redis', category: 'Databases', importance: 'Medium', roleReq: 'Session Store & Caching' },
+      { name: 'Docker', category: 'DevOps', importance: 'Medium', roleReq: 'Container Orchestration' },
     ],
     'Full-Stack Developer': [
-      { name: 'GraphQL', category: 'API', importance: 'Medium', roleReq: 'Modern API Architecture' },
+      { name: 'GraphQL / REST APIs', category: 'API', importance: 'Medium', roleReq: 'Modern API Architecture' },
       { name: 'Redis', category: 'Databases', importance: 'High', roleReq: 'Session Store & Caching' },
-      { name: 'Next.js SSR', category: 'Frameworks', importance: 'High', roleReq: 'Production Web Optimization' },
+      { name: 'Next.js / React', category: 'Frameworks', importance: 'High', roleReq: 'Production Web Optimization' },
       { name: 'Docker Compose', category: 'DevOps', importance: 'Medium', roleReq: 'Container Orchestration' },
+      { name: 'TypeScript', category: 'Languages', importance: 'High', roleReq: 'Type Safety Standards' },
+    ],
+    'Frontend Engineer': [
+      { name: 'TypeScript', category: 'Languages', importance: 'High', roleReq: 'Static Typing & Interfaces' },
+      { name: 'React / Next.js', category: 'Frameworks', importance: 'High', roleReq: 'Component Lifecycle & Server Components' },
+      { name: 'Tailwind CSS', category: 'Styling', importance: 'Medium', roleReq: 'Utility-first Responsive UI' },
+      { name: 'Web Vitals & Performance', category: 'Optimization', importance: 'High', roleReq: 'LCP/FID/CLS Core Web Vitals' },
+      { name: 'State Management (Redux/Zustand)', category: 'Architecture', importance: 'Medium', roleReq: 'Global Application State' },
     ],
     'Frontend SDE-1': [
       { name: 'TypeScript Strict', category: 'Languages', importance: 'High', roleReq: 'Type Safety Standards' },
@@ -87,10 +115,18 @@ export const ResumePage = () => {
       { name: 'Tailwind CSS / Radix UI', category: 'Styling', importance: 'Medium', roleReq: 'Design System Implementation' },
     ],
     'DevOps & Cloud Engineer': [
-      { name: 'Kubernetes', category: 'DevOps', importance: 'High', roleReq: 'Cluster Management' },
+      { name: 'Kubernetes', category: 'DevOps', importance: 'High', roleReq: 'Cluster Management & Helm' },
       { name: 'Terraform', category: 'IaC', importance: 'High', roleReq: 'Infrastructure as Code' },
+      { name: 'CI/CD Pipelines (GitHub Actions)', category: 'DevOps', importance: 'High', roleReq: 'Continuous Integration & Delivery' },
+      { name: 'AWS / Cloud Architecture', category: 'Cloud', importance: 'High', roleReq: 'Production Cloud Deployment' },
       { name: 'Prometheus & Grafana', category: 'Monitoring', importance: 'Medium', roleReq: 'Telemetry & Observability' },
-      { name: 'AWS CloudFormation/CDK', category: 'Cloud', importance: 'High', roleReq: 'Production Cloud Deployment' },
+    ],
+    'Data Engineer': [
+      { name: 'Apache Spark / PySpark', category: 'Big Data', importance: 'High', roleReq: 'Distributed Data Processing' },
+      { name: 'Apache Airflow', category: 'Pipelines', importance: 'High', roleReq: 'ETL / ELT Workflow Orchestration' },
+      { name: 'Kafka', category: 'Streaming', importance: 'High', roleReq: 'Real-time Event Ingestion' },
+      { name: 'SQL & Data Warehousing (Snowflake/BigQuery)', category: 'Databases', importance: 'High', roleReq: 'Complex Data Transformations' },
+      { name: 'Docker', category: 'DevOps', importance: 'Medium', roleReq: 'Containerized Pipeline Deployment' },
     ],
     'Data Scientist & Engineer': [
       { name: 'PySpark', category: 'Big Data', importance: 'High', roleReq: 'Distributed Data Processing' },
@@ -98,11 +134,38 @@ export const ResumePage = () => {
       { name: 'SQL Window Functions', category: 'Databases', importance: 'High', roleReq: 'Complex Data Transformations' },
       { name: 'Tableau / PowerBI', category: 'BI', importance: 'Medium', roleReq: 'Executive Dashboards' },
     ],
+    'Data Scientist': [
+      { name: 'Machine Learning (Scikit-Learn)', category: 'ML', importance: 'High', roleReq: 'Predictive Modeling' },
+      { name: 'Statistics & Hypothesis Testing', category: 'Mathematics', importance: 'High', roleReq: 'Statistical Validation' },
+      { name: 'Pandas / NumPy', category: 'Data Analysis', importance: 'High', roleReq: 'Data Cleansing & Wrangling' },
+      { name: 'Data Visualization (Seaborn/Plotly)', category: 'BI', importance: 'Medium', roleReq: 'Insights Communication' },
+      { name: 'SQL', category: 'Databases', importance: 'High', roleReq: 'Data Extraction & Aggregation' },
+    ],
+    'Data Analyst': [
+      { name: 'SQL Advanced (Window Functions/CTEs)', category: 'Databases', importance: 'High', roleReq: 'Complex Business Queries' },
+      { name: 'Power BI / Tableau', category: 'BI', importance: 'High', roleReq: 'Interactive Dashboards' },
+      { name: 'Python (Pandas/Matplotlib)', category: 'Data Analysis', importance: 'Medium', roleReq: 'Exploratory Data Analysis' },
+      { name: 'Statistical Analysis', category: 'Mathematics', importance: 'Medium', roleReq: 'Metric Trends & Correlation' },
+    ],
+    'Cybersecurity Analyst': [
+      { name: 'OWASP Top 10 Mitigation', category: 'AppSec', importance: 'High', roleReq: 'Vulnerability Remediation' },
+      { name: 'Wireshark & PCAP', category: 'Networking', importance: 'Medium', roleReq: 'Packet Analysis' },
+      { name: 'SIEM & SOC Alerting', category: 'SecOps', importance: 'High', roleReq: 'Incident Response & Log Analysis' },
+      { name: 'Linux Security & Hardening', category: 'OS', importance: 'High', roleReq: 'Access Controls & Hardening' },
+      { name: 'Burp Suite Pro', category: 'Tools', importance: 'High', roleReq: 'Penetration Testing' },
+    ],
     'Cybersecurity Engineer': [
       { name: 'OWASP Top 10 Mitigation', category: 'AppSec', importance: 'High', roleReq: 'Vulnerability Remediation' },
       { name: 'Wireshark & PCAP', category: 'Networking', importance: 'Medium', roleReq: 'Packet Analysis' },
       { name: 'SIEM & SOC Alerting', category: 'SecOps', importance: 'High', roleReq: 'Incident Response' },
       { name: 'Burp Suite Pro', category: 'Tools', importance: 'High', roleReq: 'Penetration Testing' },
+    ],
+    'Software Engineer': [
+      { name: 'Data Structures & Algorithms', category: 'Core CS', importance: 'High', roleReq: 'Problem Solving & Algorithmic Complexity' },
+      { name: 'System Design', category: 'Architecture', importance: 'High', roleReq: 'High Level & Low Level Design' },
+      { name: 'Object-Oriented Design', category: 'Core CS', importance: 'High', roleReq: 'Design Patterns & Clean Code' },
+      { name: 'Git & Version Control', category: 'Tools', importance: 'Medium', roleReq: 'Collaborative Engineering Workflow' },
+      { name: 'Database Management (SQL/NoSQL)', category: 'Databases', importance: 'High', roleReq: 'Data Modeling & Indexing' },
     ],
     'Systems Software Engineer': [
       { name: 'C++20 / Rust', category: 'Languages', importance: 'High', roleReq: 'Low-Level Systems' },
@@ -113,9 +176,32 @@ export const ResumePage = () => {
   };
 
   const getMissingSkillsForRole = (targetRole, detectedSkillNames = []) => {
-    const defaultList = ROLE_BENCHMARKS[targetRole] || ROLE_BENCHMARKS['Backend SDE-1 (Tier 1)'];
-    const detectedLower = new Set(detectedSkillNames.map(s => String(s).toLowerCase().trim()));
-    return defaultList.filter(item => !detectedLower.has(item.name.toLowerCase().trim()));
+    // Find matching role in benchmarks (case-insensitive and partial match support)
+    const normalizedRole = (targetRole || 'Backend SDE-1 (Tier 1)').trim().toLowerCase();
+    
+    let benchmarkKey = Object.keys(ROLE_BENCHMARKS).find(
+      key => key.toLowerCase() === normalizedRole
+    );
+
+    if (!benchmarkKey) {
+      benchmarkKey = Object.keys(ROLE_BENCHMARKS).find(
+        key => key.toLowerCase().includes(normalizedRole) || normalizedRole.includes(key.toLowerCase())
+      );
+    }
+
+    const defaultList = benchmarkKey ? ROLE_BENCHMARKS[benchmarkKey] : (ROLE_BENCHMARKS['Backend SDE-1 (Tier 1)']);
+    
+    const detectedLower = detectedSkillNames.map(s => String(s).toLowerCase().trim());
+    
+    return defaultList.filter(item => {
+      const itemLower = item.name.toLowerCase().trim();
+      // Flexible matching: exact match or partial contains (e.g., "PostgreSQL" matches "PostgreSQL / SQL")
+      return !detectedLower.some(detected => 
+        detected === itemLower || 
+        itemLower.includes(detected) || 
+        detected.includes(itemLower)
+      );
+    });
   };
 
   const handleRoleSelect = (roleName) => {
@@ -127,16 +213,19 @@ export const ResumePage = () => {
     updateUserProfile({ targetRole: roleName });
     
     setResumeData(prev => {
-      const detectedNames = prev.detectedSkills.map(s => s.name);
+      const detectedNames = (prev.detectedSkills || []).map(s => s.name);
       const newMissing = getMissingSkillsForRole(roleName, detectedNames);
-      const totalBenchmarks = (ROLE_BENCHMARKS[roleName] || ROLE_BENCHMARKS['Backend SDE-1 (Tier 1)']).length;
-      const matchedCount = Math.max(1, totalBenchmarks - newMissing.length);
-      const newKeywordMatch = Math.min(96, Math.max(65, Math.round((matchedCount / totalBenchmarks) * 100)));
+      const benchmarkKey = Object.keys(ROLE_BENCHMARKS).find(
+        k => k.toLowerCase() === roleName.toLowerCase() || k.toLowerCase().includes(roleName.toLowerCase()) || roleName.toLowerCase().includes(k.toLowerCase())
+      );
+      const totalBenchmarks = (benchmarkKey ? ROLE_BENCHMARKS[benchmarkKey] : ROLE_BENCHMARKS['Backend SDE-1 (Tier 1)']).length;
+      const matchedCount = Math.max(0, totalBenchmarks - newMissing.length);
+      const newKeywordMatch = Math.min(100, Math.max(20, Math.round((matchedCount / totalBenchmarks) * 100)));
 
       return {
         ...prev,
         targetRole: roleName,
-        missingSkills: newMissing.length > 0 ? newMissing : prev.missingSkills,
+        missingSkills: newMissing,
         metrics: {
           ...prev.metrics,
           keywordMatch: newKeywordMatch
@@ -193,6 +282,15 @@ export const ResumePage = () => {
           }));
           if (active.has_analysis) {
             loadAnalysis(active.id);
+          } else {
+            // Trigger automatic AI analysis if not analyzed yet
+            resumeService.analyzeResume(active.id)
+              .then(analyzeRes => {
+                if (analyzeRes && analyzeRes.success && analyzeRes.data && analyzeRes.data.analysis) {
+                  applyAnalysisData(analyzeRes.data.analysis, analyzeRes.data.analyzed_at);
+                }
+              })
+              .catch(err => console.warn("Auto-analysis trigger error:", err));
           }
         }
       } else {
@@ -259,30 +357,25 @@ export const ResumePage = () => {
     }
 
     // Fallback if none parsed
-    const finalDetected = detected.length > 0 ? detected : [
-      { name: "Python", category: "Languages", level: "Advanced", match: true },
-      { name: "TypeScript", category: "Languages", level: "Advanced", match: true },
-      { name: "React.js", category: "Frameworks", level: "Intermediate", match: true },
-      { name: "Node.js", category: "Frameworks", level: "Intermediate", match: true },
-      { name: "FastAPI", category: "Frameworks", level: "Intermediate", match: true },
-      { name: "PostgreSQL", category: "Databases", level: "Intermediate", match: true },
-      { name: "Docker", category: "DevOps", level: "Basic", match: true },
-      { name: "Git", category: "Tools", level: "Advanced", match: true },
-    ];
+    const finalDetected = detected.length > 0 ? detected : [];
 
-    // 2. Missing Skills calculation
+    // 2. Missing Skills calculation for the selected domain
     const detectedNames = finalDetected.map(s => s.name);
-    let missing = [];
-    if (Array.isArray(analysis.keyword_gaps) && analysis.keyword_gaps.length > 0) {
-      missing = analysis.keyword_gaps.map((kg, i) => ({
+    const activeTargetRole = resumeData.targetRole || user?.targetRole || user?.career?.targetRole || 'Backend SDE-1 (Tier 1)';
+    const roleBasedMissing = getMissingSkillsForRole(activeTargetRole, detectedNames);
+    
+    // Merge any additional keyword gaps detected by AI that aren't already in roleBasedMissing
+    const existingMissingNames = new Set(roleBasedMissing.map(m => m.name.toLowerCase()));
+    const extraAIGaps = (Array.isArray(analysis.keyword_gaps) ? analysis.keyword_gaps : [])
+      .filter(kg => !existingMissingNames.has(kg.toLowerCase()) && !detectedNames.some(d => d.toLowerCase() === kg.toLowerCase()))
+      .map((kg, i) => ({
         name: kg,
-        category: i % 2 === 0 ? 'Architecture' : 'Databases',
-        importance: i === 0 ? 'High' : (i === 1 ? 'Medium' : 'Low'),
-        roleReq: `Tier-1 ${kg} competency required for target role`
+        category: 'Target Competencies',
+        importance: i === 0 ? 'High' : 'Medium',
+        roleReq: `Domain competency required for ${activeTargetRole}`
       }));
-    } else {
-      missing = getMissingSkillsForRole(resumeData.targetRole, detectedNames);
-    }
+    
+    const missing = [...roleBasedMissing, ...extraAIGaps];
 
     // 3. Bullet Point Audits extraction
     const audits = [];
@@ -320,7 +413,7 @@ export const ResumePage = () => {
       });
     }
 
-    const finalAudits = audits.length > 0 ? audits.slice(0, 4) : initialResumeData.bulletAudits;
+    const finalAudits = audits.length > 0 ? audits.slice(0, 5) : [];
 
     // 4. Section Scores
     const dynamicSections = [
@@ -332,14 +425,16 @@ export const ResumePage = () => {
     ];
 
     // 5. AI Recommendations Insights
-    const dynamicInsights = (analysis.suggestions || []).map((s, idx) => ({
-      type: idx === 0 ? 'critical' : 'suggestion',
-      title: idx === 0 ? "Missing Distributed Caching Evidence" : (idx === 1 ? "Bullet Actionability Boost Available" : `AI Placement Optimization #${idx + 1}`),
-      description: typeof s === 'string' ? s : s.text || JSON.stringify(s),
-      actionLabel: idx === 0 ? 'Analyze Skill Gaps' : 'Fix Bullets with AI',
-      actionRoute: idx === 0 ? '/skill-gaps' : null,
-      actionTab: idx !== 0 ? 'bullets' : null
-    }));
+    const dynamicInsights = Array.isArray(analysis.suggestions) && analysis.suggestions.length > 0
+      ? analysis.suggestions.map((s, idx) => ({
+          type: idx === 0 ? 'critical' : 'suggestion',
+          title: typeof s === 'string' && s.length > 40 ? s.slice(0, 40) + '...' : (idx === 0 ? "Target Role Skill Gaps Detected" : `AI Recommendation #${idx + 1}`),
+          description: typeof s === 'string' ? s : s.text || JSON.stringify(s),
+          actionLabel: idx === 0 ? 'Analyze Skill Gaps' : 'Fix Bullets with AI',
+          actionRoute: idx === 0 ? '/skill-gaps' : null,
+          actionTab: idx !== 0 ? 'bullets' : null
+        }))
+      : [];
 
     setResumeData((prev) => ({
       ...prev,
@@ -562,12 +657,20 @@ export const ResumePage = () => {
                   className="bg-[#121624] text-indigo-400 font-bold border border-indigo-500/60 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-lg"
                 >
                   <option value="Backend SDE-1 (Tier 1)">Backend SDE-1 (Tier 1)</option>
-                  <option value="AI/ML Engineer">AI/ML Engineer</option>
+                  <option value="Backend Developer">Backend Developer</option>
+                  <option value="Full Stack Engineer">Full Stack Engineer</option>
                   <option value="Full-Stack Developer">Full-Stack Developer</option>
+                  <option value="Frontend Engineer">Frontend Engineer</option>
                   <option value="Frontend SDE-1">Frontend SDE-1</option>
+                  <option value="AI/ML Engineer">AI/ML Engineer</option>
                   <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                  <option value="Data Engineer">Data Engineer</option>
+                  <option value="Data Scientist">Data Scientist</option>
                   <option value="Data Scientist & Engineer">Data Scientist & Engineer</option>
+                  <option value="Data Analyst">Data Analyst</option>
+                  <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
                   <option value="Cybersecurity Engineer">Cybersecurity Engineer</option>
+                  <option value="Software Engineer">Software Engineer</option>
                   <option value="Systems Software Engineer">Systems Software Engineer</option>
                   <option value="custom">+ Custom Target Role...</option>
                 </select>
@@ -834,15 +937,21 @@ export const ResumePage = () => {
           </div>
 
           <div className="space-y-4">
-            {resumeData.bulletAudits.map((bullet) => (
-              <div
-                key={bullet.id}
-                className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl hover:border-indigo-500/30 transition-colors"
-              >
-                <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
-                  <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
-                    {bullet.section}
-                  </span>
+            {resumeData.bulletAudits.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-[#121624] border border-[#232b3e] text-center space-y-2">
+                <p className="text-sm font-semibold text-slate-300">No bullet points extracted yet</p>
+                <p className="text-xs text-slate-400">Upload your PDF resume to have AI automatically audit every project and experience bullet point.</p>
+              </div>
+            ) : (
+              resumeData.bulletAudits.map((bullet) => (
+                <div
+                  key={bullet.id}
+                  className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl hover:border-indigo-500/30 transition-colors"
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-[#232b3e]">
+                    <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
+                      {bullet.section}
+                    </span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-mono text-slate-300 font-bold">Score: {bullet.score}/100</span>
                     {bullet.isWeak ? (
@@ -905,8 +1014,9 @@ export const ResumePage = () => {
                     </button>
                   </div>
                 )}
-              </div>
-            ))}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -925,17 +1035,23 @@ export const ResumePage = () => {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {resumeData.detectedSkills.map((skill, idx) => (
-                <div
-                  key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-[#0f131d] border border-[#232b3e] flex items-center gap-2 text-xs"
-                >
-                  <span className="font-semibold text-slate-200">{skill.name}</span>
-                  <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
-                    {skill.category}
-                  </span>
-                </div>
-              ))}
+              {resumeData.detectedSkills.length === 0 ? (
+                <p className="text-xs text-slate-400 italic py-2">
+                  No skills detected yet. Upload a PDF resume or click "Upload New Resume" to analyze.
+                </p>
+              ) : (
+                resumeData.detectedSkills.map((skill, idx) => (
+                  <div
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-[#0f131d] border border-[#232b3e] flex items-center gap-2 text-xs"
+                  >
+                    <span className="font-semibold text-slate-200">{skill.name}</span>
+                    <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                      {skill.category}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -950,29 +1066,36 @@ export const ResumePage = () => {
             </div>
 
             <div className="space-y-3">
-              {resumeData.missingSkills.map((skill, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-xl bg-[#0f131d] border border-amber-500/30 flex items-center justify-between text-xs gap-2"
-                >
-                  <div className="truncate">
-                    <span className="font-bold text-white block truncate">{skill.name}</span>
-                    <span className="text-[11px] text-slate-400 block truncate">{skill.roleReq}</span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => navigate('/skill-gaps', { state: { targetRole: resumeData.targetRole, searchSkill: skill.name } })}
-                      className="px-2 py-1 rounded bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-white text-[11px] font-semibold border border-[#232b3e] transition-colors"
-                      title="Bridge gap in Skill Gaps"
-                    >
-                      Bridge Gap
-                    </button>
-                    <span className="px-2.5 py-1 rounded text-[10px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                      {skill.importance} Priority
-                    </span>
-                  </div>
+              {resumeData.missingSkills.length === 0 ? (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>Outstanding! Your resume covers all core Tier-1 benchmarks for <strong>{resumeData.targetRole}</strong>.</span>
                 </div>
-              ))}
+              ) : (
+                resumeData.missingSkills.map((skill, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-[#0f131d] border border-amber-500/30 flex items-center justify-between text-xs gap-2"
+                  >
+                    <div className="truncate">
+                      <span className="font-bold text-white block truncate">{skill.name}</span>
+                      <span className="text-[11px] text-slate-400 block truncate">{skill.roleReq}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => navigate('/skill-gaps', { state: { targetRole: resumeData.targetRole, searchSkill: skill.name } })}
+                        className="px-2 py-1 rounded bg-[#1a2030] hover:bg-[#232b3e] text-indigo-400 hover:text-white text-[11px] font-semibold border border-[#232b3e] transition-colors"
+                        title="Bridge gap in Skill Gaps"
+                      >
+                        Bridge Gap
+                      </button>
+                      <span className="px-2.5 py-1 rounded text-[10px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        {skill.importance} Priority
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

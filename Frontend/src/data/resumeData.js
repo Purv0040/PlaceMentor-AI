@@ -1,14 +1,14 @@
 // Centralized mock data for Resume Intelligence (7.html)
 
 export const initialResumeData = {
-  fileName: "Digisha_Resume.pdf",
-  fileSize: "1.4 MB",
-  pageCount: 2,
-  lastAnalyzed: "2 hours ago",
+  fileName: "No Resume Uploaded",
+  fileSize: "0 MB",
+  pageCount: 1,
+  lastAnalyzed: "Not analyzed",
   targetRole: "Backend SDE-1 (Tier 1)",
-  overallScore: 84,
-  scoreChange: "+6% vs last version",
-  status: "ATS Verified",
+  overallScore: 0,
+  scoreChange: "Awaiting upload",
+  status: "Pending Upload",
   
   metrics: {
     atsScore: 84,
