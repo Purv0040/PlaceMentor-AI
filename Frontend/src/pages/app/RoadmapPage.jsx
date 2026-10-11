@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
 import { useUser } from '../../context/UserContext';
 import { ChevronDown, Clock3, RefreshCw, Calendar, Sparkles, Sliders } from 'lucide-react';
 
-const TaskRow = ({ task, onToggle }) => (
-  <div className="flex items-start gap-3 py-3 border-b border-slate-800/80 last:border-b-0">
+const TaskRow = ({ task, onToggle, isTarget }) => (
+  <div
+    id={`task-row-${task.id}`}
+    className={`flex items-start gap-3 py-3 border-b border-slate-800/80 last:border-b-0 transition-all duration-300 ${
+      isTarget ? 'bg-indigo-500/15 ring-2 ring-indigo-400 rounded-xl px-3 my-1 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' : ''
+    }`}
+  >
     <input
       type="checkbox"
       checked={task.completed}
@@ -24,7 +29,7 @@ const TaskRow = ({ task, onToggle }) => (
         {task.duration && <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Clock3 size={13} />{task.duration}</span>}
       </div>
       {task.description && (
-        <details className="mt-1 text-xs text-slate-400">
+        <details className="mt-1 text-xs text-slate-400" open={isTarget ? true : undefined}>
           <summary className="w-fit cursor-pointer select-none rounded text-slate-500 hover:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400">
             More details
           </summary>
@@ -35,8 +40,19 @@ const TaskRow = ({ task, onToggle }) => (
   </div>
 );
 
-const TaskGroup = ({ title, tasks, onToggle }) => {
-  const [showCompleted, setShowCompleted] = useState(false);
+const TaskGroup = ({ title, tasks, onToggle, targetTaskId }) => {
+  const [showCompleted, setShowCompleted] = useState(() => {
+    return Boolean(
+      targetTaskId && tasks.some((t) => (t.id === targetTaskId || t.taskId === targetTaskId) && t.completed)
+    );
+  });
+
+  useEffect(() => {
+    if (targetTaskId && tasks.some((t) => (t.id === targetTaskId || t.taskId === targetTaskId) && t.completed)) {
+      setShowCompleted(true);
+    }
+  }, [targetTaskId, tasks]);
+
   const incomplete = tasks.filter((task) => !task.completed);
   const completed = tasks.filter((task) => task.completed);
 
@@ -47,7 +63,14 @@ const TaskGroup = ({ title, tasks, onToggle }) => {
         <span className="text-xs text-slate-500">{incomplete.length} remaining</span>
       </div>
       {incomplete.length > 0
-        ? incomplete.map((task) => <TaskRow key={task.id} task={task} onToggle={onToggle} />)
+        ? incomplete.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onToggle={onToggle}
+              isTarget={task.id === targetTaskId || task.taskId === targetTaskId}
+            />
+          ))
         : <p className="py-4 text-sm text-slate-500">No tasks to do here.</p>}
       {completed.length > 0 && (
         <>
@@ -60,7 +83,14 @@ const TaskGroup = ({ title, tasks, onToggle }) => {
             <ChevronDown size={14} className={showCompleted ? 'rotate-180 transition-transform' : 'transition-transform'} />
             {showCompleted ? 'Hide' : 'Show'} {completed.length} completed {completed.length === 1 ? 'task' : 'tasks'}
           </button>
-          {showCompleted && completed.map((task) => <TaskRow key={task.id} task={task} onToggle={onToggle} />)}
+          {showCompleted && completed.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onToggle={onToggle}
+              isTarget={task.id === targetTaskId || task.taskId === targetTaskId}
+            />
+          ))}
         </>
       )}
     </section>
@@ -69,6 +99,7 @@ const TaskGroup = ({ title, tasks, onToggle }) => {
 
 export const RoadmapPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
   const {
     roadmap,
@@ -81,6 +112,10 @@ export const RoadmapPage = () => {
     planningError,
     reloadPlanning,
   } = usePlanning();
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const targetTaskId = searchParams.get('taskId') || location.state?.taskId;
+  const targetDay = Number(searchParams.get('day') || location.state?.day);
 
   const registeredRole = user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer';
 
@@ -136,6 +171,34 @@ export const RoadmapPage = () => {
       setActivePhaseId(roadmap?.currentPhaseId || phases[0].id);
     }
   }, [activePhaseId, phases, roadmap?.currentPhaseId]);
+
+  // If navigated with a target task or day, ensure active phase contains that day
+  useEffect(() => {
+    if ((targetTaskId || targetDay) && phases.length) {
+      const allList = Array.isArray(tasks) ? tasks : [];
+      const foundTask = allList.find((t) => t.id === targetTaskId || t.taskId === targetTaskId);
+      const dayNum = foundTask?.dayNumber || targetDay;
+      if (dayNum) {
+        const matchingPhase = phases.find((p) => dayNum >= p.startDay && dayNum <= p.endDay);
+        if (matchingPhase && matchingPhase.id !== activePhaseId) {
+          setActivePhaseId(matchingPhase.id);
+        }
+      }
+    }
+  }, [targetTaskId, targetDay, tasks, phases, activePhaseId]);
+
+  // Smooth scroll into target task row when active phase is rendered
+  useEffect(() => {
+    if (targetTaskId) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`task-row-${targetTaskId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [targetTaskId, activePhaseId]);
 
   const currentDay = Number(roadmap?.currentDay) || 0;
   const totalDays = Number(roadmap?.totalDays) || selectedDuration || 90;
@@ -470,9 +533,22 @@ export const RoadmapPage = () => {
                 <p className="rounded-xl border border-slate-800 bg-[#121624] p-5 text-sm text-slate-400">No scheduled tasks are available for this phase yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {todayTasks.length > 0 && <TaskGroup title={`Today · Day ${currentDay}`} tasks={todayTasks} onToggle={toggleTaskCompletion} />}
+                  {todayTasks.length > 0 && (
+                    <TaskGroup
+                      title={`Today · Day ${currentDay}`}
+                      tasks={todayTasks}
+                      onToggle={toggleTaskCompletion}
+                      targetTaskId={targetTaskId}
+                    />
+                  )}
                   {weekGroups.map((week) => (
-                    <TaskGroup key={week} title={`Week ${week}`} tasks={laterTasks.filter((task) => Math.ceil(task.dayNumber / 7) === week)} onToggle={toggleTaskCompletion} />
+                    <TaskGroup
+                      key={week}
+                      title={`Week ${week}`}
+                      tasks={laterTasks.filter((task) => Math.ceil(task.dayNumber / 7) === week)}
+                      onToggle={toggleTaskCompletion}
+                      targetTaskId={targetTaskId}
+                    />
                   ))}
                 </div>
               )}

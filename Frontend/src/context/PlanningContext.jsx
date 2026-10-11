@@ -92,7 +92,12 @@ export const PlanningProvider = ({ children }) => {
     setPlanningState((prevState) => ({
       ...prevState,
       tasks: prevState.tasks.map((task) => task.id === taskId
-        ? { ...task, status: nextStatus, completed: nextStatus === 'completed' }
+        ? {
+            ...task,
+            status: nextStatus,
+            completed: nextStatus === 'completed',
+            completedAt: nextStatus === 'completed' ? (task.completedAt || new Date().toISOString()) : null,
+          }
         : task),
     }));
 
