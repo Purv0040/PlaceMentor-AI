@@ -79,6 +79,37 @@ def test_get_all_tasks(client: TestClient, auth_headers: dict):
     assert len(tasks) >= 2
 
 
+def test_get_all_tasks_normalizes_legacy_records(client: TestClient, auth_headers: dict, mock_db):
+    """Legacy or partially malformed task documents should not break the collection response."""
+    mock_db["daily_tasks"].docs["legacy_task"] = {
+        "_id": "legacy_task",
+        "user_id": "test_user_123",
+        "task_id": None,
+        "date": datetime(2025, 1, 2, tzinfo=timezone.utc),
+        "day_number": 999,
+        "title": None,
+        "description": None,
+        "category": "DSA",
+        "skill": None,
+        "estimated_minutes": 5000,
+        "actual_minutes": "invalid",
+        "completion_percentage": "invalid",
+        "created_at": "invalid timestamp",
+        "updated_at": "invalid timestamp",
+        "resource": "invalid resource",
+    }
+
+    response = client.get("/api/v1/tasks", headers=auth_headers)
+
+    assert response.status_code == 200
+    task = next(item for item in response.json() if item["id"] == "legacy_task")
+    assert task["day_number"] == 365
+    assert task["estimated_minutes"] == 1440
+    assert task["actual_minutes"] is None
+    assert task["completion_percentage"] == 0.0
+    assert task["resource"] is None
+
+
 # 3. test_get_today_tasks
 def test_get_today_tasks(client: TestClient, auth_headers: dict):
     res = client.get("/api/v1/tasks/today", headers=auth_headers)

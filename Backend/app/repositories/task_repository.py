@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+import math
+from datetime import date, datetime, timezone
 from typing import Optional, Dict, Any, List
 
 from bson import ObjectId
@@ -26,6 +27,27 @@ class TaskRepository:
     # ============================================================
 
     @staticmethod
+    def _as_datetime(value: Any) -> Optional[datetime]:
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, date):
+            return datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        return None
+
+    @staticmethod
+    def _as_bounded_int(value: Any, default: int, minimum: int, maximum: int) -> int:
+        try:
+            number = int(value)
+        except (TypeError, ValueError, OverflowError):
+            return default
+        return max(minimum, min(number, maximum))
+
+    @staticmethod
     def _serialize_document(doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """
         Convert MongoDB document into API-friendly dictionary.
@@ -33,38 +55,65 @@ class TaskRepository:
         if not doc:
             return None
 
-        if "_id" in doc:
-            doc["_id"] = str(doc["_id"])
-
-        if not doc.get("task_id"):
-            doc["task_id"] = doc["_id"]
-
-        if not doc.get("id"):
-            doc["id"] = str(doc["task_id"])
+        mongo_id = str(doc.get("_id") or doc.get("task_id") or "unknown-task")
+        doc["_id"] = mongo_id
+        doc["task_id"] = str(doc.get("task_id") or mongo_id)
+        doc["id"] = str(doc.get("id") or doc["task_id"])
+        doc["user_id"] = str(doc.get("user_id") or "unknown-user")
+        if doc.get("roadmap_id") is not None:
+            doc["roadmap_id"] = str(doc["roadmap_id"])
 
         # Older task records may predate fields now required by the API schema.
         # Fill them when reading so one legacy document cannot make GET /tasks
         # fail response validation for the entire collection.
-        created_at = doc.get("created_at") or datetime.now(timezone.utc)
-        fallback_date = (
-            created_at.date().isoformat()
-            if isinstance(created_at, datetime)
-            else datetime.now(timezone.utc).date().isoformat()
-        )
+        created_at = TaskRepository._as_datetime(doc.get("created_at"))
+        updated_at = TaskRepository._as_datetime(doc.get("updated_at"))
+        fallback_date = (created_at or datetime.now(timezone.utc)).date().isoformat()
         date_value = doc.get("date")
         if isinstance(date_value, datetime):
             date_value = date_value.date().isoformat()
-        doc["date"] = date_value or fallback_date
-        doc["day_number"] = doc.get("day_number") or 1
-        doc["title"] = doc.get("title") or "Untitled task"
-        doc["description"] = doc.get("description") or ""
-        doc["category"] = doc.get("category") or "General"
-        doc["skill"] = doc.get("skill") or doc["category"] or "Core"
-        doc["priority"] = doc.get("priority") or "MEDIUM"
-        doc["estimated_minutes"] = doc.get("estimated_minutes") or 60
-        doc["difficulty"] = doc.get("difficulty") or "Intermediate"
-        doc["status"] = doc.get("status") or "pending"
-        doc["completion_percentage"] = doc.get("completion_percentage") or 0.0
+        elif isinstance(date_value, date):
+            date_value = date_value.isoformat()
+        try:
+            datetime.strptime(str(date_value), "%Y-%m-%d")
+            doc["date"] = str(date_value)
+        except (TypeError, ValueError):
+            doc["date"] = fallback_date
+
+        doc["day_number"] = TaskRepository._as_bounded_int(doc.get("day_number"), 1, 1, 365)
+        for field, fallback in (
+            ("title", "Untitled task"),
+            ("description", ""),
+            ("category", "General"),
+            ("priority", "MEDIUM"),
+            ("difficulty", "Intermediate"),
+            ("status", "pending"),
+        ):
+            value = doc.get(field)
+            doc[field] = str(value) if value not in (None, "") else fallback
+        doc["skill"] = str(doc.get("skill") or doc["category"] or "Core")
+        doc["estimated_minutes"] = TaskRepository._as_bounded_int(doc.get("estimated_minutes"), 60, 1, 1440)
+        actual_minutes = doc.get("actual_minutes")
+        try:
+            doc["actual_minutes"] = (
+                max(0, min(int(actual_minutes), 1440))
+                if actual_minutes is not None
+                else None
+            )
+        except (TypeError, ValueError, OverflowError):
+            doc["actual_minutes"] = None
+        try:
+            percentage = float(doc.get("completion_percentage", 0.0))
+        except (TypeError, ValueError, OverflowError):
+            percentage = 0.0
+        doc["completion_percentage"] = min(100.0, max(0.0, percentage)) if math.isfinite(percentage) else 0.0
+        doc["completed_at"] = TaskRepository._as_datetime(doc.get("completed_at"))
+        doc["created_at"] = created_at
+        doc["updated_at"] = updated_at
+        if not isinstance(doc.get("resource"), dict):
+            doc["resource"] = None
+        if doc.get("notes") is not None:
+            doc["notes"] = str(doc["notes"])
 
         return doc
 

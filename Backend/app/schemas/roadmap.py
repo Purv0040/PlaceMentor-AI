@@ -126,6 +126,12 @@ class RoadmapGenerateRequestSchema(BaseModel):
         ),
     )
 
+    experience_level: str = Field(default="intermediate", pattern="^(beginner|intermediate|advanced)$")
+
+    start_date: Optional[datetime] = None
+
+    replace_existing: bool = Field(default=False, description="Confirm replacing a roadmap that has progress.")
+
     force_regenerate: bool = Field(
         default=False,
         description=(
@@ -204,6 +210,8 @@ class RoadmapResponseSchema(BaseModel):
     duration_days: int = 90
 
     available_minutes_per_day: int = 120
+
+    experience_level: str = "intermediate"
 
     total_estimated_hours: float = 0.0
 

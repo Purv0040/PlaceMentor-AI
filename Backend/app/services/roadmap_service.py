@@ -1,8 +1,9 @@
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from typing import Optional, Dict, Any, List
 
 from fastapi.encoders import jsonable_encoder
+from fastapi import HTTPException, status as http_status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.repositories.roadmap_repository import RoadmapRepository
@@ -176,6 +177,9 @@ class RoadmapService:
         target_role: Optional[str] = None,
         available_minutes_per_day: int = 120,
         force_regenerate: bool = False,
+        experience_level: str = "intermediate",
+        start_date: Optional[datetime] = None,
+        replace_existing: bool = False,
     ) -> Dict[str, Any]:
 
         """
@@ -222,6 +226,9 @@ class RoadmapService:
         requested_target_role = self._normalize_role(
             target_role
         )
+        experience_level = str(experience_level or "intermediate").lower()
+        if experience_level not in {"beginner", "intermediate", "advanced"}:
+            experience_level = "intermediate"
 
         # --------------------------------------------------------
         # 2. Load existing active roadmap
@@ -260,6 +267,11 @@ class RoadmapService:
                 active_minutes
                 == available_minutes_per_day
             )
+            level_matches = active.get("experience_level", "intermediate") == experience_level
+            requested_start = start_date.date() if isinstance(start_date, datetime) else start_date
+            active_start = active.get("start_date")
+            active_start = active_start.date() if isinstance(active_start, datetime) else active_start
+            start_matches = requested_start is None or requested_start == active_start
 
             # IMPORTANT:
             # If both role and available time match,
@@ -267,7 +279,7 @@ class RoadmapService:
             #
             # If either changes, generate a new roadmap.
 
-            if role_matches and minutes_match:
+            if role_matches and minutes_match and level_matches and start_matches:
 
                 logger.info(
                     "Returning existing active roadmap "
@@ -277,6 +289,18 @@ class RoadmapService:
                 )
 
                 return active
+
+            old_id = str(active.get("roadmap_id") or active.get("_id") or "")
+            if old_id:
+                has_progress = await self.task_service.task_repo.collection.count_documents({
+                    "roadmap_id": old_id,
+                    "status": {"$in": ["completed", "in_progress"]},
+                }) > 0
+                if has_progress and not replace_existing:
+                    raise HTTPException(
+                        status_code=http_status.HTTP_409_CONFLICT,
+                        detail="This roadmap has saved progress. Confirm replacement to start a different roadmap; the current roadmap and its progress will remain in your history.",
+                    )
 
             logger.info(
                 "Active roadmap configuration differs "
@@ -295,6 +319,16 @@ class RoadmapService:
             )
             or {}
         )
+
+        career = profile_doc.get("career") if isinstance(profile_doc.get("career"), dict) else {}
+        preferences = profile_doc.get("preferences") if isinstance(profile_doc.get("preferences"), dict) else {}
+        if target_role is None:
+            requested_target_role = self._normalize_role(career.get("targetRole") or profile_doc.get("target_role"))
+        if not requested_target_role:
+            try:
+                available_minutes_per_day = max(30, min(480, int(preferences.get("dailyGoalMinutes", 120))))
+            except (TypeError, ValueError):
+                pass
 
         readiness_doc = (
             await self.readiness_repo.get_latest_by_user(
@@ -334,6 +368,7 @@ class RoadmapService:
             )
             or "Backend Developer"
         )
+        selected_level = experience_level or career.get("experienceLevel") or "intermediate"
 
         # --------------------------------------------------------
         # 6. Build AI payload
@@ -344,6 +379,7 @@ class RoadmapService:
             "available_minutes_per_day": (
                 available_minutes_per_day
             ),
+            "experience_level": experience_level,
             "profile": profile_doc,
             "skill_gaps": skill_gap_doc,
             "readiness": readiness_doc,
@@ -394,6 +430,7 @@ class RoadmapService:
                     available_minutes_per_day,
                     skill_gap_doc,
                     profile_doc,
+                    selected_level,
                 )
             )
 
@@ -411,6 +448,7 @@ class RoadmapService:
                     available_minutes_per_day,
                     skill_gap_doc,
                     profile_doc,
+                    selected_level,
                 )
             )
 
@@ -586,6 +624,13 @@ class RoadmapService:
 
         all_tasks = cleaned_tasks
 
+        canonical_tasks = self._generate_deterministic_fallback(
+            resolved_target_role, available_minutes_per_day, skill_gap_doc, profile_doc, selected_level
+        ).get("all_tasks", [])
+        present_days = {task.get("day") for task in all_tasks}
+        all_tasks.extend(task for task in canonical_tasks if task.get("day") not in present_days)
+        all_tasks.sort(key=lambda task: (task.get("day", 1), task.get("id", "")))
+
         # --------------------------------------------------------
         # 11. Fallback if AI generated no usable tasks
         # --------------------------------------------------------
@@ -598,6 +643,7 @@ class RoadmapService:
                     available_minutes_per_day,
                     skill_gap_doc,
                     profile_doc,
+                    selected_level,
                 )
             )
 
@@ -652,13 +698,6 @@ class RoadmapService:
             )
 
         # --------------------------------------------------------
-        # 13. Supersede existing active roadmap
-        # --------------------------------------------------------
-
-        await self.roadmap_repo.supersede_active_roadmaps(
-            user_id
-        )
-
         # --------------------------------------------------------
         # 14. Build weekly goals
         # --------------------------------------------------------
@@ -672,7 +711,12 @@ class RoadmapService:
         # 15. Build dates
         # --------------------------------------------------------
 
-        start_dt = datetime.now(APP_TIMEZONE)
+        if isinstance(start_date, datetime):
+            start_dt = start_date.replace(tzinfo=APP_TIMEZONE) if start_date.tzinfo is None else start_date.astimezone(APP_TIMEZONE)
+        elif isinstance(start_date, date):
+            start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=APP_TIMEZONE)
+        else:
+            start_dt = datetime.now(APP_TIMEZONE)
 
         end_dt = start_dt + timedelta(
             days=89
@@ -762,6 +806,8 @@ class RoadmapService:
                 available_minutes_per_day
             ),
 
+            "experience_level": selected_level,
+
             "total_estimated_hours": (
                 total_estimated_hours
             ),
@@ -817,6 +863,12 @@ class RoadmapService:
                 "Roadmap was created but no roadmap ID "
                 "was returned."
             )
+
+        await self.roadmap_repo.supersede_active_roadmaps(user_id)
+        await self.roadmap_repo.collection.update_one(
+            {"roadmap_id": str(roadmap_id), "user_id": user_id},
+            {"$set": {"status": "active"}},
+        )
 
         # --------------------------------------------------------
         # 19. Generate daily tasks
@@ -1046,6 +1098,7 @@ class RoadmapService:
         daily_minutes: int,
         skill_gap_doc: Dict[str, Any],
         profile_doc: Optional[Dict[str, Any]] = None,
+        experience_level: str = "intermediate",
     ) -> Dict[str, Any]:
 
         priority_gaps = []
@@ -1070,6 +1123,8 @@ class RoadmapService:
         if profile_doc:
 
             skills = profile_doc.get("skills") or []
+            if isinstance(skills, dict):
+                skills = skills.get("selectedSkills", [])
 
             if isinstance(skills, list):
 
@@ -1104,6 +1159,19 @@ class RoadmapService:
             high_gaps=priority_gaps,
             preferred_language=preferred_lang,
         )
+
+        if experience_level == "beginner":
+            for task in all_tasks:
+                if task.get("difficulty") == "Intermediate":
+                    task["difficulty"] = "Beginner"
+                elif task.get("difficulty") == "Advanced":
+                    task["difficulty"] = "Intermediate"
+        elif experience_level == "advanced":
+            for task in all_tasks:
+                if task.get("difficulty") == "Beginner":
+                    task["difficulty"] = "Intermediate"
+                elif task.get("difficulty") == "Intermediate":
+                    task["difficulty"] = "Advanced"
 
         phase1_tasks = [
             task

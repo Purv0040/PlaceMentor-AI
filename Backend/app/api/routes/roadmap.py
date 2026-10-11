@@ -85,6 +85,9 @@ async def generate_roadmap(
         if payload
         else False
     )
+    experience_level = payload.experience_level if payload else "intermediate"
+    start_date = payload.start_date if payload else None
+    replace_existing = payload.replace_existing if payload else False
 
     service = RoadmapService(db)
 
@@ -94,6 +97,9 @@ async def generate_roadmap(
             target_role=target_role,
             available_minutes_per_day=daily_minutes,
             force_regenerate=force_regenerate,
+            experience_level=experience_level,
+            start_date=start_date,
+            replace_existing=replace_existing,
         )
 
         return roadmap
@@ -136,6 +142,9 @@ async def regenerate_roadmap(
         if payload
         else 120
     )
+    experience_level = payload.experience_level if payload else "intermediate"
+    start_date = payload.start_date if payload else None
+    replace_existing = payload.replace_existing if payload else False
 
     service = RoadmapService(db)
 
@@ -145,6 +154,9 @@ async def regenerate_roadmap(
             target_role=target_role,
             available_minutes_per_day=daily_minutes,
             force_regenerate=True,
+            experience_level=experience_level,
+            start_date=start_date,
+            replace_existing=replace_existing,
         )
 
         return roadmap

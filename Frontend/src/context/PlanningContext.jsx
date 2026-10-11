@@ -1,72 +1,122 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { planningService } from '../services/planningService';
 import { authService } from '../services/authService';
 
 const PlanningContext = createContext();
 
+const mergeTaskProgress = (current, apiProgress) => apiProgress ? {
+  ...current,
+  overallProgressPercent: apiProgress.roadmap_completion_percentage ?? current.overallProgressPercent,
+  completedTasksCount: apiProgress.completed_tasks ?? current.completedTasksCount,
+  totalTasksCount: apiProgress.total_tasks ?? current.totalTasksCount,
+  currentStreakDays: apiProgress.current_streak ?? current.currentStreakDays,
+  longestStreakDays: apiProgress.longest_streak ?? current.longestStreakDays,
+} : current;
+
 export const PlanningProvider = ({ children }) => {
   const [planningState, setPlanningState] = useState(() => planningService.getInitialState());
   const [toastNotification, setToastNotification] = useState(null);
+  const [planningLoading, setPlanningLoading] = useState(() => authService.isAuthenticated());
+  const [planningError, setPlanningError] = useState(null);
 
   useEffect(() => {
     planningService.saveState(planningState);
   }, [planningState]);
 
-  useEffect(() => {
-    if (!authService.isAuthenticated()) return;
-
-    const fetchApiPlanning = async () => {
-      const [apiTasks, apiRoadmap] = await Promise.all([
-        planningService.getTasksFromApi(),
-        planningService.getRoadmapFromApi(),
-      ]);
-
-      setPlanningState((prev) => ({
-        ...prev,
-        ...(apiTasks && apiTasks.length > 0 ? { tasks: apiTasks } : {}),
-        ...(apiRoadmap ? { roadmap: apiRoadmap } : {}),
-      }));
-    };
-    fetchApiPlanning();
-  }, []);
-
   const showToast = (message) => {
     setToastNotification(message);
-    setTimeout(() => setToastNotification(null), 3000);
+    window.setTimeout(() => setToastNotification(null), 3000);
   };
 
-  const toggleTaskCompletion = (taskId) => {
-    setPlanningState((prevState) => {
-      const updatedTasks = prevState.tasks.map((t) =>
-        t.id === taskId ? { ...t, completed: !t.completed } : t
-      );
+  const loadApiPlanning = useCallback(async () => {
+    if (!authService.isAuthenticated()) {
+      setPlanningLoading(false);
+      setPlanningError('Sign in to view your roadmap.');
+      return;
+    }
 
-      const completedCount = updatedTasks.filter((t) => t.completed).length;
-      const totalCount = updatedTasks.length;
+    setPlanningLoading(true);
+    setPlanningError(null);
+    const apiRoadmap = await planningService.getRoadmapFromApi();
+    const [apiTasks, roadmapSummary, taskProgress] = await Promise.all([
+        planningService.getTasksFromApi(),
+        planningService.getRoadmapSummaryFromApi(),
+        planningService.getTaskProgressFromApi(),
+    ]);
 
-      const updatedProgress = {
-        ...prevState.progress,
-        completedTasksCount: completedCount,
-        totalTasksCount: totalCount,
-        overallProgressPercent: Math.round(60 + (completedCount * 2)),
-      };
+    const activeTasks = Array.isArray(apiTasks)
+      ? apiTasks.filter((task) => !apiRoadmap?.roadmapId || task.roadmapId === apiRoadmap.roadmapId)
+      : null;
+    const phases = apiRoadmap?.phases || [];
+    const currentDay = Number(roadmapSummary?.current_day) || null;
+    const currentPhase = phases.find((phase) => currentDay && currentDay >= phase.startDay && currentDay <= phase.endDay);
 
-      const targetTask = prevState.tasks.find((t) => t.id === taskId);
-      const isCompleted = targetTask ? !targetTask.completed : false;
-      showToast(isCompleted ? `Task completed! (+1 task)` : `Task marked in-complete`);
+    if (apiTasks && apiRoadmap && roadmapSummary) {
+      setPlanningState((prev) => ({
+        ...prev,
+        tasks: activeTasks,
+        roadmap: {
+          ...apiRoadmap,
+          currentDay,
+          currentPhaseId: currentPhase?.id || null,
+          currentPhaseName: roadmapSummary.current_phase_name || currentPhase?.title || null,
+          overallProgressPercent: Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage) || 0,
+        },
+        progress: mergeTaskProgress(prev.progress, taskProgress),
+      }));
+      setPlanningError(null);
+    } else {
+      setPlanningError('Your roadmap could not be loaded. Check your connection and try again.');
+    }
+    setPlanningLoading(false);
+  }, []);
 
-      if (isCompleted && !taskId.startsWith('task-skill-')) {
-        planningService.completeTaskInApi(taskId).catch(() => {});
+  useEffect(() => {
+    loadApiPlanning();
+  }, [loadApiPlanning]);
+
+  const toggleTaskCompletion = async (taskId) => {
+    const targetTask = planningState.tasks.find((task) => task.id === taskId);
+    if (!targetTask) return;
+
+    const nextStatus = targetTask.completed ? 'pending' : 'completed';
+    const isLocalTask = !targetTask.taskId || String(targetTask.taskId).startsWith('task-skill-');
+    if (!isLocalTask) {
+      const response = await planningService.updateTaskStatusInApi(targetTask.taskId, nextStatus);
+      if (!response) {
+        showToast('Task update failed. Please try again.');
+        return;
       }
+    }
 
-      return {
-        ...prevState,
-        tasks: updatedTasks,
-        progress: updatedProgress,
-      };
-    });
+    setPlanningState((prevState) => ({
+      ...prevState,
+      tasks: prevState.tasks.map((task) => task.id === taskId
+        ? { ...task, status: nextStatus, completed: nextStatus === 'completed' }
+        : task),
+    }));
+
+    showToast(nextStatus === 'completed' ? 'Task completed.' : 'Task reopened.');
+    if (!isLocalTask) {
+      const roadmapSummary = await planningService.getRoadmapSummaryFromApi();
+      const taskProgress = await planningService.getTaskProgressFromApi();
+      setPlanningState((prev) => ({
+        ...prev,
+        roadmap: roadmapSummary ? {
+          ...prev.roadmap,
+          currentDay: Number(roadmapSummary.current_day) || prev.roadmap.currentDay,
+          currentPhaseName: roadmapSummary.current_phase_name || prev.roadmap.currentPhaseName,
+          overallProgressPercent: Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage) || 0,
+        } : prev.roadmap,
+        progress: mergeTaskProgress(prev.progress, taskProgress),
+      }));
+    }
   };
 
+  /*
+   * Keep existing task-add behavior available to other pages; the roadmap view
+   * itself only displays tasks returned by the authenticated API.
+   */
   const addSkillToRoadmap = (skillItem) => {
     const newTaskId = `task-skill-${Date.now()}`;
     const newTask = {
@@ -77,47 +127,28 @@ export const PlanningProvider = ({ children }) => {
       duration: '45 mins',
       priority: skillItem.priority || 'High',
       completed: false,
-      dayNumber: 35,
-      phaseId: 'phase-2',
+      status: 'pending',
+      dayNumber: (planningState.roadmap.currentDay || 1) + 1,
       route: skillItem.actionRoute || '/roadmap'
     };
 
-    setPlanningState((prevState) => {
-      const updatedTasks = [newTask, ...prevState.tasks];
-      const updatedRoadmap = {
-        ...prevState.roadmap,
-        lastAdapted: 'Just now (Skill Gap Added)',
-        adaptiveRebalancingNotice: {
-          isAdapted: true,
-          reason: `Added "${skillItem.skill}" to Day 35 active execution matrix.`,
-          adaptedAt: 'Just now',
-          adjustments: [
-            `Inserted task "${newTask.title}" into Sprint 5 schedule.`,
-            `Prioritized ${skillItem.priority || 'High'} level remediation for target role readiness.`
-          ]
-        }
-      };
-
-      return {
-        ...prevState,
-        tasks: updatedTasks,
-        roadmap: updatedRoadmap,
-      };
-    });
-
-    showToast(`Added "${skillItem.skill}" to 90-Day Roadmap (Day 35)!`);
+    setPlanningState((prevState) => ({ ...prevState, tasks: [newTask, ...prevState.tasks] }));
+    showToast(`Added "${skillItem.skill}" to your roadmap.`);
   };
 
   const adaptRoadmap = async () => {
-    const updatedRoadmap = await planningService.adaptRoadmap(
-      planningState.roadmap,
-      planningState.tasks
-    );
-    setPlanningState((prev) => ({
-      ...prev,
-      roadmap: updatedRoadmap,
-    }));
-    showToast('Roadmap schedule re-balanced with AI Copilot!');
+    try {
+      const updatedRoadmap = await planningService.adaptRoadmap(
+        planningState.roadmap,
+        planningState.tasks
+      );
+      setPlanningState((prev) => ({ ...prev, roadmap: updatedRoadmap }));
+      showToast(updatedRoadmap.adaptationReason || 'Roadmap recalibrated.');
+      return true;
+    } catch (error) {
+      showToast(error.message || 'Roadmap recalibration failed.');
+      return false;
+    }
   };
 
   return (
@@ -126,6 +157,9 @@ export const PlanningProvider = ({ children }) => {
         roadmap: planningState.roadmap,
         tasks: planningState.tasks,
         progress: planningState.progress,
+        planningLoading,
+        planningError,
+        reloadPlanning: loadApiPlanning,
         toggleTaskCompletion,
         addSkillToRoadmap,
         adaptRoadmap,
