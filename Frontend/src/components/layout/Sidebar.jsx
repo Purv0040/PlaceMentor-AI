@@ -31,8 +31,7 @@ export const Sidebar = () => {
     {
       title: 'Main',
       items: [
-        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { label: 'AI Placement Mentor', path: '/mentor', icon: Bot }
+        { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }
       ]
     },
     {
@@ -41,9 +40,7 @@ export const Sidebar = () => {
         { label: 'Resume Intelligence', path: '/resume', icon: FileText },
         { label: 'GitHub Intelligence', path: '/github', icon: Github },
         { label: 'LeetCode Analytics', path: '/leetcode', icon: Code2 },
-        { label: 'Projects Audit', path: '/projects', icon: FolderKanban },
-        { label: 'Communication Lab', path: '/communication', icon: Mic },
-        { label: 'Mock Interview', path: '/interviews', icon: Video }
+        { label: 'Projects Audit', path: '/projects', icon: FolderKanban }
       ]
     },
     {
@@ -59,6 +56,14 @@ export const Sidebar = () => {
         { label: '90-Day Roadmap', path: '/roadmap', icon: Map },
         { label: "Today's Tasks", path: '/tasks', icon: CheckSquare },
         { label: 'Progress Telemetry', path: '/progress', icon: TrendingUp }
+      ]
+    },
+    {
+      title: 'Practice & Interview',
+      items: [
+        { label: 'AI Placement Mentor', path: '/mentor', icon: Bot },
+        { label: 'Communication Lab', path: '/communication', icon: Mic },
+        { label: 'Mock Interview', path: '/interviews', icon: Video }
       ]
     },
     {
