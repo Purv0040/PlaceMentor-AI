@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
+import { initialRoadmapData } from '../../data/roadmapData';
 import {
   Zap,
   RefreshCw,
@@ -24,14 +25,29 @@ export const RoadmapPage = () => {
   const [activePhaseId, setActivePhaseId] = useState('phase-2');
   const [isAdapting, setIsAdapting] = useState(false);
 
+  const safeRoadmap = {
+    ...initialRoadmapData,
+    ...roadmap,
+    phases: Array.isArray(roadmap?.phases) && roadmap.phases.length
+      ? roadmap.phases.map((phase, index) => ({
+          ...phase,
+          id: phase.id || phase.phase_id || `phase-${index + 1}`,
+          title: phase.title || phase.name || `Phase ${index + 1}`,
+          milestones: Array.isArray(phase.milestones) ? phase.milestones : [],
+        }))
+      : initialRoadmapData.phases,
+    day34Details: roadmap?.day34Details || initialRoadmapData.day34Details,
+  };
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+
   const handleRecalibrate = async () => {
     setIsAdapting(true);
     await adaptRoadmap();
     setIsAdapting(false);
   };
 
-  const activePhase = roadmap.phases.find((p) => p.id === activePhaseId) || roadmap.phases[1];
-  const day34Tasks = tasks.filter((t) => t.dayNumber === 34 || t.phaseId === 'phase-2');
+  const activePhase = safeRoadmap.phases.find((p) => p.id === activePhaseId) || safeRoadmap.phases[1] || initialRoadmapData.phases[1];
+  const day34Tasks = safeTasks.filter((t) => t.dayNumber === 34 || t.phaseId === 'phase-2');
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -49,7 +65,7 @@ export const RoadmapPage = () => {
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-semibold border border-indigo-500/30">
               <Zap className="w-3.5 h-3.5 text-indigo-400" />
-              Telemetry V4.2 · Adaptive Re-balancing Engine
+              Telemetry V4.2 Â· Adaptive Re-balancing Engine
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">90-Day Adaptive Placement Roadmap</h1>
@@ -83,34 +99,34 @@ export const RoadmapPage = () => {
           <div>
             <span className="text-xs font-mono uppercase text-slate-400 font-semibold tracking-wider block">Current Sprint & Progress</span>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              Day {roadmap.currentDay} of {roadmap.totalDays} · {roadmap.activeSprintName}
+              Day {safeRoadmap.currentDay} of {safeRoadmap.totalDays} Â· {safeRoadmap.activeSprintName}
             </h3>
           </div>
           <span className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
-            {roadmap.overallProgressPercent}% Roadmap Completed
+            {safeRoadmap.overallProgressPercent}% Roadmap Completed
           </span>
         </div>
 
         <div className="w-full bg-[#0f131d] rounded-full h-3 overflow-hidden border border-[#232b3e]">
           <div
             className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-sm"
-            style={{ width: `${roadmap.overallProgressPercent}%` }}
+            style={{ width: `${safeRoadmap.overallProgressPercent}%` }}
           ></div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 pt-1">
-          <span>Completed: {roadmap.completedDaysCount} Days</span>
-          <span>Last Adapted: {roadmap.lastAdapted}</span>
-          <span>Remaining: {roadmap.totalDays - roadmap.completedDaysCount} Days</span>
+          <span>Completed: {safeRoadmap.completedDaysCount} Days</span>
+          <span>Last Adapted: {safeRoadmap.lastAdapted}</span>
+          <span>Remaining: {safeRoadmap.totalDays - safeRoadmap.completedDaysCount} Days</span>
         </div>
       </div>
 
       {/* 3. PHASE TIMELINE TABS */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 border-b border-[#232b3e] pb-2 overflow-x-auto">
-          {roadmap.phases.map((phase) => (
+              {safeRoadmap.phases.map((phase, index) => (
             <button
-              key={phase.id}
+              key={phase.id || `phase-${index + 1}`}
               onClick={() => setActivePhaseId(phase.id)}
               className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 activePhaseId === phase.id
@@ -137,7 +153,7 @@ export const RoadmapPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
             <div>
               <h3 className="font-bold text-white text-lg">{activePhase.title}</h3>
-              <p className="text-xs text-slate-400 font-mono">Days {activePhase.startDay} – {activePhase.endDay} ({activePhase.durationDays} Days Duration)</p>
+              <p className="text-xs text-slate-400 font-mono">Days {activePhase.startDay} â€“ {activePhase.endDay} ({activePhase.durationDays} Days Duration)</p>
             </div>
             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 self-start sm:self-auto">
               Status: {activePhase.status}
@@ -168,16 +184,16 @@ export const RoadmapPage = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                ACTIVE DAY {roadmap.day34Details.dayNumber}
+                ACTIVE DAY {safeRoadmap.day34Details.dayNumber}
               </span>
-              <h3 className="font-bold text-white text-lg">{roadmap.day34Details.focusTitle}</h3>
+              <h3 className="font-bold text-white text-lg">{safeRoadmap.day34Details.focusTitle}</h3>
             </div>
-            <p className="text-xs text-slate-400 mt-1">{roadmap.day34Details.description}</p>
+            <p className="text-xs text-slate-400 mt-1">{safeRoadmap.day34Details.description}</p>
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 self-start sm:self-auto">
             <Clock className="w-4 h-4 text-indigo-400" />
-            <span>Target: {roadmap.day34Details.recommendedHours}</span>
+            <span>Target: {safeRoadmap.day34Details.recommendedHours}</span>
           </div>
         </div>
 

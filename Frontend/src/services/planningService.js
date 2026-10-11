@@ -35,7 +35,28 @@ export const planningService = {
     try {
       const res = await apiRequest("/roadmap");
       if (res && res.title) {
+        const phases = Array.isArray(res.phases)
+          ? res.phases.map((phase, index) => {
+              const tasks = Array.isArray(phase.tasks) ? phase.tasks : [];
+              return {
+                ...phase,
+                id: phase.id || phase.phase_id || `phase-${phase.phase_number || index + 1}`,
+                title: phase.title || phase.name || `Phase ${phase.phase_number || index + 1}`,
+                subtitle: phase.subtitle || phase.goal || "",
+                startDay: phase.startDay ?? phase.start_day ?? 1,
+                endDay: phase.endDay ?? phase.end_day ?? 1,
+                durationDays: phase.durationDays ?? phase.duration_days ?? Math.max(1, (phase.endDay ?? phase.end_day ?? 1) - (phase.startDay ?? phase.start_day ?? 1) + 1),
+                status: phase.status || "upcoming",
+                progressPercent: phase.progressPercent ?? phase.progress_percentage ?? 0,
+                milestones: Array.isArray(phase.milestones)
+                  ? phase.milestones
+                  : tasks.map((task) => task.title).filter(Boolean),
+              };
+            })
+          : initialRoadmapData.phases;
+
         return {
+          ...initialRoadmapData,
           id: res.id,
           title: res.title,
           description: res.description,
@@ -45,7 +66,7 @@ export const planningService = {
           currentPhaseName: res.phase_name || "Phase 1: Foundations",
           completionPercentage: Math.round(res.progress_percentage || 0),
           lastAdapted: res.updated_at ? new Date(res.updated_at).toLocaleDateString() : "Recently",
-          phases: res.phases || initialRoadmapData.phases,
+          phases,
           adaptiveRebalancingNotice: {
             isAdapted: true,
             reason: "Synced with AI Adaptive Engine Backend",

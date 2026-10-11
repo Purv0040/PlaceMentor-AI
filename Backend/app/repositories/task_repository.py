@@ -42,6 +42,30 @@ class TaskRepository:
         if not doc.get("id"):
             doc["id"] = str(doc["task_id"])
 
+        # Older task records may predate fields now required by the API schema.
+        # Fill them when reading so one legacy document cannot make GET /tasks
+        # fail response validation for the entire collection.
+        created_at = doc.get("created_at") or datetime.now(timezone.utc)
+        fallback_date = (
+            created_at.date().isoformat()
+            if isinstance(created_at, datetime)
+            else datetime.now(timezone.utc).date().isoformat()
+        )
+        date_value = doc.get("date")
+        if isinstance(date_value, datetime):
+            date_value = date_value.date().isoformat()
+        doc["date"] = date_value or fallback_date
+        doc["day_number"] = doc.get("day_number") or 1
+        doc["title"] = doc.get("title") or "Untitled task"
+        doc["description"] = doc.get("description") or ""
+        doc["category"] = doc.get("category") or "General"
+        doc["skill"] = doc.get("skill") or doc["category"] or "Core"
+        doc["priority"] = doc.get("priority") or "MEDIUM"
+        doc["estimated_minutes"] = doc.get("estimated_minutes") or 60
+        doc["difficulty"] = doc.get("difficulty") or "Intermediate"
+        doc["status"] = doc.get("status") or "pending"
+        doc["completion_percentage"] = doc.get("completion_percentage") or 0.0
+
         return doc
 
     @staticmethod
