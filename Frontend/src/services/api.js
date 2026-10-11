@@ -4,6 +4,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+  
+  // Guard against sending unauthenticated requests to protected endpoints
+  if (!token && !options.isPublic) {
+    return null;
+  }
+
   const defaultHeaders = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -41,7 +47,8 @@ export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
           return await apiRequest(endpoint, options, true);
         }
       }
-      // If session is expired and unrefreshable, return null cleanly without noisy throw
+      // Session expired and unrefreshable: log out cleanly
+      authService.logout();
       return null;
     }
 

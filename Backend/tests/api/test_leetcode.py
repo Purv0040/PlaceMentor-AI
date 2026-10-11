@@ -116,9 +116,54 @@ def test_leetcode_connect_and_sync_flow(client: TestClient, auth_headers: dict):
     assert res_fetch.status_code == 200
     assert res_fetch.json()["data"]["analysis"]["profile"]["username"] == "digisha_prep"
 
+    # Test Daily Practice Plan
+    res_plan = client.get("/api/v1/leetcode/daily-plan", headers=auth_headers)
+    assert res_plan.status_code == 200
+    plan_data = res_plan.json()["data"]
+    assert "tasks" in plan_data
+    assert len(plan_data["tasks"]) >= 3
+    assert plan_data["completed_count"] == 0
+    first_task_id = plan_data["tasks"][0]["task_id"]
+
+    # Test toggling a daily practice task
+    res_toggle = client.post(f"/api/v1/leetcode/daily-plan/{first_task_id}/toggle", headers=auth_headers)
+    assert res_toggle.status_code == 200
+    toggled_data = res_toggle.json()["data"]
+    assert toggled_data["completed_count"] == 1
+    assert toggled_data["tasks"][0]["status"] == "completed"
+
+    # Test Activity History (7d, 30d, 90d)
+    for period in [7, 30, 90]:
+        res_hist = client.get(f"/api/v1/leetcode/history?days={period}", headers=auth_headers)
+        assert res_hist.status_code == 200
+        hist_data = res_hist.json()["data"]
+        assert hist_data["days"] == period
+        assert len(hist_data["data_points"]) == period
+        assert hist_data["has_contest_history"] is True
+
+    # Test Focus Areas (14 DSA topics)
+    res_focus = client.get("/api/v1/leetcode/focus-areas", headers=auth_headers)
+    assert res_focus.status_code == 200
+    focus_data = res_focus.json()["data"]
+    assert len(focus_data) == 14
+    for topic_item in focus_data:
+        assert 0 <= topic_item["mastery_percentage"] <= 100
+        assert topic_item["priority"] in ["High", "Medium", "Low"]
+        assert len(topic_item["suggested_problems"]) > 0
+
+    # Test Readiness Breakdown
+    res_ready = client.get("/api/v1/leetcode/readiness-breakdown", headers=auth_headers)
+    assert res_ready.status_code == 200
+    ready_data = res_ready.json()["data"]
+    assert 25 <= ready_data["readiness_score"] <= 98
+    assert "disclaimer" in ready_data
+    assert ready_data["easy_pts"] > 0
+    assert ready_data["medium_pts"] > 0
+
     res_del = client.delete("/api/v1/leetcode", headers=auth_headers)
     assert res_del.status_code == 200
     assert res_del.json()["data"]["disconnected"] is True
 
     res_after = client.get("/api/v1/leetcode", headers=auth_headers)
     assert res_after.status_code == 404
+

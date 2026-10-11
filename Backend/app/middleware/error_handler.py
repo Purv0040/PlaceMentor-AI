@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.responses import JSONResponse
 from bson.errors import InvalidId
+from pymongo.errors import DuplicateKeyError, PyMongoError
 from app.core.config import settings
 from app.core.exceptions import AppException
 
@@ -12,6 +13,38 @@ logger = logging.getLogger(__name__)
 
 def register_exception_handlers(app: FastAPI) -> None:
     """Register custom exception handlers on FastAPI application."""
+
+    @app.exception_handler(DuplicateKeyError)
+    async def duplicate_key_exception_handler(request: Request, exc: DuplicateKeyError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", "-")
+        logger.warning("DuplicateKeyError [req_id:%s]: %s", request_id, str(exc))
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "success": False,
+                "error": {
+                    "code": "CONFLICT",
+                    "message": "A record with this information already exists.",
+                    "details": None,
+                },
+            },
+        )
+
+    @app.exception_handler(PyMongoError)
+    async def pymongo_exception_handler(request: Request, exc: PyMongoError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", "-")
+        logger.error("PyMongoError [req_id:%s]: %s", request_id, str(exc))
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "success": False,
+                "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Database is temporarily unavailable. Please try again.",
+                    "details": None,
+                },
+            },
+        )
 
     @app.exception_handler(InvalidId)
     async def invalid_id_exception_handler(request: Request, exc: InvalidId) -> JSONResponse:

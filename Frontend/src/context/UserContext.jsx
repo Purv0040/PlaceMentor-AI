@@ -61,6 +61,7 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchApiProfile = async () => {
+      if (!authService.isAuthenticated()) return;
       const activeUser = authService.getCurrentUser();
       if (activeUser) {
         setUser(prev => ({

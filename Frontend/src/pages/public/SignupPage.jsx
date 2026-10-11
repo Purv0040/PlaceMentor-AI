@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { User, Mail, ArrowRight, Sparkles, Github, Chrome, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -59,12 +59,23 @@ export const SignupPage = () => {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !window.google?.accounts?.id) return;
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleResponse,
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
+    try {
+      window.__gsiSignupCallback = handleGoogleResponse;
+      if (!window.__gsiInitialized) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (res) => {
+            if (window.__gsiSignupCallback) window.__gsiSignupCallback(res);
+            else if (window.__gsiLoginCallback) window.__gsiLoginCallback(res);
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+        window.__gsiInitialized = true;
+      }
+    } catch (e) {
+      console.warn('Google One Tap init warning:', e);
+    }
   }, [handleGoogleResponse]);
 
   const handleGoogleClick = () => {

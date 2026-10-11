@@ -638,7 +638,7 @@ class GitHubService:
             }
 
             # 6. Save repositories in DB
-            profile_id = str(existing["id"])
+            profile_id = str(existing.get("id") or existing.get("_id") or "")
             await self.repo.upsert_repositories(user_id, profile_id, repos)
 
             # 7. Save updated profile with stats & set sync status

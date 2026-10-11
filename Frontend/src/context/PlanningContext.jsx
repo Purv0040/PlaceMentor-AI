@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { planningService } from '../services/planningService';
+import { authService } from '../services/authService';
 
 const PlanningContext = createContext();
 
@@ -12,6 +13,8 @@ export const PlanningProvider = ({ children }) => {
   }, [planningState]);
 
   useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+
     const fetchApiPlanning = async () => {
       const [apiTasks, apiRoadmap] = await Promise.all([
         planningService.getTasksFromApi(),

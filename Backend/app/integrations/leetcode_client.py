@@ -25,6 +25,12 @@ _QUERY_PROFILE = """
 query getUserProfile($username: String!) {
   matchedUser(username: $username) {
     username
+    submissionCalendar
+    userCalendar {
+      streak
+      totalActiveDays
+      submissionCalendar
+    }
     profile {
       realName
       aboutMe
@@ -34,6 +40,11 @@ query getUserProfile($username: String!) {
     }
     submitStats: submitStatsGlobal {
       acSubmissionNum {
+        difficulty
+        count
+        submissions
+      }
+      totalSubmissionNum {
         difficulty
         count
         submissions
@@ -63,6 +74,7 @@ _QUERY_RECENT = """
 query recentAcSubmissions($username: String!, $limit: Int!) {
   recentAcSubmissionList(username: $username, limit: $limit) {
     title
+    titleSlug
     timestamp
     statusDisplay
   }
@@ -77,6 +89,15 @@ query userContestRankingInfo($username: String!) {
     totalParticipants
     topPercentage
     attendedContestsCount
+  }
+  userContestRankingHistory(username: $username) {
+    attended
+    rating
+    ranking
+    contest {
+      title
+      startTime
+    }
   }
 }
 """
@@ -123,6 +144,8 @@ class LeetCodeAPIClient:
             raise LeetCodeUserNotFoundError(f"LeetCode user '{username}' not found.")
 
         profile = user.get("profile", {})
+        user_cal = user.get("userCalendar") or {}
+        raw_cal = user.get("submissionCalendar") or user_cal.get("submissionCalendar")
         return {
             "username": user.get("username", username),
             "real_name": profile.get("realName"),
@@ -130,18 +153,26 @@ class LeetCodeAPIClient:
             "ranking": profile.get("ranking"),
             "reputation": profile.get("reputation"),
             "avatar_url": profile.get("userAvatar"),
+            "submission_calendar": raw_cal,
+            "streak": user_cal.get("streak", 0),
+            "total_active_days": user_cal.get("totalActiveDays", 0),
         }
 
     async def get_solved_problems(self, username: str) -> Dict[str, Any]:
-        """Fetch problem statistics by difficulty."""
+        """Fetch problem statistics by difficulty, calculate acceptance rate and streaks."""
         data = await self._post_query(_QUERY_PROFILE, {"username": username})
         user = data.get("matchedUser")
         if not user:
             raise LeetCodeUserNotFoundError(f"LeetCode user '{username}' not found.")
 
+        user_cal = user.get("userCalendar") or {}
         ac_nums = {
             entry["difficulty"]: entry
             for entry in user.get("submitStats", {}).get("acSubmissionNum", [])
+        }
+        total_nums = {
+            entry["difficulty"]: entry
+            for entry in user.get("submitStats", {}).get("totalSubmissionNum", [])
         }
         all_counts = {
             entry["difficulty"]: entry["count"]
@@ -153,8 +184,83 @@ class LeetCodeAPIClient:
         hard_solved = ac_nums.get("Hard", {}).get("count", 0)
         total_solved = ac_nums.get("All", {}).get("count", easy_solved + medium_solved + hard_solved)
 
-        all_submissions = ac_nums.get("All", {}).get("submissions", 0)
-        acceptance_rate = round(total_solved / all_submissions * 100, 1) if (all_submissions and total_solved) else None
+        ac_submissions = ac_nums.get("All", {}).get("submissions", 0) or total_solved
+        total_submissions = total_nums.get("All", {}).get("submissions", 0)
+
+        # Standard LeetCode Acceptance Rate = (accepted_submissions / total_submissions) * 100
+        if total_submissions and total_submissions > 0:
+            acceptance_rate = round((ac_submissions / total_submissions) * 100, 1)
+        elif ac_submissions and ac_submissions > 0:
+            acceptance_rate = round((total_solved / ac_submissions) * 100, 1)
+        else:
+            acceptance_rate = None
+
+        # Parse submissionCalendar to evaluate streak metrics
+        raw_cal = user.get("submissionCalendar") or user_cal.get("submissionCalendar")
+        dates = set()
+        if raw_cal:
+            try:
+                import json
+                cal_dict = json.loads(raw_cal) if isinstance(raw_cal, str) else raw_cal
+                if isinstance(cal_dict, dict):
+                    from datetime import datetime, timezone, timedelta
+                    try:
+                        from zoneinfo import ZoneInfo
+                        tz = ZoneInfo("Asia/Kolkata")
+                    except Exception:
+                        tz = timezone(timedelta(hours=5, minutes=30))
+                    for ts in cal_dict.keys():
+                        dates.add(datetime.fromtimestamp(int(ts), tz).date())
+            except Exception as e:
+                logger.warning("Error parsing submissionCalendar for streak: %s", e)
+
+        # Calculate longest continuous daily streak
+        sorted_dates = sorted(list(dates))
+        longest_streak = 0
+        running = 0
+        prev_d = None
+        for d in sorted_dates:
+            from datetime import timedelta
+            if prev_d is None or d == prev_d + timedelta(days=1):
+                running += 1
+            else:
+                running = 1
+            longest_streak = max(longest_streak, running)
+            prev_d = d
+
+        # LeetCode's userCalendar.streak represents the maximum/best streak achieved in the calendar
+        cal_streak = int(user_cal.get("streak") or 0)
+        longest_streak = max(longest_streak, cal_streak)
+
+        # Calculate REAL current active streak leading up to today (or yesterday if pending today's submission)
+        current_streak = 0
+        if dates:
+            from datetime import datetime, timezone, timedelta
+            try:
+                from zoneinfo import ZoneInfo
+                tz = ZoneInfo("Asia/Kolkata")
+            except Exception:
+                tz = timezone(timedelta(hours=5, minutes=30))
+            today = datetime.now(tz).date()
+            yesterday = today - timedelta(days=1)
+
+            # If user submitted today or yesterday, streak is currently active
+            if today in dates:
+                check_date = today
+            elif yesterday in dates:
+                check_date = yesterday
+            else:
+                check_date = None
+
+            while check_date and check_date in dates:
+                current_streak += 1
+                check_date -= timedelta(days=1)
+        elif cal_streak:
+            # Fallback only if no submission calendar timestamps were provided
+            current_streak = cal_streak
+
+        longest_streak = max(longest_streak, current_streak)
+        total_active_days = user_cal.get("totalActiveDays", len(dates))
 
         return {
             "total_solved": total_solved,
@@ -166,6 +272,11 @@ class LeetCodeAPIClient:
             "medium_total": all_counts.get("Medium", 0),
             "hard_total": all_counts.get("Hard", 0),
             "acceptance_rate": acceptance_rate,
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "total_active_days": total_active_days,
+            "accepted_submissions": ac_submissions,
+            "total_submissions": total_submissions,
         }
 
     async def get_topic_tags(self, username: str) -> List[Dict[str, Any]]:
@@ -190,7 +301,7 @@ class LeetCodeAPIClient:
             logger.warning("Topic tags fetch failed for %s: %s", username, e)
             return []
 
-    async def get_recent_submissions(self, username: str, limit: int = 15) -> List[Dict[str, Any]]:
+    async def get_recent_submissions(self, username: str, limit: int = 20) -> List[Dict[str, Any]]:
         """Fetch recent accepted submissions."""
         try:
             data = await self._post_query(_QUERY_RECENT, {"username": username, "limit": limit})
@@ -198,8 +309,10 @@ class LeetCodeAPIClient:
             return [
                 {
                     "title": s.get("title", "Unknown"),
+                    "title_slug": s.get("titleSlug"),
+                    "url": f"https://leetcode.com/problems/{s.get('titleSlug')}/" if s.get("titleSlug") else f"https://leetcode.com/problems/{s.get('title', '').lower().replace(' ', '-')}/",
                     "timestamp": str(s.get("timestamp")) if s.get("timestamp") else None,
-                    "status": s.get("statusDisplay") or None,
+                    "status": s.get("statusDisplay") or "Accepted",
                     "difficulty": None
                 }
                 for s in submissions
@@ -213,13 +326,15 @@ class LeetCodeAPIClient:
         try:
             data = await self._post_query(_QUERY_CONTEST, {"username": username})
             ranking = data.get("userContestRanking")
-            if not ranking:
+            history = [h for h in (data.get("userContestRankingHistory") or []) if h.get("attended")]
+            if not ranking and not history:
                 return None
             return {
-                "rating": ranking.get("rating"),
-                "global_ranking": ranking.get("globalRanking"),
-                "attended_contests": ranking.get("attendedContestsCount"),
-                "top_percentage": ranking.get("topPercentage"),
+                "rating": ranking.get("rating") if ranking else None,
+                "global_ranking": ranking.get("globalRanking") if ranking else None,
+                "attended_contests": ranking.get("attendedContestsCount") if ranking else 0,
+                "top_percentage": ranking.get("topPercentage") if ranking else None,
+                "history": history
             }
         except Exception as e:
             logger.warning("Contest info fetch failed for %s: %s", username, e)

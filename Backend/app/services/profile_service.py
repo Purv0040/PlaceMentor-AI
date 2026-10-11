@@ -26,6 +26,8 @@ class ProfileService:
         
         if "_id" in profile and not isinstance(profile["_id"], str):
             profile["_id"] = str(profile["_id"])
+        if "id" not in profile and "_id" in profile:
+            profile["id"] = profile["_id"]
         return profile
 
     async def update_profile(self, user_id: str, profile_update: ProfileUpdate) -> Dict[str, Any]:
@@ -60,9 +62,10 @@ class ProfileService:
             for k, v in profile_update.goals.model_dump(exclude_none=True).items():
                 update_fields[f"goals.{k}"] = v
 
-        if profile_update.overallReadinessScore is not None:
-            update_fields["overallReadinessScore"] = profile_update.overallReadinessScore
-            update_fields["baseline_score"] = profile_update.overallReadinessScore
+        readiness_score = getattr(profile_update, "overallReadinessScore", None)
+        if readiness_score is not None:
+            update_fields["overallReadinessScore"] = readiness_score
+            update_fields["baseline_score"] = readiness_score
 
         if not update_fields:
             return existing
