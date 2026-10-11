@@ -57,7 +57,7 @@ export const TasksPage = () => {
             onClick={() => navigate('/roadmap')}
             className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
           >
-            <span>View 90-Day Roadmap</span>
+            <span>View Roadmap</span>
             <ArrowUpRight className="w-4 h-4" />
           </button>
         </div>
@@ -210,15 +210,15 @@ export const TasksPage = () => {
           </div>
 
           <div className="p-4 rounded-xl bg-[#0f131d] border border-[#232b3e] space-y-2 hover:border-purple-500/40 transition-colors">
-            <h4 className="font-bold text-sm text-white">Review 90-Day Curriculum</h4>
+            <h4 className="font-bold text-sm text-white">Review Adaptive Curriculum</h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Inspect upcoming Day 35–40 milestones in Sprint 5 of your adaptive roadmap.
+              Inspect upcoming preparation milestones in your personalized adaptive roadmap.
             </p>
             <button
               onClick={() => navigate('/roadmap')}
               className="text-xs font-bold text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1 pt-1"
             >
-              <span>Go to 90-Day Roadmap</span>
+              <span>Go to Roadmap</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>

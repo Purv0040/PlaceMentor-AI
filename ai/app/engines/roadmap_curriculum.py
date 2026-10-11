@@ -15,6 +15,7 @@ Provides structured, progressive, and highly personalized curricula across techn
 - Mobile App Developer
 - Software Engineer / Custom Roles
 """
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -87,6 +88,9 @@ ROLE_DOMAIN_MAP: Dict[str, str] = {
     "sdet": "qa",
     "database engineer": "database",
     "database administrator": "database",
+    "business analyst": "business_analyst",
+    "product analyst": "business_analyst",
+    "ui/ux designer": "uiux",
     
     # General SWE
     "software engineer": "software_engineer",
@@ -150,6 +154,8 @@ ROLE_RELEVANT_CATEGORIES_MAP: Dict[str, List[str]] = {
     "qa": ["Testing", "Programming", "Backend", "DevOps", "Projects", "Resume", "GitHub", "Interview"],
     "mobile": ["Mobile", "Frontend", "Backend", "Programming", "Projects", "Resume", "GitHub", "Interview"],
     "database": ["Databases", "Backend", "DevOps", "CS Fundamentals", "Projects", "Resume", "GitHub", "Interview"],
+    "business_analyst": ["Business Analysis", "Data Visualization", "Databases", "Projects", "Communication", "Interview"],
+    "uiux": ["UI/UX", "Design Systems", "Accessibility", "Projects", "Portfolio", "Interview"],
     "software_engineer": ["DSA", "CS Fundamentals", "Programming", "Backend", "Projects", "Resume", "GitHub", "Interview"],
 }
 
@@ -573,8 +579,153 @@ def _generate_backend_curriculum(target_role: str, high_gaps: List[str], preferr
     return days
 
 
+def _generate_fullstack_curriculum(target_role: str, high_gaps: List[str]) -> List[Dict[str, Any]]:
+    """Generates 90 progressive day blueprints for Full Stack Engineer roles."""
+    days = []
+    
+    # --- Phase 1: Foundation (Days 1–30) ---
+    p1_topics = [
+        (1, "Frontend", "HTML5 & Accessibility", "HTML5 Semantics, Modern DOM & Accessibility (WCAG)", "Master semantic markup (<main>, <article>, <nav>), DOM tree construction, and ARIA accessibility roles."),
+        (2, "Frontend", "CSS3", "Modern CSS3: Flexbox, CSS Grid & Responsive Layout Architecture", "Build mobile-first responsive grid systems, fluid layouts with clamp(), and CSS custom property theme tokens."),
+        (3, "Programming", "JavaScript", "Modern JavaScript (ES6+): Closures, Promises & Async/Await Event Loop", "Deep dive into execution context, call stack, microtask vs macrotask queue, closures, and async patterns."),
+        (4, "Programming", "TypeScript", "TypeScript Fundamentals: Type Inference, Interfaces & Generics", "Configure tsconfig.json, type annotations, union/intersection types, generics, and strict null checking."),
+        (5, "Frontend", "React", "React Core Foundations: JSX, Component Hierarchy, Props & useState", "Build modular functional components, unidirectional data flow, immutable state updates, and key reconciliation."),
+        (6, "Frontend", "React", "React Lifecycle & Side Effects with useEffect and Custom Hooks", "Manage dependency arrays, cleanup functions, avoid infinite re-render loops, and encapsulate logic into custom hooks."),
+        (7, "Backend", "Node.js", "Node.js Runtime: Architecture, Event Loop, Libuv & NPM Ecosystem", "Understand single-threaded asynchronous non-blocking I/O, event emitters, buffer streams, and modular package management."),
+        (8, "Backend", "Express.js", "Express.js Server Architecture, Middleware Pipelines & Routing", "Initialize a scalable server structure with custom logging middleware, CORS, body parsing, and route controllers."),
+        (9, "Backend", "REST API", "RESTful API Architecture: HTTP Methods, Status Codes & Query Contracts", "Design resource endpoints, URL hierarchies, proper HTTP verbs (GET, POST, PUT, PATCH, DELETE), and status handling."),
+        (10, "Resume", "Resume", "Full Stack ATS Resume Optimization & Technical Portfolio Audit", f"Rewrite project bullets highlighting full-stack architectures, latency reductions, and user metrics for {target_role}."),
+        (11, "Databases", "SQL", "Relational Database Foundations: SQL Schemas, Constraints & Normalization", "Design 3NF relational schemas, primary/foreign keys, unique constraints, and write multi-table INNER/LEFT JOIN queries."),
+        (12, "Databases", "PostgreSQL", "PostgreSQL Advanced Queries: Aggregations, Grouping & Subqueries", "Write analytical queries using GROUP BY, HAVING, subqueries, and analyze relational integrity constraints."),
+        (13, "Databases", "ORM", "ORM Modeling & Schema Migrations with Prisma / Sequelize", "Define schema models, configure 1:1, 1:N, M:N relations, run declarative migrations, and seed initial database state."),
+        (14, "Backend", "Authentication", "Authentication Architecture: Cookies & Sessions vs Stateless JWT", "Compare stateful session cookies vs stateless JSON Web Tokens (JWT), token signing, and localStorage vs HttpOnly cookie security."),
+        (15, "Backend", "Authentication", "Secure JWT Authentication Flow: Access Tokens & Refresh Rotation", "Implement bcrypt password hashing with salt rounds, JWT sign/verify middleware, and secure refresh token rotation."),
+        (16, "Full Stack", "Validation", "End-to-End Type Safety & Input Validation with Zod", "Create shared validation schemas for API request payloads and frontend forms, handling typed validation errors."),
+        (17, "DSA", "Arrays", "DSA Foundation: Arrays, Strings & Two Pointers for Problem Solving", "Solve classic LeetCode array and string manipulation problems applying two pointers and sliding window techniques."),
+        (18, "DSA", "Hashing", "DSA Foundation: Hash Maps, Sets & Frequency Counter Patterns", "Implement hash table lookup algorithms and solve two-sum, group anagrams, and frequency count challenges."),
+        (19, "DevOps", "Git", "Git Collaboration Workflows: Feature Branching, Rebase & Pull Requests", "Practice interactive rebase, resolving merge conflicts, conventional commits, and collaborative code reviews."),
+        (20, "GitHub", "GitHub", "GitHub Portfolio Setup & Full Stack Monorepo Architecture", "Set up a clean GitHub repository with client/server workspaces, comprehensive README documentation, and architecture diagrams."),
+        (21, "Frontend", "API Client", "Client-Server Integration: Axios / Fetch & Error Boundary Handling", "Build typed API service modules, Axios interceptors for auth headers, loading states, and React error boundaries."),
+        (22, "Frontend", "UI Design", "Utility-First Styling with Tailwind CSS & Design Token System", "Configure Tailwind CSS typography, responsive utility modifiers, dark mode variants, and reusable UI button/card primitives."),
+        (23, "Frontend", "State Management", "Client State Management: React Context API vs Zustand Store", "Manage global authentication and theme state using lightweight Zustand stores with selector optimization."),
+        (24, "Backend", "File Uploads", "File Upload Pipelines: Multipart Form Data & S3 Pre-Signed URLs", "Implement file upload middleware using Multer and generate pre-signed AWS S3 upload URLs for direct cloud storage."),
+        (25, "Databases", "PostgreSQL", "Relational Modeling: Many-to-Many Relationships & Foreign Key Cascades", "Implement join tables for Many-to-Many entity relationships with cascade deletions and foreign key integrity."),
+        (26, "Full Stack", "Security", "Web Security Essentials: CORS, Helmet, CSRF & XSS Sanitization", "Configure Helmet security headers, enforce strict CORS policies, sanitize HTML inputs, and prevent XSS injections."),
+        (27, "Full Stack", "Testing", "Full Stack Testing Basics: Unit Tests with Vitest & Supertest API Tests", "Write unit tests for utility helpers using Vitest and integration tests for REST API endpoints using Supertest."),
+        (28, "DevOps", "Docker", "Containerization: Multi-Stage Dockerfile for Frontend & Backend", "Write multi-stage Dockerfiles optimizing image size for React client build and Node.js production runtime."),
+        (29, "DevOps", "Docker", "Docker Compose: Orchestrating Client, API & PostgreSQL Services", "Configure docker-compose.yml to launch frontend, backend API server, and PostgreSQL database with persistent volumes."),
+        (30, "Full Stack", "Full Stack", "Phase 1 Full Stack Foundation Milestone Review & Benchmark", f"Complete comprehensive full stack architecture, database, and client-server benchmark for {target_role}."),
+    ]
+    for d, cat, skill, title, desc in p1_topics:
+        days.append({"day": d, "phase": 1, "category": cat, "skill": skill, "title": f"Day {d}: {title}", "desc": desc, "diff": "Beginner"})
+        
+    # --- Phase 2: Skill Development & Production Frameworks (Days 31–60) ---
+    p2_topics = [
+        (31, "Frontend", "Next.js", "Next.js SSR & React Server Components (RSC) Architecture", "Understand Server-Side Rendering (SSR), Static Site Generation (SSG), and React Server Components boundaries."),
+        (32, "Frontend", "Next.js", "Next.js App Router: Nested Layouts, Server Actions & Data Fetching", "Build dynamic routing with nested layout trees, parallel routes, and mutation handling via Server Actions."),
+        (33, "Databases", "Redis", "In-Memory Caching with Redis: Session Caching & Cache-Aside Pattern", "Deploy Redis instance and implement Cache-Aside pattern for high-traffic read endpoints with TTL invalidation."),
+        (34, "Backend", "Async Processing", "Asynchronous Job Queues & Background Workers with BullMQ / Celery", "Implement Redis-backed job queues for asynchronous email delivery, image processing, and task retry policies."),
+        (35, "Full Stack", "WebSockets", "Bidirectional Real-Time Communication with WebSockets & Socket.io", "Build a real-time event pipeline for live updates, chat messaging, and connection lifecycle handling."),
+        (36, "Backend", "Server-Sent Events", "Server-Sent Events (SSE) for Unidirectional Real-Time Streaming", "Implement SSE endpoints for real-time progress notifications and live AI generation streaming."),
+        (37, "Databases", "PostgreSQL", "Database Performance Tuning: B-Tree Indexes, Composite Keys & EXPLAIN", "Analyze query execution plans using EXPLAIN ANALYZE, identify sequential table scans, and build composite B-Tree indexes."),
+        (38, "Databases", "PostgreSQL", "Database Transactions: ACID Guarantees, Row Locking & Rollbacks", "Execute atomic multi-step database transactions with rollback on failure and examine isolation levels."),
+        (39, "Full Stack", "Authorization", "Role-Based Access Control (RBAC): Admin Panels & Guard Middleware", "Implement fine-grained RBAC permissions with protected route guards on frontend and middleware on backend."),
+        (40, "Projects", "Full Stack", "Full Stack Project Sprint 1: Production Multi-Tenant Web Application", "Architect and build full CRUD workflows with authentication, database migrations, and responsive UI components."),
+        (41, "Full Stack", "Payments", "Payment Gateway Integration: Stripe Webhooks & Idempotency", "Integrate Stripe checkout sessions, verify webhook signatures securely, and implement idempotent order fulfillment."),
+        (42, "Frontend", "Search & Filters", "Complex Search, Debounced Filtering & Cursor-Based Pagination", "Implement instant debounced search queries, multi-filter dropdowns, and cursor-based infinite scrolling pagination."),
+        (43, "Frontend", "Data Fetching", "Server State Synchronization with TanStack Query (React Query)", "Configure query caching, automated background refetching, optimistic UI mutations, and stale-time policies."),
+        (44, "DSA", "Linked Lists", "Intermediate DSA: Linked Lists, Stacks & Monotonic Queue Problems", "Solve LeetCode Medium challenges on linked list reversal, cycle detection, and monotonic stack evaluation."),
+        (45, "DSA", "Trees", "Intermediate DSA: Binary Trees, BST Traversals & Level-Order BFS", "Implement binary tree traversals (Inorder, Preorder, Postorder) and BFS queue traversal for tree level analysis."),
+        (46, "Frontend", "Performance", "Frontend Optimization: Code Splitting, Dynamic Imports & Bundle Analysis", "Analyze JavaScript bundle sizes with webpack/vite visualizer, implement React.lazy route splitting, and optimize web assets."),
+        (47, "Frontend", "Performance", "Core Web Vitals Optimization: LCP, FID/INP & CLS Tuning", "Optimize Largest Contentful Paint with image preloading, eliminate Layout Shifts (CLS), and maximize Lighthouse performance scores."),
+        (48, "DevOps", "CI/CD", "Automated CI/CD Pipelines with GitHub Actions for Full Stack Testing", "Build a GitHub Actions workflow to run linters, type checks, unit tests, and automated Docker container builds on PRs."),
+        (49, "Cloud", "Deployment", "Cloud Deployment: Containerized Full Stack Deployment to AWS / Vercel", "Deploy frontend to Vercel/Cloudflare and containerized backend API to AWS (ECS/App Runner) with custom domain & SSL."),
+        (50, "Projects", "Full Stack", "Full Stack Project Sprint 2: Real-Time Collaborative SaaS Platform", "Build a multi-user collaborative platform with WebSocket presence, live comments, Redis caching, and notification triggers."),
+        (51, "Backend", "Microservices", "Microservice Architecture: API Gateway, Routing & Service Discovery", "Design API Gateway layer routing client requests across dedicated auth, product, and notification services."),
+        (52, "Backend", "Event-Driven", "Event-Driven Systems: Message Queues with RabbitMQ / Kafka", "Implement pub-sub message broker communication between decoupled services with dead letter queue handling."),
+        (53, "Databases", "MongoDB", "NoSQL Integration: MongoDB Document Schemas & Aggregation Pipelines", "Model flexible unstructured data in MongoDB, build aggregation pipelines ($match, $lookup, $group), and compare SQL vs NoSQL."),
+        (54, "Backend", "Rate Limiting", "API Rate Limiting & Abuse Prevention with Redis Token Bucket", "Implement distributed rate limiting middleware preventing API abuse and brute-force authentication attacks."),
+        (55, "Full Stack", "Testing", "End-to-End Integration Testing with Playwright / Cypress", "Write automated E2E browser tests simulating user signup, login, navigation, checkout, and verification flows."),
+        (56, "DevOps", "Observability", "Full Stack Observability: Structured Logging, Metrics & APM", "Configure structured JSON logger (Pino), trace request IDs across frontend and backend, and monitor error rates with Sentry."),
+        (57, "DSA", "Graphs", "Intermediate DSA: Graph Traversals (BFS & DFS) and Topological Sort", "Solve LeetCode graph problems representing network connections, cycle detection, and dependency ordering."),
+        (58, "DSA", "Dynamic Programming", "Intermediate DSA: 1D Dynamic Programming (Climbing Stairs, Coin Change)", "Derive state transition relations, memoization tables, and bottom-up space-optimized solutions for 1D DP."),
+        (59, "Frontend", "Accessibility", "Accessibility (a11y) & WCAG 2.1 AA Compliance Audit", "Audit UI keyboard navigation, focus management modals, screen reader announcements, and color contrast ratios."),
+        (60, "Projects", "Full Stack", "Full Stack Project Sprint 3: High-Performance Full Stack E-Commerce / SaaS", "Finalize and deploy an end-to-end production web application featuring Redis caching, payment flow, real-time alerts, and CI/CD."),
+    ]
+    for d, cat, skill, title, desc in p2_topics:
+        days.append({"day": d, "phase": 2, "category": cat, "skill": skill, "title": f"Day {d}: {title}", "desc": desc, "diff": "Intermediate"})
+        
+    # --- Phase 3: System Design, Advanced Drills & Placement (Days 61–90) ---
+    p3_topics = [
+        (61, "System Design", "System Design", "Full Stack System Design: Architecture of an E-Commerce Platform", "Design scalable e-commerce platform: product catalog caching, search indexing, shopping cart session persistence, and checkout queue."),
+        (62, "System Design", "System Design", "Full Stack System Design: Collaborative Real-Time Document Editor", "Architect Google Docs clone: operational transformation (OT) / CRDTs, WebSocket cluster, snapshot storage, and conflict resolution."),
+        (63, "System Design", "System Design", "Full Stack System Design: High-Traffic Social Media Feed (Twitter/LinkedIn)", "Design news feed system: Fan-out on write vs fan-out on read, Redis feed caching, timeline pagination, and media storage."),
+        (64, "System Design", "System Design", "Full Stack System Design: Video Ingestion & Streaming Platform", "Design YouTube/Netflix architecture: video chunking, transcoding pipelines, CDN edge caching, and adaptive bitrate streaming (HLS)."),
+        (65, "DSA", "Graphs", "Advanced DSA: Dijkstra's Shortest Path & Priority Queues", "Implement Dijkstra's shortest path algorithm using min-heaps and solve network delay time problems."),
+        (66, "DSA", "Dynamic Programming", "Advanced DSA: 2D Dynamic Programming (Grid Paths & Edit Distance)", "Solve complex 2D DP matrix challenges under timed conditions, optimizing space and time complexities."),
+        (67, "System Design", "System Design", "System Design: CDN Architecture, Edge Compute & Database Sharding", "Evaluate global CDN edge caching, static asset invalidation strategies, horizontal database sharding, and consistent hashing."),
+        (68, "System Design", "System Design", "System Design: Distributed Rate Limiter & API Gateway Architecture", "Design distributed rate limiter handling 500k QPS using Redis sliding logs and token bucket algorithms."),
+        (69, "Interview", "Full Stack Interview", "Frontend Deep Dive Interview: JavaScript Engine & React Fiber Internals", "Practice articulating V8 memory management, event loop microtasks, React Fiber reconciliation, and concurrent mode."),
+        (70, "Interview", "Full Stack Interview", "Backend Deep Dive Interview: Database Concurrency & Index Internals", "Practice defending B-Tree vs LSM trees, WAL write-ahead logs, transaction isolation anomalies, and connection pooling."),
+        (71, "Interview", "Full Stack Interview", "API Design & Microservice Protocols: REST vs GraphQL vs gRPC", "Articulate technical tradeoffs between REST, GraphQL over-fetching prevention, and binary gRPC transport."),
+        (72, "Interview", "Full Stack Interview", "Web Security Defense Interview: OWASP Top 10 Live Remediation", "Walk through live code remediation for SQL injection, CSRF, SSRF, XSS, and broken object level authorization (BOLA)."),
+        (73, "Interview", "Live Coding", "Live Full Stack Coding Challenge: 2 LeetCode Mediums under 45-Min Timer", "Solve 2 LeetCode Medium problems under simulated interview conditions with live verbal reasoning."),
+        (74, "Interview", "System Design", "System Design Whiteboard: 4-Step Framework for Full Stack Systems", "Master 4-step whiteboard framework: Scope & Requirements, High-Level Architecture, Deep-Dive Components, and Bottleneck Resolution."),
+        (75, "Interview", "System Design", "Mock Whiteboard Session: Designing a URL Shortener at Scale", "Simulate live 45-minute whiteboard session defending hashing algorithms, database schema, Redis caching, and capacity planning."),
+        (76, "Communication", "Communication", "Behavioral Interview Prep: STAR Method for Full Stack Engineers", "Craft 5 structured STAR method stories detailing technical leadership, production bug troubleshooting, and cross-functional decisions."),
+        (77, "Interview", "Full Stack Interview", "Mock Technical Interview: Full Stack Live Coding & Architecture Round", "Simulate a live 45-minute technical interview covering data modeling, React component design, and API endpoint implementation."),
+        (78, "Interview", "System Design", "Mock Technical Interview: System Design Whiteboard & Data Flow Defense", "Simulate a live 45-minute System Design interview defending scalability, caching tiers, and failure recovery modes."),
+        (79, "Interview", "Full Stack Interview", "Mock Technical Interview: End-to-End Debugging & Performance Profiling", "Simulate a technical deep dive investigating memory leaks, slow database queries, and frontend rendering bottlenecks."),
+        (80, "Interview", "Full Stack Interview", "Full Placement Panel Simulation: 90-Minute Comprehensive Interview", "Complete a full mock placement interview covering coding, System Design, and behavioral questions."),
+        (81, "GitHub", "GitHub", "Full Stack Portfolio Polish: Architecture Diagrams & Live Demo Links", "Ensure all GitHub repositories have production demo links, clean READMEs, architecture diagrams, and test suite badges."),
+        (82, "Resume", "Resume", "Final ATS Resume Calibration for Full Stack Engineer Roles", f"Finalize ATS-optimized resume emphasizing full-stack delivery, performance wins, and quantifiable business impact for {target_role}."),
+        (83, "Communication", "Communication", "LinkedIn Profile Optimization & Engineering Networking", "Optimize LinkedIn headline, publish technical writeups on full-stack architecture, and connect with engineering leaders."),
+        (84, "Interview", "Full Stack Interview", "Targeted Application Sprint: Submitting 15+ Applications for Full Stack Roles", f"Submit 15+ tailored job applications for {target_role} across target technology firms and fast-growing startups."),
+        (85, "Full Stack", "Code Quality", "Code Review Simulation & Clean Architecture Principles", "Review pull requests enforcing clean architecture, SOLID principles, separation of concerns, and robust error handling."),
+        (86, "Interview", "Live Coding", "Speed Drills: Rapid Full Stack Feature Implementation under Pressure", "Execute timed 30-minute full-stack feature build connecting React frontend with backend API endpoints."),
+        (87, "Interview", "Full Stack Interview", "Take-Home Assignment Strategy & Production Code Quality Checklist", "Review take-home assignment best practices: modular directory structure, comprehensive unit tests, Docker packaging, and documentation."),
+        (88, "Communication", "Communication", "Offer Negotiation & Compensation Strategies for Full Stack Roles", "Understand full-stack engineering compensation packages (base salary, performance bonus, equity/RSUs) and negotiation tactics."),
+        (89, "Interview", "Full Stack Interview", "Final Application Follow-ups & Technical Assessment Submissions", "Complete pending take-home coding challenges, follow up on interview pipelines, and prepare for final round interviews."),
+        (90, "Interview", "Full Stack Interview", "Final Placement Readiness Audit & Career Launch Strategy", "Review overall readiness score, celebrate milestone achievements, and finalize ongoing placement interview schedule."),
+    ]
+    for d, cat, skill, title, desc in p3_topics:
+        days.append({"day": d, "phase": 3, "category": cat, "skill": skill, "title": f"Day {d}: {title}", "desc": desc, "diff": "Advanced"})
+        
+    return days
+
+
 def _generate_generic_role_curriculum(target_role: str, domain: str, high_gaps: List[str], medium_gaps: List[str]) -> List[Dict[str, Any]]:
     """Generates a dynamic 90-day progressive curriculum for other or custom roles."""
+    curriculum = {
+        "frontend": (["HTML semantics and accessibility", "CSS layout and responsive design", "JavaScript fundamentals", "TypeScript types", "React components and props", "React state and hooks", "Browser rendering and DOM", "Web forms and validation", "HTTP and browser networking", "Frontend testing"], ["State management", "Routing and layouts", "API integration", "Authentication flows", "Component architecture", "Design systems", "Performance and Core Web Vitals", "Accessibility audits", "Build a tested responsive application", "Deploy and monitor a frontend"], ["Frontend system design", "Debug performance traces", "Accessibility scenario review", "UI implementation interview", "JavaScript and TypeScript interview", "React architecture discussion", "Portfolio case study", "Behavioral interview stories", "Tailored applications", "Readiness review"]),
+        "fullstack": (["JavaScript and TypeScript fundamentals", "HTML semantics and responsive CSS", "React component patterns", "HTTP and REST fundamentals", "Node.js runtime", "API routing and validation", "Relational data modeling", "SQL querying", "Git workflow and testing", "Authentication fundamentals"], ["Build frontend feature flows", "Design REST endpoints", "Persist and validate data", "Authentication and authorization", "Error handling and logging", "Automated API and UI tests", "Caching and performance", "Docker and environment config", "Build an integrated full stack feature", "Deploy with CI/CD"], ["Full stack system design", "Security review", "Database tradeoffs", "Frontend debugging interview", "Backend coding interview", "End-to-end project walkthrough", "Production incident scenarios", "Behavioral interview stories", "Tailored applications", "Readiness review"]),
+        "data_analyst": (["SQL filtering and joins", "Grouping and aggregation", "CTEs and window functions", "Data quality checks", "Spreadsheet analysis", "Python and Pandas", "Exploratory data analysis", "Descriptive statistics", "KPI definitions", "Chart selection and data ethics"], ["Dashboard requirements", "Power BI or Tableau data model", "Calculated metrics", "Dashboard interaction design", "Cohort and funnel analysis", "A/B test interpretation", "Automated reporting with SQL", "Executive data storytelling", "Build a business analytics case study", "Validate results with stakeholders"], ["SQL timed exercise", "Analytics case interview", "Metric diagnosis scenario", "Dashboard portfolio review", "Experiment design discussion", "Communicate an ambiguous finding", "Behavioral interview stories", "Tailored applications", "Mock analyst interview", "Readiness review"]),
+        "data_science": (["Python for analysis", "NumPy and Pandas", "Probability and distributions", "Descriptive statistics", "Data cleaning", "Exploratory analysis", "Visualization and uncertainty", "SQL for analysis", "Hypothesis testing", "Train and test data design"], ["Feature engineering", "Regression models", "Classification models", "Evaluation metrics", "Cross validation", "Imbalanced data", "Tree ensembles", "Experiment design", "Build a reproducible modeling project", "Model interpretation and limitations"], ["Modeling case interview", "Metric selection exercise", "Experiment critique", "ML system design basics", "Project defense", "Data leakage review", "Behavioral interview stories", "Tailored applications", "Mock data science interview", "Readiness review"]),
+        "data_engineer": (["Python data processing", "Advanced SQL", "Relational modeling", "Batch and streaming concepts", "Data formats and schema", "ETL and ELT patterns", "Workflow orchestration", "Data quality testing", "Warehouse fundamentals", "Linux and Git"], ["Build an incremental pipeline", "Partitioning and file formats", "Spark transformations", "Kafka event flow", "Orchestration and retries", "Warehouse performance", "Data contracts and lineage", "Access controls and privacy", "Deploy a tested data pipeline", "Monitor freshness and failures"], ["Pipeline design interview", "SQL exercise", "Data modeling review", "Streaming tradeoffs", "Pipeline incident simulation", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock data engineering interview", "Readiness review"]),
+        "cloud": (["Cloud shared responsibility", "Compute and network basics", "Identity and access management", "Virtual networks and subnets", "Object and block storage", "DNS and load balancing", "Linux operations", "Infrastructure as code", "Cloud cost fundamentals", "Logging and metrics"], ["Deploy a secure service", "Autoscaling and health checks", "Managed data services", "Secrets and key management", "Backup and recovery", "Infrastructure modules", "Network security controls", "Cost optimization exercise", "Build a resilient cloud architecture", "Automate deployment and rollback"], ["Cloud architecture interview", "IAM policy review", "Outage troubleshooting", "Cost tradeoff discussion", "Disaster recovery design", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock cloud interview", "Readiness review"]),
+        "devops": (["Linux processes and permissions", "Shell scripting", "Git branching and review", "HTTP and network basics", "Build pipelines", "Containers and images", "Docker networking", "CI test stages", "Infrastructure as code", "Logs and metrics"], ["Kubernetes workloads", "Service discovery and ingress", "Secrets and config", "Deployment strategies", "Infrastructure modules", "Monitoring and alerting", "SLO and error budgets", "Incident response", "Build a CI/CD delivery path", "Reliability and rollback exercise"], ["Production incident drill", "Kubernetes debugging", "CI/CD design interview", "Reliability tradeoffs", "Security and secrets review", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock DevOps interview", "Readiness review"]),
+        "qa": (["Test design and coverage", "Equivalence and boundary testing", "Bug reports and triage", "API testing", "SQL validation", "Python or Java test basics", "Unit and integration tests", "Browser automation", "Test data management", "CI testing fundamentals"], ["Page object and fixtures", "Reliable selectors and waits", "Contract testing", "Accessibility testing", "Performance test basics", "Cross browser strategy", "Flaky test diagnosis", "Risk based regression", "Build an automated test suite", "Integrate tests into CI"], ["Testing strategy interview", "Automation coding exercise", "Bug triage scenario", "API test design", "Quality metrics discussion", "Portfolio walkthrough", "Behavioral interview stories", "Tailored applications", "Mock QA interview", "Readiness review"]),
+        "mobile": (["Platform tooling and project setup", "App lifecycle", "Layout and navigation", "State management", "Networking and API clients", "Local persistence", "Accessibility on mobile", "Unit and UI testing", "App permissions and security", "Git and release builds"], ["Offline first behavior", "Background work", "Push notifications", "Performance profiling", "Crash reporting", "Deep links", "Secure storage", "Design system components", "Build and release a portfolio app", "Store deployment checklist"], ["Mobile architecture interview", "Lifecycle debugging", "Offline scenario design", "Performance review", "App security discussion", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock mobile interview", "Readiness review"]),
+        "database": (["Relational data modeling", "SQL joins and aggregation", "Transactions and isolation", "Indexes and query plans", "Constraints and normalization", "Backup and restore", "Linux database operations", "Access control", "Replication concepts", "Monitoring fundamentals"], ["Query tuning lab", "Partitioning strategy", "Replication and failover", "Backup recovery drill", "Connection pooling", "Schema migrations", "Capacity planning", "Security hardening", "Build a monitored database lab", "Automate operational checks"], ["SQL interview exercise", "Query plan review", "Failure recovery scenario", "Consistency tradeoffs", "Security review", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock database interview", "Readiness review"]),
+        "business_analyst": (["Stakeholder and problem framing", "Requirements interviews", "User stories and acceptance criteria", "Process mapping", "SQL basics", "Spreadsheet analysis", "KPI and metric definitions", "Data quality review", "Prioritization methods", "Clear requirement documentation"], ["As-is and to-be process design", "Dashboard requirements", "Root cause analysis", "Experiment and impact measurement", "Backlog refinement", "UAT planning", "Risk and dependency analysis", "Executive presentation", "Build a measurable case study", "Validate recommendations with evidence"], ["Ambiguous case interview", "Requirements workshop simulation", "Prioritization discussion", "Metric interpretation", "Stakeholder conflict scenario", "Portfolio case presentation", "Behavioral interview stories", "Tailored applications", "Mock analyst interview", "Readiness review"]),
+        "uiux": (["User research methods", "Interview planning", "Personas and journey maps", "Information architecture", "Wireframing", "Visual hierarchy", "Typography and color", "Interaction states", "Accessibility basics", "Usability testing"], ["Component and design systems", "Responsive interaction patterns", "Prototype a user flow", "Run moderated usability tests", "Synthesize research findings", "Content design", "Developer handoff", "Measure product usability", "Build an end-to-end case study", "Iterate from user feedback"], ["Portfolio case study review", "Design critique exercise", "Accessibility scenario", "Product design challenge", "Research insight presentation", "Tradeoff explanation", "Behavioral interview stories", "Tailored applications", "Mock design interview", "Readiness review"]),
+    }
+    if domain in curriculum:
+        phases = curriculum[domain]
+        gaps = list(dict.fromkeys(high_gaps + medium_gaps))
+        result = []
+        for day in range(1, 91):
+            phase = min(2, (day - 1) // 30)
+            phase_day = (day - 1) % 30
+            topics = phases[phase]
+            topic = topics[phase_day % len(topics)]
+            skill = gaps[0] if phase == 0 and gaps else topic
+            activity = "learn and practice" if phase == 0 else "implement and validate" if phase == 1 else "explain and demonstrate"
+            if phase == 1 and day % 7 in (0, 1): activity = "extend your role-specific portfolio project and test the result"
+            if phase == 2 and day % 7 in (0, 1): activity = "complete a timed role-specific interview drill and review your reasoning"
+            result.append({"day": day, "phase": phase + 1, "category": get_domain_categories(domain)[min(phase, len(get_domain_categories(domain))-1)], "skill": skill, "title": f"Day {day}: {topic}", "desc": f"For {target_role}, {activity}: {topic}. Record the outcome, note tradeoffs, and identify one next improvement.", "diff": ("Beginner", "Intermediate", "Advanced")[phase]})
+        return result
+
     categories = get_domain_categories(domain)
     primary_cat = categories[0]
     secondary_cat = categories[1] if len(categories) > 1 else categories[0]
@@ -626,40 +777,109 @@ def _generate_generic_role_curriculum(target_role: str, domain: str, high_gaps: 
     return days
 
 
-def generate_90_day_curriculum(
+def _sample_phase_blueprints(blueprints: List[Dict[str, Any]], target_count: int) -> List[Dict[str, Any]]:
+    """Sample target_count blueprint items from a phase list, ensuring first and last items are preserved."""
+    if target_count <= 0:
+        return []
+    total = len(blueprints)
+    if total == 0:
+        return []
+    if target_count >= total:
+        res = list(blueprints)
+        idx = 0
+        while len(res) < target_count:
+            res.append(blueprints[idx % total])
+            idx += 1
+        return res
+    if target_count == 1:
+        return [blueprints[0]]
+    
+    indices = [
+        int(round(i * (total - 1) / (target_count - 1)))
+        for i in range(target_count)
+    ]
+    
+    chosen = []
+    prev = -1
+    for idx in indices:
+        curr = max(prev + 1, idx)
+        curr = min(curr, total - (target_count - len(chosen)))
+        chosen.append(blueprints[curr])
+        prev = curr
+    return chosen
+
+
+def generate_curriculum(
     target_role: str,
     daily_minutes: int,
+    duration_days: int = 90,
     high_gaps: Optional[List[str]] = None,
     medium_gaps: Optional[List[str]] = None,
     preferred_language: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Main curriculum generator.
-    Produces 90 daily tasks with split estimated_minutes strictly summing to daily_minutes.
+    Main curriculum generator supporting arbitrary duration_days (e.g. 15, 30, 45, 60, 90, or custom).
+    Generates role-specific progressive daily tasks with split estimated_minutes strictly summing to daily_minutes.
     """
     high_gaps = high_gaps or []
     medium_gaps = medium_gaps or []
     daily_minutes = max(30, min(int(daily_minutes), 480))
+    duration_days = max(1, min(int(duration_days), 365))
     domain = resolve_role_domain(target_role)
     
-    # 1. Fetch progressive 90-day blueprints
+    # 1. Fetch progressive blueprints
     if domain == "cybersecurity":
         blueprints = _generate_cybersecurity_curriculum(target_role, high_gaps)
     elif domain == "aiml":
         blueprints = _generate_aiml_curriculum(target_role, high_gaps)
     elif domain == "backend":
         blueprints = _generate_backend_curriculum(target_role, high_gaps, preferred_language)
+    elif domain == "fullstack":
+        blueprints = _generate_fullstack_curriculum(target_role, high_gaps)
     else:
         blueprints = _generate_generic_role_curriculum(target_role, domain, high_gaps, medium_gaps)
         
+    p1_bps = [b for b in blueprints if b.get("phase") == 1]
+    p2_bps = [b for b in blueprints if b.get("phase") == 2]
+    p3_bps = [b for b in blueprints if b.get("phase") == 3]
+    
+    # Calculate phase day counts
+    if duration_days == 1:
+        p1_count, p2_count, p3_count = 1, 0, 0
+    elif duration_days == 2:
+        p1_count, p2_count, p3_count = 1, 1, 0
+    else:
+        p1_count = max(1, int(round(duration_days / 3.0)))
+        p2_count = max(1, int(round(duration_days / 3.0)))
+        p3_count = duration_days - p1_count - p2_count
+        if p3_count < 1:
+            p3_count = 1
+            if p2_count > 1:
+                p2_count -= 1
+            elif p1_count > 1:
+                p1_count -= 1
+                
+    selected_p1 = _sample_phase_blueprints(p1_bps, p1_count)
+    selected_p2 = _sample_phase_blueprints(p2_bps, p2_count)
+    selected_p3 = _sample_phase_blueprints(p3_bps, p3_count)
+    selected_blueprints = selected_p1 + selected_p2 + selected_p3
+    
     all_tasks = []
     
-    for bp in blueprints:
-        day = bp["day"]
-        phase_num = bp["phase"]
+    for day in range(1, duration_days + 1):
+        bp = selected_blueprints[day - 1] if day - 1 < len(selected_blueprints) else blueprints[(day - 1) % len(blueprints)]
+        
+        if day <= p1_count:
+            phase_num = 1
+        elif day <= p1_count + p2_count:
+            phase_num = 2
+        else:
+            phase_num = 3
+            
         cat = bp["category"]
         skill = bp["skill"]
-        title = bp["title"]
+        raw_title = re.sub(r"^Day\s+\d+:\s*", "", bp["title"]).strip()
+        title = f"Day {day}: {raw_title}"
         desc = bp["desc"]
         diff = bp["diff"]
         
@@ -680,7 +900,7 @@ def generate_90_day_curriculum(
             "description": desc,
             "estimated_minutes": splits[0],
             "difficulty": diff,
-            "priority": "High" if day % 2 == 1 or day in [10, 20, 30, 40, 50, 60, 75, 80, 85, 90] else "Medium",
+            "priority": "High" if day % 2 == 1 or day in [1, duration_days, p1_count, p1_count + p2_count] else "Medium",
             "skill": skill,
             "status": "pending",
             "phase_number": phase_num,
@@ -691,7 +911,7 @@ def generate_90_day_curriculum(
         if len(splits) > 1:
             if phase_num == 1:
                 sec_cat = "DSA" if domain in ["backend", "aiml", "software_engineer", "fullstack"] else ("Networking" if domain == "cybersecurity" else "Programming")
-                sec_skill = "Problem Solving" if domain in ["backend", "aiml", "software_engineer"] else ("Network Protocols" if domain == "cybersecurity" else "Core Syntax")
+                sec_skill = "Problem Solving" if domain in ["backend", "aiml", "software_engineer"] else ("Full Stack Fundamentals" if domain == "fullstack" else ("Network Protocols" if domain == "cybersecurity" else "Core Syntax"))
                 sec_title = f"Day {day}: Hands-On Practice & Core Drills in {sec_skill}"
                 sec_desc = f"Complete interactive practice modules and hands-on drills focusing on {sec_skill} for {target_role}."
                 sec_diff = "Beginner"
@@ -724,3 +944,23 @@ def generate_90_day_curriculum(
             all_tasks.append(t2)
             
     return all_tasks
+
+
+def generate_90_day_curriculum(
+    target_role: str,
+    daily_minutes: int,
+    high_gaps: Optional[List[str]] = None,
+    medium_gaps: Optional[List[str]] = None,
+    preferred_language: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Backward-compatible 90-day curriculum generator.
+    """
+    return generate_curriculum(
+        target_role=target_role,
+        daily_minutes=daily_minutes,
+        duration_days=90,
+        high_gaps=high_gaps,
+        medium_gaps=medium_gaps,
+        preferred_language=preferred_language,
+    )

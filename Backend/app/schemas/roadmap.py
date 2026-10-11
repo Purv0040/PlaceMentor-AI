@@ -14,7 +14,7 @@ class RoadmapTaskSchema(BaseModel):
     day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     category: str
@@ -46,7 +46,7 @@ class RoadmapPhaseSchema(BaseModel):
     phase_number: int = Field(
         ...,
         ge=1,
-        le=3,
+        le=10,
     )
 
     name: str
@@ -56,13 +56,13 @@ class RoadmapPhaseSchema(BaseModel):
     start_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     end_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     goal: str
@@ -80,7 +80,7 @@ class WeeklyGoalSchema(BaseModel):
     week_number: int = Field(
         ...,
         ge=1,
-        le=13,
+        le=52,
     )
 
     objective: str
@@ -114,6 +114,15 @@ class RoadmapGenerateRequestSchema(BaseModel):
         description=(
             "Target role. If omitted, "
             "the student's profile target role is used."
+        ),
+    )
+
+    duration_days: Optional[int] = Field(
+        default=90,
+        ge=1,
+        le=365,
+        description=(
+            "Total duration of preparation in days (e.g. 15, 30, 45, 60, 90, or custom)."
         ),
     )
 
@@ -179,7 +188,7 @@ class RoadmapMilestoneSchema(BaseModel):
     week_number: int = Field(
         ...,
         ge=1,
-        le=13,
+        le=52,
     )
 
 

@@ -151,6 +151,25 @@ export const PlanningProvider = ({ children }) => {
     }
   };
 
+  const generateCustomRoadmap = async ({ targetRole, durationDays, dailyMinutes }) => {
+    try {
+      setPlanningLoading(true);
+      await planningService.generateCustomRoadmap({
+        targetRole,
+        durationDays,
+        dailyMinutes,
+        replaceExisting: true,
+      });
+      await loadApiPlanning();
+      showToast(`Personalized ${durationDays || 90}-day roadmap generated successfully!`);
+      return true;
+    } catch (error) {
+      showToast(error.message || 'Failed to generate roadmap.');
+      setPlanningLoading(false);
+      return false;
+    }
+  };
+
   return (
     <PlanningContext.Provider
       value={{
@@ -163,6 +182,7 @@ export const PlanningProvider = ({ children }) => {
         toggleTaskCompletion,
         addSkillToRoadmap,
         adaptRoadmap,
+        generateCustomRoadmap,
         toastNotification,
       }}
     >

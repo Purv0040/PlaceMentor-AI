@@ -66,7 +66,8 @@ export const planningService = {
           targetRole: res.target_role,
           description: res.description,
           currentDay: null,
-          totalDays: res.duration_days ?? null,
+          totalDays: res.duration_days ?? res.total_days ?? 90,
+          availableMinutesPerDay: res.available_minutes_per_day ?? 120,
           currentPhaseId: null,
           currentPhaseName: null,
           overallProgressPercent: null,
@@ -80,6 +81,32 @@ export const planningService = {
       console.warn("Failed to fetch roadmap from API, using fallback", e);
     }
     return null;
+  },
+
+  generateCustomRoadmap: async ({
+    targetRole,
+    durationDays = 90,
+    dailyMinutes = 60,
+    replaceExisting = true,
+  } = {}) => {
+    try {
+      const payload = {
+        force_regenerate: true,
+        replace_existing: replaceExisting,
+      };
+      if (targetRole) payload.target_role = targetRole;
+      if (durationDays) payload.duration_days = Number(durationDays);
+      if (dailyMinutes) payload.available_minutes_per_day = Number(dailyMinutes);
+
+      const res = await apiRequest("/roadmap/generate", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return res;
+    } catch (e) {
+      console.error("Failed to generate custom roadmap", e);
+      throw e;
+    }
   },
 
   getRoadmapSummaryFromApi: async () => {

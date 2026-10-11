@@ -25,6 +25,7 @@ from app.engines.roadmap_curriculum import (
     get_domain_categories,
     get_role_phase_goals,
     generate_90_day_curriculum,
+    generate_curriculum,
     ROLE_RELEVANT_CATEGORIES_MAP,
 )
 
@@ -50,7 +51,7 @@ ROLE_RELEVANT_CATEGORIES: Dict[str, List[str]] = {
 
 class PersonalizedRoadmapEngine:
     """
-    Personalized 90-Day Roadmap Generator.
+    Personalized Dynamic-Day Roadmap Generator.
     Executes 3-phase task scheduling, LLM synthesis, strict daily minute validation, and prerequisite checking.
     """
 
@@ -62,10 +63,16 @@ class PersonalizedRoadmapEngine:
 
     def generate_roadmap(self, request: RoadmapGenerateRequest) -> PersonalizedRoadmap:
         """
-        Main entry point to generate a validated 90-day personalized roadmap.
+        Main entry point to generate a validated personalized roadmap.
         """
         canonical_role = get_canonical_role_name(request.target_role)
         daily_minutes = request.available_minutes_per_day
+        duration_days = getattr(request, "duration_days", 90) or 90
+        try:
+            duration_days = int(duration_days)
+        except (TypeError, ValueError):
+            duration_days = 90
+        duration_days = max(1, min(duration_days, 365))
 
         # 1. Resolve Profile, Skill Gaps, and Readiness Analyses
         profile, skill_gaps, readiness = self._resolve_input_analyses(request, canonical_role)
@@ -76,7 +83,7 @@ class PersonalizedRoadmapEngine:
         domain = resolve_role_domain(canonical_role)
         relevant_cats = get_domain_categories(domain)
 
-        # 3. Generate raw 90-day tasks for 3 phases
+        # 3. Generate raw tasks for 3 phases
         all_tasks = self._generate_90_day_tasks(
             canonical_role=canonical_role,
             daily_minutes=daily_minutes,
@@ -86,45 +93,51 @@ class PersonalizedRoadmapEngine:
             high_gaps=high_gaps,
             medium_gaps=medium_gaps,
             relevant_cats=relevant_cats,
+            duration_days=duration_days,
         )
 
         # 4. Post-validate and auto-repair daily time constraints and phase bounds
         all_tasks, validation_report = self._validate_and_repair_roadmap(
             tasks=all_tasks,
             daily_minutes=daily_minutes,
+            duration_days=duration_days,
         )
 
-        # 5. Group tasks into 3 phases
-        phase1_tasks = [t for t in all_tasks if 1 <= t.day <= 30]
-        phase2_tasks = [t for t in all_tasks if 31 <= t.day <= 60]
-        phase3_tasks = [t for t in all_tasks if 61 <= t.day <= 90]
+        # 5. Group tasks into 3 phases proportionally
+        p1_end = max(1, int(round(duration_days / 3.0)))
+        p2_end = max(p1_end + 1, int(round(2.0 * duration_days / 3.0))) if duration_days >= 3 else p1_end
+        p3_end = duration_days
+
+        phase1_tasks = [t for t in all_tasks if 1 <= t.day <= p1_end]
+        phase2_tasks = [t for t in all_tasks if p1_end < t.day <= p2_end]
+        phase3_tasks = [t for t in all_tasks if p2_end < t.day <= p3_end]
 
         p1_goal, p2_goal, p3_goal = get_role_phase_goals(canonical_role, domain, high_gaps)
 
         phase1 = RoadmapPhase(
             phase_number=1,
             name="Phase 1: Foundation",
-            day_range="Days 1-30",
+            day_range=f"Days 1-{p1_end}",
             start_day=1,
-            end_day=30,
+            end_day=p1_end,
             goal=p1_goal,
             tasks=phase1_tasks,
         )
         phase2 = RoadmapPhase(
             phase_number=2,
             name="Phase 2: Skill Development",
-            day_range="Days 31-60",
-            start_day=31,
-            end_day=60,
+            day_range=f"Days {p1_end + 1}-{p2_end}",
+            start_day=p1_end + 1,
+            end_day=p2_end,
             goal=p2_goal,
             tasks=phase2_tasks,
         )
         phase3 = RoadmapPhase(
             phase_number=3,
             name="Phase 3: Placement Preparation",
-            day_range="Days 61-90",
-            start_day=61,
-            end_day=90,
+            day_range=f"Days {p2_end + 1}-{p3_end}",
+            start_day=p2_end + 1,
+            end_day=p3_end,
             goal=p3_goal,
             tasks=phase3_tasks,
         )
@@ -135,14 +148,14 @@ class PersonalizedRoadmapEngine:
         readiness_label = readiness.readiness_label if readiness and hasattr(readiness, "readiness_label") else "Developing"
 
         summary = (
-            f"Personalized 90-day placement preparation roadmap for '{canonical_role}' totaling {total_hours} study hours "
+            f"Personalized {duration_days}-day placement preparation roadmap for '{canonical_role}' totaling {total_hours} study hours "
             f"across 3 phases ({daily_minutes} mins/day). Designed to bridge {len(high_gaps)} high-priority gap(s) "
             f"and raise placement readiness from '{readiness_label}' to 'Placement Ready'."
         )
 
         return PersonalizedRoadmap(
             target_role=canonical_role,
-            total_days=90,
+            total_days=duration_days,
             available_minutes_per_day=daily_minutes,
             total_estimated_hours=total_hours,
             phases=[phase1, phase2, phase3],
@@ -218,9 +231,10 @@ class PersonalizedRoadmapEngine:
         high_gaps: List[str],
         medium_gaps: List[str],
         relevant_cats: List[str],
+        duration_days: int = 90,
     ) -> List[RoadmapTask]:
         """
-        Generates structured daily tasks for Days 1 to 90 respecting the daily time budget.
+        Generates structured daily tasks for Days 1 to duration_days respecting the daily time budget.
         """
         # Determine preferred language from profile if available
         preferred_lang = None
@@ -238,9 +252,10 @@ class PersonalizedRoadmapEngine:
                         preferred_lang = s
                         break
 
-        raw_curriculum = generate_90_day_curriculum(
+        raw_curriculum = generate_curriculum(
             target_role=canonical_role,
             daily_minutes=daily_minutes,
+            duration_days=duration_days,
             high_gaps=high_gaps,
             medium_gaps=medium_gaps,
             preferred_language=preferred_lang,
@@ -272,12 +287,13 @@ class PersonalizedRoadmapEngine:
         self,
         tasks: List[RoadmapTask],
         daily_minutes: int,
+        duration_days: int = 90,
     ) -> Tuple[List[RoadmapTask], Dict[str, Any]]:
         """
         Strict Python post-validation logic.
         Validates:
         1. Daily time constraint: sum(estimated_minutes for day D) <= available_minutes_per_day
-        2. Phase day boundaries (Phase 1: 1-30, Phase 2: 31-60, Phase 3: 61-90)
+        2. Phase day boundaries
         3. Prerequisite sequence check
         4. Schema completeness & distinct task IDs
         Auto-repairs any task over-scheduling or day bounds seamlessly.
@@ -287,15 +303,16 @@ class PersonalizedRoadmapEngine:
         exceeded_days_count = 0
 
         # Group tasks by day
-        day_map: Dict[int, List[RoadmapTask]] = {d: [] for d in range(1, 91)}
+        day_map: Dict[int, List[RoadmapTask]] = {d: [] for d in range(1, duration_days + 1)}
         for t in tasks:
             # Ensure day bounds
-            valid_day = max(1, min(90, t.day))
+            valid_day = max(1, min(duration_days, t.day))
             t.day = valid_day
-            day_map[valid_day].append(t)
+            if valid_day in day_map:
+                day_map[valid_day].append(t)
 
-        for day in range(1, 91):
-            day_tasks = day_map[day]
+        for day in range(1, duration_days + 1):
+            day_tasks = day_map.get(day, [])
             current_sum = sum(t.estimated_minutes for t in day_tasks)
 
             # Auto-repair if day total exceeds daily_minutes budget
@@ -316,7 +333,8 @@ class PersonalizedRoadmapEngine:
             repaired_tasks.extend(day_tasks)
 
         validation_report = {
-            "valid_90_days": len(day_map) == 90,
+            "valid_days": len(day_map) == duration_days,
+            "valid_90_days": len(day_map) == 90 if duration_days == 90 else True,
             "daily_time_constraint_passed": (exceeded_days_count == 0),
             "max_daily_minutes_budget": daily_minutes,
             "exceeded_days_auto_repaired_count": exceeded_days_count,

@@ -21,6 +21,7 @@ from app.integrations.ai_client import (
 from app.services.roadmap_curriculum import (
     resolve_role_domain,
     get_role_phase_goals,
+    generate_curriculum,
     generate_90_day_curriculum,
 )
 from app.utils.dates import APP_TIMEZONE
@@ -175,6 +176,7 @@ class RoadmapService:
         self,
         user_id: str,
         target_role: Optional[str] = None,
+        duration_days: int = 90,
         available_minutes_per_day: int = 120,
         force_regenerate: bool = False,
         experience_level: str = "intermediate",
@@ -183,7 +185,7 @@ class RoadmapService:
     ) -> Dict[str, Any]:
 
         """
-        Generate a personalized 90-day preparation roadmap.
+        Generate a personalized preparation roadmap.
 
         Flow:
 
@@ -205,7 +207,7 @@ class RoadmapService:
         user_id = str(user_id)
 
         # --------------------------------------------------------
-        # 1. Validate available time
+        # 1. Validate available time & duration
         # --------------------------------------------------------
 
         try:
@@ -220,6 +222,19 @@ class RoadmapService:
             min(
                 available_minutes_per_day,
                 480,
+            ),
+        )
+
+        try:
+            duration_days = int(duration_days)
+        except (TypeError, ValueError):
+            duration_days = 90
+
+        duration_days = max(
+            1,
+            min(
+                duration_days,
+                365,
             ),
         )
 
@@ -257,6 +272,12 @@ class RoadmapService:
             except (TypeError, ValueError):
                 active_minutes = 120
 
+            active_duration = active.get("duration_days", 90)
+            try:
+                active_duration = int(active_duration)
+            except (TypeError, ValueError):
+                active_duration = 90
+
             role_matches = (
                 not requested_target_role
                 or active_role.casefold()
@@ -267,6 +288,10 @@ class RoadmapService:
                 active_minutes
                 == available_minutes_per_day
             )
+            duration_matches = (
+                active_duration
+                == duration_days
+            )
             level_matches = active.get("experience_level", "intermediate") == experience_level
             requested_start = start_date.date() if isinstance(start_date, datetime) else start_date
             active_start = active.get("start_date")
@@ -274,12 +299,12 @@ class RoadmapService:
             start_matches = requested_start is None or requested_start == active_start
 
             # IMPORTANT:
-            # If both role and available time match,
+            # If role, duration, and available time match,
             # return existing roadmap.
             #
-            # If either changes, generate a new roadmap.
+            # If any changes, generate a new roadmap.
 
-            if role_matches and minutes_match and level_matches and start_matches:
+            if role_matches and minutes_match and duration_matches and level_matches and start_matches:
 
                 logger.info(
                     "Returning existing active roadmap "
@@ -376,6 +401,7 @@ class RoadmapService:
 
         raw_payload: Dict[str, Any] = {
             "target_role": resolved_target_role,
+            "duration_days": duration_days,
             "available_minutes_per_day": (
                 available_minutes_per_day
             ),
@@ -431,6 +457,7 @@ class RoadmapService:
                     skill_gap_doc,
                     profile_doc,
                     selected_level,
+                    duration_days=duration_days,
                 )
             )
 
@@ -449,6 +476,7 @@ class RoadmapService:
                     skill_gap_doc,
                     profile_doc,
                     selected_level,
+                    duration_days=duration_days,
                 )
             )
 
@@ -505,6 +533,8 @@ class RoadmapService:
         # --------------------------------------------------------
 
         cleaned_tasks: List[Dict[str, Any]] = []
+        p1_len = max(1, int(round(duration_days / 3.0)))
+        p2_len = max(1, int(round(duration_days / 3.0)))
 
         for index, task in enumerate(all_tasks):
 
@@ -535,13 +565,8 @@ class RoadmapService:
             except (TypeError, ValueError):
                 day = index + 1
 
-            day = max(
-                1,
-                min(
-                    day,
-                    90,
-                ),
-            )
+            if not (1 <= day <= duration_days):
+                continue
 
             task["day"] = day
 
@@ -611,9 +636,9 @@ class RoadmapService:
                 "pending",
             )
 
-            if day <= 30:
+            if day <= p1_len:
                 phase_number = 1
-            elif day <= 60:
+            elif day <= p1_len + p2_len:
                 phase_number = 2
             else:
                 phase_number = 3
@@ -625,10 +650,11 @@ class RoadmapService:
         all_tasks = cleaned_tasks
 
         canonical_tasks = self._generate_deterministic_fallback(
-            resolved_target_role, available_minutes_per_day, skill_gap_doc, profile_doc, selected_level
+            resolved_target_role, available_minutes_per_day, skill_gap_doc, profile_doc, selected_level, duration_days=duration_days
         ).get("all_tasks", [])
         present_days = {task.get("day") for task in all_tasks}
         all_tasks.extend(task for task in canonical_tasks if task.get("day") not in present_days)
+        all_tasks = [task for task in all_tasks if 1 <= task.get("day", 1) <= duration_days]
         all_tasks.sort(key=lambda task: (task.get("day", 1), task.get("id", "")))
 
         # --------------------------------------------------------
@@ -644,6 +670,7 @@ class RoadmapService:
                     skill_gap_doc,
                     profile_doc,
                     selected_level,
+                    duration_days=duration_days,
                 )
             )
 
@@ -660,7 +687,7 @@ class RoadmapService:
             ai_data["summary"] = fallback.get(
                 "summary",
                 (
-                    f"90-Day placement preparation "
+                    f"{duration_days}-Day placement preparation "
                     f"plan for {resolved_target_role}."
                 ),
             )
@@ -683,11 +710,12 @@ class RoadmapService:
         # 12. Ensure phases exist
         # --------------------------------------------------------
 
-        if not phases:
+        if not phases or len(phases) != 3 or phases[2].get("end_day") != duration_days:
 
             phases = self._build_phases(
                 all_tasks,
                 resolved_target_role,
+                duration_days=duration_days,
             )
 
         else:
@@ -705,6 +733,7 @@ class RoadmapService:
         weekly_goals = self._build_weekly_goals(
             all_tasks,
             resolved_target_role,
+            duration_days=duration_days,
         )
 
         # --------------------------------------------------------
@@ -719,7 +748,7 @@ class RoadmapService:
             start_dt = datetime.now(APP_TIMEZONE)
 
         end_dt = start_dt + timedelta(
-            days=89
+            days=max(0, duration_days - 1)
         )
 
         # --------------------------------------------------------
@@ -745,21 +774,7 @@ class RoadmapService:
             1,
         )
 
-        try:
-
-            total_estimated_hours = float(
-                ai_data.get(
-                    "total_estimated_hours",
-                    calculated_hours,
-                )
-                or calculated_hours
-            )
-
-        except (TypeError, ValueError):
-
-            total_estimated_hours = (
-                calculated_hours
-            )
+        total_estimated_hours = calculated_hours
 
         # --------------------------------------------------------
         # 17. Build roadmap MongoDB document
@@ -773,7 +788,7 @@ class RoadmapService:
             "target_role": resolved_target_role,
 
             "title": (
-                f"90-Day "
+                f"{duration_days}-Day "
                 f"{resolved_target_role} "
                 f"Placement Roadmap"
             ),
@@ -782,7 +797,7 @@ class RoadmapService:
                 ai_data.get("summary")
                 or
                 (
-                    f"Personalized 90-day plan "
+                    f"Personalized {duration_days}-day plan "
                     f"for {resolved_target_role}"
                 )
             ),
@@ -791,7 +806,7 @@ class RoadmapService:
                 ai_data.get("summary")
                 or
                 (
-                    f"Personalized 90-day plan "
+                    f"Personalized {duration_days}-day plan "
                     f"for {resolved_target_role}"
                 )
             ),
@@ -800,7 +815,7 @@ class RoadmapService:
 
             "end_date": end_dt,
 
-            "duration_days": 90,
+            "duration_days": duration_days,
 
             "available_minutes_per_day": (
                 available_minutes_per_day
@@ -874,6 +889,23 @@ class RoadmapService:
         # 19. Generate daily tasks
         # --------------------------------------------------------
 
+        # Preserve progress from previously completed tasks if regenerating
+        if active:
+            old_roadmap_id = str(active.get("roadmap_id") or active.get("_id") or "")
+            if old_roadmap_id:
+                try:
+                    prev_completed = await self.task_service.task_repo.collection.find({
+                        "user_id": user_id,
+                        "roadmap_id": old_roadmap_id,
+                        "status": "completed",
+                    }).to_list(length=1000)
+                    completed_days = {t.get("day_number") for t in prev_completed if t.get("day_number")}
+                    for t in all_tasks:
+                        if t.get("day") in completed_days:
+                            t["status"] = "completed"
+                except Exception as e:
+                    logger.warning("Could not carry over completed tasks: %s", e)
+
         if all_tasks:
 
             await self.task_service.generate_tasks_for_roadmap(
@@ -916,6 +948,7 @@ class RoadmapService:
         all_tasks: List[Dict[str, Any]],
         target_role: str,
         high_gaps: Optional[List[str]] = None,
+        duration_days: int = 90,
     ) -> List[Dict[str, Any]]:
 
         domain = resolve_role_domain(target_role)
@@ -926,27 +959,36 @@ class RoadmapService:
         )
 
         phases = []
+        p1_len = max(1, int(round(duration_days / 3.0)))
+        p2_len = max(1, int(round(duration_days / 3.0)))
+        p3_len = duration_days - p1_len - p2_len
+        if p3_len < 1:
+            p3_len = 1
+            if p2_len > 1:
+                p2_len -= 1
+            elif p1_len > 1:
+                p1_len -= 1
 
         ranges = [
             (
                 1,
                 "Phase 1: Foundation",
                 1,
-                30,
+                p1_len,
                 p1_goal,
             ),
             (
                 2,
                 "Phase 2: Skill Development",
-                31,
-                60,
+                p1_len + 1,
+                p1_len + p2_len,
                 p2_goal,
             ),
             (
                 3,
                 "Phase 3: Placement Preparation",
-                61,
-                90,
+                p1_len + p2_len + 1,
+                duration_days,
                 p3_goal,
             ),
         ]
@@ -991,18 +1033,20 @@ class RoadmapService:
         self,
         all_tasks: List[Dict[str, Any]],
         target_role: str,
+        duration_days: int = 90,
     ) -> List[Dict[str, Any]]:
 
         weeks: List[Dict[str, Any]] = []
+        total_weeks = max(1, (duration_days + 6) // 7)
 
-        for week_number in range(1, 14):
+        for week_number in range(1, total_weeks + 1):
 
             start_day = (
                 (week_number - 1) * 7
             ) + 1
 
             end_day = min(
-                90,
+                duration_days,
                 week_number * 7,
             )
 
@@ -1099,6 +1143,7 @@ class RoadmapService:
         skill_gap_doc: Dict[str, Any],
         profile_doc: Optional[Dict[str, Any]] = None,
         experience_level: str = "intermediate",
+        duration_days: int = 90,
     ) -> Dict[str, Any]:
 
         priority_gaps = []
@@ -1153,9 +1198,16 @@ class RoadmapService:
             ),
         )
 
-        all_tasks = generate_90_day_curriculum(
+        try:
+            duration_days = int(duration_days)
+        except (TypeError, ValueError):
+            duration_days = 90
+        duration_days = max(1, min(duration_days, 365))
+
+        all_tasks = generate_curriculum(
             target_role=target_role,
             daily_minutes=daily_minutes,
+            duration_days=duration_days,
             high_gaps=priority_gaps,
             preferred_language=preferred_lang,
         )
@@ -1173,22 +1225,32 @@ class RoadmapService:
                 elif task.get("difficulty") == "Intermediate":
                     task["difficulty"] = "Advanced"
 
+        p1_len = max(1, int(round(duration_days / 3.0)))
+        p2_len = max(1, int(round(duration_days / 3.0)))
+        p3_len = duration_days - p1_len - p2_len
+        if p3_len < 1:
+            p3_len = 1
+            if p2_len > 1:
+                p2_len -= 1
+            elif p1_len > 1:
+                p1_len -= 1
+
         phase1_tasks = [
             task
             for task in all_tasks
-            if 1 <= task["day"] <= 30
+            if 1 <= task["day"] <= p1_len
         ]
 
         phase2_tasks = [
             task
             for task in all_tasks
-            if 31 <= task["day"] <= 60
+            if p1_len + 1 <= task["day"] <= p1_len + p2_len
         ]
 
         phase3_tasks = [
             task
             for task in all_tasks
-            if 61 <= task["day"] <= 90
+            if p1_len + p2_len + 1 <= task["day"] <= duration_days
         ]
 
         domain = resolve_role_domain(target_role)
@@ -1210,14 +1272,14 @@ class RoadmapService:
         )
 
         summary = (
-            f"Personalized 90-day placement preparation plan for '{target_role}' "
+            f"Personalized {duration_days}-day placement preparation plan for '{target_role}' "
             f"totaling {total_hours} study hours across 3 phases ({daily_minutes} mins/day)."
         )
 
         return {
             "target_role": target_role,
 
-            "total_days": 90,
+            "total_days": duration_days,
 
             "available_minutes_per_day": daily_minutes,
 
@@ -1227,27 +1289,27 @@ class RoadmapService:
                 {
                     "phase_number": 1,
                     "name": "Phase 1: Foundation",
-                    "day_range": "Days 1-30",
+                    "day_range": f"Days 1-{p1_len}",
                     "start_day": 1,
-                    "end_day": 30,
+                    "end_day": p1_len,
                     "goal": p1_goal,
                     "tasks": phase1_tasks,
                 },
                 {
                     "phase_number": 2,
                     "name": "Phase 2: Skill Development",
-                    "day_range": "Days 31-60",
-                    "start_day": 31,
-                    "end_day": 60,
+                    "day_range": f"Days {p1_len + 1}-{p1_len + p2_len}",
+                    "start_day": p1_len + 1,
+                    "end_day": p1_len + p2_len,
                     "goal": p2_goal,
                     "tasks": phase2_tasks,
                 },
                 {
                     "phase_number": 3,
                     "name": "Phase 3: Placement Preparation",
-                    "day_range": "Days 61-90",
-                    "start_day": 61,
-                    "end_day": 90,
+                    "day_range": f"Days {p1_len + p2_len + 1}-{duration_days}",
+                    "start_day": p1_len + p2_len + 1,
+                    "end_day": duration_days,
                     "goal": p3_goal,
                     "tasks": phase3_tasks,
                 },
@@ -1260,7 +1322,7 @@ class RoadmapService:
             "validation_report": {
                 "status": "valid_fallback",
                 "source": "deterministic_fallback",
-                "valid_90_days": True,
+                "valid_days": True,
                 "daily_time_constraint_passed": True,
             },
         }
@@ -1319,10 +1381,12 @@ class RoadmapService:
                 tzinfo=timezone.utc
             )
 
+        total_days = int(active.get("duration_days", 90))
+
         current_day = max(
             1,
             min(
-                90,
+                total_days,
                 (
                     datetime.now(
                         timezone.utc
@@ -1401,10 +1465,7 @@ class RoadmapService:
                 "Backend Developer",
             ),
 
-            "total_days": active.get(
-                "duration_days",
-                90,
-            ),
+            "total_days": total_days,
 
             "current_day": current_day,
 

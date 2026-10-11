@@ -167,3 +167,101 @@ def test_roadmap_task_progression_and_non_repetition(client: TestClient, auth_he
     unique_titles = set(all_titles)
     # Most tasks across the 90 days must be unique
     assert len(unique_titles) >= len(all_titles) * 0.8
+
+
+def test_dynamic_duration_fullstack_15_days(client: TestClient, auth_headers: dict):
+    """Test generating a 15-day roadmap for Full Stack Engineer with 60 mins/day."""
+    res = client.post(
+        "/api/v1/roadmap/generate",
+        json={
+            "target_role": "Full Stack Engineer",
+            "duration_days": 15,
+            "available_minutes_per_day": 60,
+            "force_regenerate": True,
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["target_role"] == "Full Stack Engineer"
+    assert data["duration_days"] == 15
+    assert len(data["phases"]) == 3
+
+    # Check phase day boundaries for 15 days: 1-5, 6-10, 11-15
+    p1, p2, p3 = data["phases"]
+    assert p1["start_day"] == 1
+    assert p1["end_day"] == 5
+    assert p2["start_day"] == 6
+    assert p2["end_day"] == 10
+    assert p3["start_day"] == 11
+    assert p3["end_day"] == 15
+
+    # Check all tasks have day between 1 and 15
+    all_tasks = [t for phase in data["phases"] for t in phase.get("tasks", [])]
+    task_days = {t["day"] for t in all_tasks}
+    assert task_days == set(range(1, 16))
+    assert max(task_days) == 15
+
+    # Check total study hours = 15 days * 60 min / 60 = 15.0 hours
+    assert data["total_estimated_hours"] == 15.0
+
+    # Check Full Stack specific skills
+    all_skills = {t.get("skill", "").lower() for t in all_tasks}
+    all_titles = " ".join(t.get("title", "") for t in all_tasks).lower()
+    assert any(s in all_skills for s in ["react", "node.js", "postgresql", "html5 & accessibility", "javascript", "full stack", "system design"])
+    assert "react" in all_titles or "node" in all_titles or "html" in all_titles or "database" in all_titles
+
+    # Summary check
+    res_sum = client.get("/api/v1/roadmap/summary", headers=auth_headers)
+    assert res_sum.status_code == 200
+    sum_data = res_sum.json()
+    assert sum_data["total_days"] == 15
+    assert sum_data["target_role"] == "Full Stack Engineer"
+
+
+def test_dynamic_duration_aiml_30_days_45_mins(client: TestClient, auth_headers: dict):
+    """Test generating a 30-day roadmap for AI/ML Engineer with 45 mins/day."""
+    res = client.post(
+        "/api/v1/roadmap/generate",
+        json={
+            "target_role": "AI/ML Engineer",
+            "duration_days": 30,
+            "available_minutes_per_day": 45,
+            "force_regenerate": True,
+        },
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["target_role"] == "AI/ML Engineer"
+    assert data["duration_days"] == 30
+    assert len(data["phases"]) == 3
+
+    p1, p2, p3 = data["phases"]
+    assert p1["start_day"] == 1
+    assert p1["end_day"] == 10
+    assert p2["start_day"] == 11
+    assert p2["end_day"] == 20
+    assert p3["start_day"] == 21
+    assert p3["end_day"] == 30
+
+    all_tasks = [t for phase in data["phases"] for t in phase.get("tasks", [])]
+    task_days = {t["day"] for t in all_tasks}
+    assert task_days == set(range(1, 31))
+    assert max(task_days) == 30
+
+    # With 45 mins/day, exactly 1 task per day of 45 mins
+    day_task_counts = {}
+    for t in all_tasks:
+        day_task_counts[t["day"]] = day_task_counts.get(t["day"], 0) + 1
+        assert t["estimated_minutes"] == 45
+    assert all(count == 1 for count in day_task_counts.values())
+
+    # Total hours: 30 * 45 / 60 = 22.5 hours
+    assert data["total_estimated_hours"] == 22.5
+
+    # Check AI/ML specific content
+    all_skills = {t.get("skill", "").lower() for t in all_tasks}
+    all_titles = " ".join(t.get("title", "") for t in all_tasks).lower()
+    assert any(s in all_skills for s in ["python", "numpy", "pandas", "pytorch", "deep learning", "ai/ml", "machine learning"])
+    assert "numpy" in all_titles or "learning" in all_titles or "model" in all_titles or "pytorch" in all_titles

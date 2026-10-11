@@ -75,6 +75,11 @@ async def generate_roadmap(
     user_id = _get_user_id(current_user)
 
     target_role = payload.target_role if payload else None
+    duration_days = (
+        payload.duration_days
+        if payload and payload.duration_days
+        else 90
+    )
     daily_minutes = (
         payload.available_minutes_per_day
         if payload
@@ -95,6 +100,7 @@ async def generate_roadmap(
         roadmap = await service.generate_roadmap(
             user_id=user_id,
             target_role=target_role,
+            duration_days=duration_days,
             available_minutes_per_day=daily_minutes,
             force_regenerate=force_regenerate,
             experience_level=experience_level,
@@ -130,12 +136,17 @@ async def regenerate_roadmap(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
-    Force regenerate a new 90-day roadmap.
+    Force regenerate a personalized preparation roadmap.
     """
 
     user_id = _get_user_id(current_user)
 
     target_role = payload.target_role if payload else None
+    duration_days = (
+        payload.duration_days
+        if payload and payload.duration_days
+        else 90
+    )
 
     daily_minutes = (
         payload.available_minutes_per_day
@@ -152,6 +163,7 @@ async def regenerate_roadmap(
         roadmap = await service.generate_roadmap(
             user_id=user_id,
             target_role=target_role,
+            duration_days=duration_days,
             available_minutes_per_day=daily_minutes,
             force_regenerate=True,
             experience_level=experience_level,
