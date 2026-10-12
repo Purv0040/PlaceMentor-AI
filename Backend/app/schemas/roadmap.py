@@ -14,7 +14,7 @@ class RoadmapTaskSchema(BaseModel):
     day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     category: str
@@ -46,7 +46,7 @@ class RoadmapPhaseSchema(BaseModel):
     phase_number: int = Field(
         ...,
         ge=1,
-        le=3,
+        le=10,
     )
 
     name: str
@@ -56,13 +56,13 @@ class RoadmapPhaseSchema(BaseModel):
     start_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     end_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     goal: str
@@ -80,7 +80,7 @@ class WeeklyGoalSchema(BaseModel):
     week_number: int = Field(
         ...,
         ge=1,
-        le=13,
+        le=52,
     )
 
     objective: str
@@ -117,6 +117,15 @@ class RoadmapGenerateRequestSchema(BaseModel):
         ),
     )
 
+    duration_days: Optional[int] = Field(
+        default=90,
+        ge=1,
+        le=365,
+        description=(
+            "Total duration of preparation in days (e.g. 15, 30, 45, 60, 90, or custom)."
+        ),
+    )
+
     available_minutes_per_day: int = Field(
         default=120,
         ge=30,
@@ -125,6 +134,12 @@ class RoadmapGenerateRequestSchema(BaseModel):
             "Available learning minutes per day."
         ),
     )
+
+    experience_level: str = Field(default="intermediate", pattern="^(beginner|intermediate|advanced)$")
+
+    start_date: Optional[datetime] = None
+
+    replace_existing: bool = Field(default=False, description="Confirm replacing a roadmap that has progress.")
 
     force_regenerate: bool = Field(
         default=False,
@@ -173,7 +188,7 @@ class RoadmapMilestoneSchema(BaseModel):
     week_number: int = Field(
         ...,
         ge=1,
-        le=13,
+        le=52,
     )
 
 
@@ -204,6 +219,8 @@ class RoadmapResponseSchema(BaseModel):
     duration_days: int = 90
 
     available_minutes_per_day: int = 120
+
+    experience_level: str = "intermediate"
 
     total_estimated_hours: float = 0.0
 

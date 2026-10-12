@@ -1,263 +1,563 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
-import { initialRoadmapData } from '../../data/roadmapData';
-import {
-  Zap,
-  RefreshCw,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  ArrowUpRight,
-  TrendingUp,
-  SlidersHorizontal,
-  ChevronRight,
-  Target,
-  Check,
-  AlertTriangle,
-  Flame,
-  ArrowRight
-} from 'lucide-react';
+import { useUser } from '../../context/UserContext';
+import { ChevronDown, Clock3, RefreshCw, Calendar, Sparkles, Sliders } from 'lucide-react';
+
+const TaskRow = ({ task, onToggle, isTarget }) => (
+  <div
+    id={`task-row-${task.id}`}
+    className={`flex items-start gap-3 py-3 border-b border-slate-800/80 last:border-b-0 transition-all duration-300 ${
+      isTarget ? 'bg-indigo-500/15 ring-2 ring-indigo-400 rounded-xl px-3 my-1 border border-indigo-500/40 shadow-lg shadow-indigo-500/10' : ''
+    }`}
+  >
+    <input
+      type="checkbox"
+      checked={task.completed}
+      onChange={() => onToggle(task.id)}
+      aria-label={`${task.completed ? 'Reopen' : 'Complete'} ${task.title}`}
+      className="mt-1 h-4 w-4 shrink-0 accent-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+    />
+    <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p className={`min-w-0 flex-1 text-sm leading-6 ${task.completed ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+          {task.title}
+        </p>
+        <span className={`text-xs ${task.completed ? 'text-emerald-400' : 'text-slate-500'}`}>
+          {task.completed ? 'Completed' : 'To do'}
+        </span>
+        {task.duration && <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Clock3 size={13} />{task.duration}</span>}
+      </div>
+      {task.description && (
+        <details className="mt-1 text-xs text-slate-400" open={isTarget ? true : undefined}>
+          <summary className="w-fit cursor-pointer select-none rounded text-slate-500 hover:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400">
+            More details
+          </summary>
+          <p className="max-w-3xl pt-2 leading-5">{task.description}</p>
+        </details>
+      )}
+    </div>
+  </div>
+);
+
+const TaskGroup = ({ title, tasks, onToggle, targetTaskId }) => {
+  const [showCompleted, setShowCompleted] = useState(() => {
+    return Boolean(
+      targetTaskId && tasks.some((t) => (t.id === targetTaskId || t.taskId === targetTaskId) && t.completed)
+    );
+  });
+
+  useEffect(() => {
+    if (targetTaskId && tasks.some((t) => (t.id === targetTaskId || t.taskId === targetTaskId) && t.completed)) {
+      setShowCompleted(true);
+    }
+  }, [targetTaskId, tasks]);
+
+  const incomplete = tasks.filter((task) => !task.completed);
+  const completed = tasks.filter((task) => task.completed);
+
+  return (
+    <section aria-label={title} className="rounded-xl bg-[#111724] px-4 sm:px-5">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-800 py-3">
+        <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+        <span className="text-xs text-slate-500">{incomplete.length} remaining</span>
+      </div>
+      {incomplete.length > 0
+        ? incomplete.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onToggle={onToggle}
+              isTarget={task.id === targetTaskId || task.taskId === targetTaskId}
+            />
+          ))
+        : <p className="py-4 text-sm text-slate-500">No tasks to do here.</p>}
+      {completed.length > 0 && (
+        <>
+          <button
+            type="button"
+            aria-expanded={showCompleted}
+            onClick={() => setShowCompleted((shown) => !shown)}
+            className="flex min-h-10 w-full items-center gap-2 text-left text-xs text-slate-500 hover:text-slate-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
+          >
+            <ChevronDown size={14} className={showCompleted ? 'rotate-180 transition-transform' : 'transition-transform'} />
+            {showCompleted ? 'Hide' : 'Show'} {completed.length} completed {completed.length === 1 ? 'task' : 'tasks'}
+          </button>
+          {showCompleted && completed.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onToggle={onToggle}
+              isTarget={task.id === targetTaskId || task.taskId === targetTaskId}
+            />
+          ))}
+        </>
+      )}
+    </section>
+  );
+};
 
 export const RoadmapPage = () => {
   const navigate = useNavigate();
-  const { roadmap, tasks, toggleTaskCompletion, adaptRoadmap, toastNotification } = usePlanning();
-  const [activePhaseId, setActivePhaseId] = useState('phase-2');
-  const [isAdapting, setIsAdapting] = useState(false);
+  const location = useLocation();
+  const { user } = useUser();
+  const {
+    roadmap,
+    tasks,
+    toggleTaskCompletion,
+    adaptRoadmap,
+    generateCustomRoadmap,
+    toastNotification,
+    planningLoading,
+    planningError,
+    reloadPlanning,
+  } = usePlanning();
 
-  const safeRoadmap = {
-    ...initialRoadmapData,
-    ...roadmap,
-    phases: Array.isArray(roadmap?.phases) && roadmap.phases.length
-      ? roadmap.phases.map((phase, index) => ({
-          ...phase,
-          id: phase.id || phase.phase_id || `phase-${index + 1}`,
-          title: phase.title || phase.name || `Phase ${index + 1}`,
-          milestones: Array.isArray(phase.milestones) ? phase.milestones : [],
-        }))
-      : initialRoadmapData.phases,
-    day34Details: roadmap?.day34Details || initialRoadmapData.day34Details,
-  };
-  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const targetTaskId = searchParams.get('taskId') || location.state?.taskId;
+  const targetDay = Number(searchParams.get('day') || location.state?.day);
+
+  const registeredRole = user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer';
+
+  // State for dynamic duration & daily study time
+  const [selectedDuration, setSelectedDuration] = useState(roadmap?.totalDays || 90);
+  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [customDurationInput, setCustomDurationInput] = useState('');
+
+  const [selectedDailyMinutes, setSelectedDailyMinutes] = useState(
+    Number(user?.dailyGoalMinutes) || roadmap?.availableMinutesPerDay || 60
+  );
+  const [isCustomDaily, setIsCustomDaily] = useState(false);
+  const [customDailyInput, setCustomDailyInput] = useState('');
+
+  const [activePhaseId, setActivePhaseId] = useState(null);
+  const [isAdapting, setIsAdapting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Sync initial inputs with loaded roadmap state
+  useEffect(() => {
+    if (roadmap?.totalDays) {
+      if ([15, 30, 45, 60, 90].includes(roadmap.totalDays)) {
+        setSelectedDuration(roadmap.totalDays);
+        setIsCustomDuration(false);
+      } else {
+        setSelectedDuration(roadmap.totalDays);
+        setIsCustomDuration(true);
+        setCustomDurationInput(String(roadmap.totalDays));
+      }
+    }
+  }, [roadmap?.totalDays]);
+
+  useEffect(() => {
+    if (roadmap?.availableMinutesPerDay) {
+      if ([30, 45, 60, 120].includes(roadmap.availableMinutesPerDay)) {
+        setSelectedDailyMinutes(roadmap.availableMinutesPerDay);
+        setIsCustomDaily(false);
+      } else {
+        setSelectedDailyMinutes(roadmap.availableMinutesPerDay);
+        setIsCustomDaily(true);
+        setCustomDailyInput(String(roadmap.availableMinutesPerDay));
+      }
+    }
+  }, [roadmap?.availableMinutesPerDay]);
+
+  const phases = Array.isArray(roadmap?.phases) ? roadmap.phases : [];
+  const activePhase = phases.find((phase) => phase.id === activePhaseId)
+    || phases.find((phase) => phase.id === roadmap?.currentPhaseId)
+    || phases[0];
+
+  useEffect(() => {
+    if (!activePhaseId && phases.length) {
+      setActivePhaseId(roadmap?.currentPhaseId || phases[0].id);
+    }
+  }, [activePhaseId, phases, roadmap?.currentPhaseId]);
+
+  // If navigated with a target task or day, ensure active phase contains that day
+  useEffect(() => {
+    if ((targetTaskId || targetDay) && phases.length) {
+      const allList = Array.isArray(tasks) ? tasks : [];
+      const foundTask = allList.find((t) => t.id === targetTaskId || t.taskId === targetTaskId);
+      const dayNum = foundTask?.dayNumber || targetDay;
+      if (dayNum) {
+        const matchingPhase = phases.find((p) => dayNum >= p.startDay && dayNum <= p.endDay);
+        if (matchingPhase && matchingPhase.id !== activePhaseId) {
+          setActivePhaseId(matchingPhase.id);
+        }
+      }
+    }
+  }, [targetTaskId, targetDay, tasks, phases, activePhaseId]);
+
+  // Smooth scroll into target task row when active phase is rendered
+  useEffect(() => {
+    if (targetTaskId) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`task-row-${targetTaskId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [targetTaskId, activePhaseId]);
+
+  const currentDay = Number(roadmap?.currentDay) || 0;
+  const totalDays = Number(roadmap?.totalDays) || selectedDuration || 90;
+  const progressPercent = Math.min(100, Math.max(0, Number(roadmap?.overallProgressPercent) || 0));
+  const currentPhase = phases.find((phase) => currentDay >= phase.startDay && currentDay <= phase.endDay);
+  const phaseTasks = useMemo(() => {
+    if (!activePhase || !Array.isArray(tasks)) return [];
+    return tasks
+      .filter((task) => task.taskId && task.dayNumber >= activePhase.startDay && task.dayNumber <= activePhase.endDay)
+      .sort((a, b) => a.dayNumber - b.dayNumber || a.title.localeCompare(b.title));
+  }, [activePhase, tasks]);
+
+  const todayTasks = phaseTasks.filter((task) => task.dayNumber === currentDay);
+  const laterTasks = phaseTasks.filter((task) => task.dayNumber !== currentDay);
+  const weekGroups = [...new Set(laterTasks.map((task) => Math.ceil(task.dayNumber / 7)))];
 
   const handleRecalibrate = async () => {
     setIsAdapting(true);
-    await adaptRoadmap();
-    setIsAdapting(false);
+    try {
+      if (await adaptRoadmap()) await reloadPlanning();
+    } finally {
+      setIsAdapting(false);
+    }
   };
 
-  const activePhase = safeRoadmap.phases.find((p) => p.id === activePhaseId) || safeRoadmap.phases[1] || initialRoadmapData.phases[1];
-  const day34Tasks = safeTasks.filter((t) => t.dayNumber === 34 || t.phaseId === 'phase-2');
+  const handleDurationPreset = (days) => {
+    setIsCustomDuration(false);
+    setSelectedDuration(days);
+  };
+
+  const handleCustomDurationChange = (e) => {
+    const val = e.target.value;
+    setCustomDurationInput(val);
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 1 && num <= 365) {
+      setSelectedDuration(num);
+    }
+  };
+
+  const handleDailyPreset = (mins) => {
+    setIsCustomDaily(false);
+    setSelectedDailyMinutes(mins);
+  };
+
+  const handleCustomDailyChange = (e) => {
+    const val = e.target.value;
+    setCustomDailyInput(val);
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 15 && num <= 480) {
+      setSelectedDailyMinutes(num);
+    }
+  };
+
+  const handleGenerateCustomRoadmap = async () => {
+    const finalDays = isCustomDuration ? parseInt(customDurationInput, 10) || selectedDuration : selectedDuration;
+    const finalMins = isCustomDaily ? parseInt(customDailyInput, 10) || selectedDailyMinutes : selectedDailyMinutes;
+
+    if (!finalDays || finalDays < 1 || finalDays > 365) return;
+    if (!finalMins || finalMins < 15 || finalMins > 480) return;
+
+    setIsGenerating(true);
+    try {
+      await generateCustomRoadmap({
+        targetRole: registeredRole,
+        durationDays: finalDays,
+        dailyMinutes: finalMins,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  if (planningLoading) {
+    return <div role="status" className="rounded-2xl border border-slate-800 bg-[#121624] p-6 text-sm text-slate-400">Loading your roadmap…</div>;
+  }
+
+  if (planningError) {
+    return (
+      <section className="rounded-2xl border border-slate-800 bg-[#121624] p-6 sm:p-8" aria-labelledby="roadmap-error-title">
+        <h1 id="roadmap-error-title" className="text-xl font-semibold text-white">{totalDays}-Day Adaptive Placement Roadmap</h1>
+        <p role="alert" className="mt-2 text-sm text-slate-400">{planningError}</p>
+        <button type="button" onClick={reloadPlanning} className="mt-5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">Try again</button>
+      </section>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Toast Notification */}
-      {toastNotification && (
-        <div className="fixed bottom-10 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-[#121624] border border-indigo-500/40 text-white rounded-xl shadow-2xl font-mono text-xs animate-in slide-in-from-bottom duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{toastNotification}</span>
-        </div>
-      )}
+    <main className="mx-auto max-w-5xl space-y-5 pb-8 text-slate-100">
+      {toastNotification && <div role="status" className="fixed bottom-6 right-6 z-50 rounded-lg border border-slate-700 bg-[#121624] px-4 py-3 text-sm text-slate-100 shadow-xl">{toastNotification}</div>}
 
-      {/* 1. HERO BANNER */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#121624] border border-indigo-500/30 shadow-2xl">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-semibold border border-indigo-500/30">
-              <Zap className="w-3.5 h-3.5 text-indigo-400" />
-              Telemetry V4.2 Â· Adaptive Re-balancing Engine
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">90-Day Adaptive Placement Roadmap</h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-            Adaptive 90-day execution curriculum dynamically re-balanced based on your DSA accuracy, AST project audits, and ATS skill gap telemetry.
-          </p>
+      <header className="flex flex-col gap-4 rounded-2xl border border-slate-800 bg-[#121624] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">{totalDays}-Day Adaptive Placement Roadmap</h1>
+          <p className="mt-1 text-sm text-slate-400">Preparing for <span className="font-medium text-indigo-300">{registeredRole}</span></p>
         </div>
-
-        <div className="flex items-center gap-3 self-start lg:self-center shrink-0">
-          <button
-            onClick={handleRecalibrate}
-            disabled={isAdapting}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a2030] hover:bg-[#232b3e] text-slate-200 hover:text-white text-xs sm:text-sm font-semibold rounded-xl border border-[#232b3e] transition-all shadow-md disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 text-indigo-400 ${isAdapting ? 'animate-spin' : ''}`} />
-            <span>{isAdapting ? 'Re-balancing Schedule...' : 'Recalibrate Plan with AI'}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={handleRecalibrate} disabled={isAdapting} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400">
+            <RefreshCw size={15} className={isAdapting ? 'animate-spin' : ''} />
+            {isAdapting ? 'Updating…' : 'Recalibrate'}
           </button>
-          <button
-            onClick={() => navigate('/tasks')}
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 border border-indigo-400/30"
-          >
-            <span>View Today's Tasks</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </button>
+          <button type="button" onClick={() => navigate('/tasks')} className="min-h-10 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300">View today’s tasks</button>
         </div>
-      </div>
+      </header>
 
-      {/* 2. OVERALL PROGRESS SUMMARY BAR */}
-      <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Dynamic Roadmap Preferences & Generation Controls */}
+      <section aria-label="Roadmap Preparation Plan Configuration" className="rounded-2xl border border-slate-800 bg-[#121624] p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
           <div>
-            <span className="text-xs font-mono uppercase text-slate-400 font-semibold tracking-wider block">Current Sprint & Progress</span>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              Day {safeRoadmap.currentDay} of {safeRoadmap.totalDays} Â· {safeRoadmap.activeSprintName}
-            </h3>
+            <h2 className="text-base font-semibold text-white flex items-center gap-2">
+              <Sliders size={18} className="text-indigo-400" />
+              Personalized Plan Settings
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Customize your study cadence and preparation runway. Existing completed tasks are preserved.
+            </p>
           </div>
-          <span className="px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 self-start sm:self-auto">
-            {safeRoadmap.overallProgressPercent}% Roadmap Completed
-          </span>
-        </div>
-
-        <div className="w-full bg-[#0f131d] rounded-full h-3 overflow-hidden border border-[#232b3e]">
-          <div
-            className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-sm"
-            style={{ width: `${safeRoadmap.overallProgressPercent}%` }}
-          ></div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 pt-1">
-          <span>Completed: {safeRoadmap.completedDaysCount} Days</span>
-          <span>Last Adapted: {safeRoadmap.lastAdapted}</span>
-          <span>Remaining: {safeRoadmap.totalDays - safeRoadmap.completedDaysCount} Days</span>
-        </div>
-      </div>
-
-      {/* 3. PHASE TIMELINE TABS */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-[#232b3e] pb-2 overflow-x-auto">
-              {safeRoadmap.phases.map((phase, index) => (
-            <button
-              key={phase.id || `phase-${index + 1}`}
-              onClick={() => setActivePhaseId(phase.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
-                activePhaseId === phase.id
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30'
-                  : 'bg-[#121624] text-slate-400 hover:text-white hover:bg-[#1a2030] border border-[#232b3e]'
-              }`}
-            >
-              <span>{phase.title}</span>
-              <span className={`text-xs font-mono px-2 py-0.5 rounded-full font-bold ${
-                phase.status === 'completed'
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : phase.status === 'in-progress'
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'bg-[#1a2030] text-slate-400'
-              }`}>
-                {phase.progressPercent}%
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Selected Phase Details Card */}
-        <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
-            <div>
-              <h3 className="font-bold text-white text-lg">{activePhase.title}</h3>
-              <p className="text-xs text-slate-400 font-mono">Days {activePhase.startDay} â€“ {activePhase.endDay} ({activePhase.durationDays} Days Duration)</p>
-            </div>
-            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 self-start sm:self-auto">
-              Status: {activePhase.status}
+          {/* Target Role Sync Badge */}
+          <div className="flex items-center gap-2 self-start sm:self-auto rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 text-xs">
+            <span className="text-slate-400">Target Role:</span>
+            <span className="font-semibold text-indigo-300">{registeredRole}</span>
+            <span className="inline-flex items-center text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-medium">
+              Profile Synced
             </span>
           </div>
-
-          <p className="text-xs sm:text-sm text-slate-300 font-sans">{activePhase.subtitle}</p>
-
-          <div className="space-y-2 pt-1">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-400 block">
-              Key Phase Milestones:
-            </span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {activePhase.milestones.map((m, idx) => (
-                <div key={idx} className="p-3 rounded-xl bg-[#0f131d] border border-[#232b3e] text-xs font-sans text-slate-200 flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{m}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* 5. DAY 34 EXECUTION MATRIX */}
-      <div className="bg-[#121624] p-6 rounded-2xl border border-[#232b3e] space-y-4 shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#232b3e]">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                ACTIVE DAY {safeRoadmap.day34Details.dayNumber}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+          {/* Preparation Duration */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Calendar size={14} className="text-indigo-400" />
+                Study Duration
               </span>
-              <h3 className="font-bold text-white text-lg">{safeRoadmap.day34Details.focusTitle}</h3>
-            </div>
-            <p className="text-xs text-slate-400 mt-1">{safeRoadmap.day34Details.description}</p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 self-start sm:self-auto">
-            <Clock className="w-4 h-4 text-indigo-400" />
-            <span>Target: {safeRoadmap.day34Details.recommendedHours}</span>
-          </div>
-        </div>
-
-        {/* Day Tasks List */}
-        <div className="space-y-3">
-          <span className="text-xs font-mono uppercase font-bold tracking-wider text-slate-400 block">
-            Day 34 Action Items ({day34Tasks.filter((t) => t.completed).length} / {day34Tasks.length} Completed):
-          </span>
-
-          {day34Tasks.map((task) => (
-            <div
-              key={task.id}
-              className={`roadmap-task-card p-4 rounded-xl border transition-all ${
-                task.completed
-                  ? 'roadmap-task-completed bg-[#0f131d]/60 border-[#232b3e] opacity-75'
-                  : 'bg-[#0f131d] border-[#232b3e] hover:border-indigo-500/40'
-              } flex items-center justify-between gap-3`}
-            >
-              <div className="flex items-start gap-3 flex-1 min-w-0">
+              <span className="text-indigo-300 font-semibold">{selectedDuration} Days</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[15, 30, 45, 60, 90].map((days) => (
                 <button
+                  key={days}
                   type="button"
-                  onClick={() => toggleTaskCompletion(task.id)}
-                  className="mt-0.5 shrink-0 text-slate-400 hover:text-indigo-400 transition-colors"
+                  onClick={() => handleDurationPreset(days)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                    !isCustomDuration && selectedDuration === days
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                  }`}
                 >
-                  <CheckCircle2
-                    className={`w-5 h-5 ${
-                      task.completed ? 'text-emerald-400 fill-emerald-500/20' : 'text-slate-500'
-                    }`}
-                  />
+                  {days} Days
                 </button>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                      {task.category}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {task.duration}
-                    </span>
-                    <span
-                      className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold ${
-                        task.priority === 'High' ? 'bg-amber-500/20 text-amber-400' : 'bg-[#1a2030] text-slate-400'
-                      }`}
-                    >
-                      {task.priority}
-                    </span>
-                  </div>
-                  <p className={`text-xs sm:text-sm font-semibold ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
-                    {task.title}
-                  </p>
-                </div>
-              </div>
-
+              ))}
               <button
-                onClick={() => navigate(task.route)}
-                className="p-2 rounded-lg bg-[#1a2030] text-slate-300 hover:text-white hover:bg-[#232b3e] transition-colors shrink-0"
-                title="Execute Task Module"
+                type="button"
+                onClick={() => {
+                  setIsCustomDuration(true);
+                  if (!customDurationInput) setCustomDurationInput(String(selectedDuration));
+                }}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                  isCustomDuration
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                    : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                }`}
               >
-                <ArrowRight className="w-4 h-4 text-indigo-400" />
+                Custom
               </button>
             </div>
-          ))}
-        </div>
-      </div>
+            {isCustomDuration && (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={customDurationInput}
+                  onChange={handleCustomDurationChange}
+                  placeholder="Days (1-365)"
+                  className="w-32 rounded-lg bg-[#111724] border border-slate-700 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+                <span className="text-xs text-slate-400">days (1–365)</span>
+              </div>
+            )}
+          </div>
 
-    </div>
+          {/* Daily Study Time */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Clock3 size={14} className="text-indigo-400" />
+                Daily Study Time
+              </span>
+              <span className="text-indigo-300 font-semibold">
+                {selectedDailyMinutes >= 60 && selectedDailyMinutes % 60 === 0
+                  ? `${selectedDailyMinutes / 60} Hour${selectedDailyMinutes > 60 ? 's' : ''}`
+                  : `${selectedDailyMinutes} Mins`}/day
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: '30 Mins', value: 30 },
+                { label: '45 Mins', value: 45 },
+                { label: '1 Hour', value: 60 },
+                { label: '2 Hours', value: 120 },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleDailyPreset(opt.value)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                    !isCustomDaily && selectedDailyMinutes === opt.value
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomDaily(true);
+                  if (!customDailyInput) setCustomDailyInput(String(selectedDailyMinutes));
+                }}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                  isCustomDaily
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                    : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+            {isCustomDaily && (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="number"
+                  min="15"
+                  max="480"
+                  value={customDailyInput}
+                  onChange={handleCustomDailyChange}
+                  placeholder="Mins (15-480)"
+                  className="w-32 rounded-lg bg-[#111724] border border-slate-700 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                />
+                <span className="text-xs text-slate-400">minutes/day (15–480)</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800/80">
+          <p className="text-xs text-slate-400">
+            Estimated runway: <span className="text-slate-200 font-medium">~{Math.round((selectedDuration * selectedDailyMinutes) / 60)} study hours</span> across <span className="text-slate-200 font-medium">{selectedDuration} days</span>
+          </p>
+          <button
+            type="button"
+            onClick={handleGenerateCustomRoadmap}
+            disabled={isGenerating || planningLoading}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors shadow-sm shadow-indigo-600/25"
+          >
+            {isGenerating ? (
+              <>
+                <RefreshCw size={13} className="animate-spin" />
+                Generating Adaptive Roadmap…
+              </>
+            ) : (
+              <>
+                <Sparkles size={13} />
+                Generate {selectedDuration}-Day Roadmap
+              </>
+            )}
+          </button>
+        </div>
+      </section>
+
+      <section aria-label="Roadmap progress" className="rounded-2xl border border-slate-800 bg-[#121624] p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm text-slate-400">Overall completion</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums text-white">{progressPercent}%</p>
+          </div>
+          <p className="text-sm text-slate-400">Day {currentDay || '—'} of {totalDays || '—'}</p>
+        </div>
+        <div
+          className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800"
+          role="progressbar"
+          aria-label="Overall roadmap completion"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progressPercent}
+        >
+          <div className="h-full rounded-full bg-indigo-500 transition-[width]" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
+          <span>Week {currentDay ? Math.ceil(currentDay / 7) : '—'}</span>
+          <span>Current phase: {currentPhase?.title || roadmap?.currentPhaseName || '—'}</span>
+        </div>
+      </section>
+
+      {phases.length > 0 ? (
+        <section aria-label="Roadmap phases" className="space-y-4">
+          <div role="tablist" aria-label="Roadmap phase" className="flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
+            {phases.map((phase, index) => (
+              <button
+                key={phase.id}
+                id={`${phase.id}-tab`}
+                type="button"
+                role="tab"
+                aria-selected={activePhase?.id === phase.id}
+                aria-controls="roadmap-phase-panel"
+                onClick={() => setActivePhaseId(phase.id)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                  event.preventDefault();
+                  const direction = event.key === 'ArrowRight' ? 1 : -1;
+                  const nextIndex = (index + direction + phases.length) % phases.length;
+                  setActivePhaseId(phases[nextIndex].id);
+                  event.currentTarget.parentElement.querySelectorAll('[role="tab"]')[nextIndex]?.focus();
+                }}
+                className={`min-h-10 shrink-0 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${activePhase?.id === phase.id ? 'bg-indigo-500/15 text-indigo-200 ring-1 ring-indigo-400/40' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+              >
+                {phase.title}
+              </button>
+            ))}
+          </div>
+
+          {activePhase && (
+            <div role="tabpanel" id="roadmap-phase-panel" aria-labelledby={`${activePhase.id}-tab`} className="space-y-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 px-1">
+                <h2 className="text-lg font-semibold text-white">{activePhase.title}</h2>
+                <p className="text-sm text-slate-500">Days {activePhase.startDay}–{activePhase.endDay}</p>
+              </div>
+
+              {phaseTasks.length === 0 ? (
+                <p className="rounded-xl border border-slate-800 bg-[#121624] p-5 text-sm text-slate-400">No scheduled tasks are available for this phase yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {todayTasks.length > 0 && (
+                    <TaskGroup
+                      title={`Today · Day ${currentDay}`}
+                      tasks={todayTasks}
+                      onToggle={toggleTaskCompletion}
+                      targetTaskId={targetTaskId}
+                    />
+                  )}
+                  {weekGroups.map((week) => (
+                    <TaskGroup
+                      key={week}
+                      title={`Week ${week}`}
+                      tasks={laterTasks.filter((task) => Math.ceil(task.dayNumber / 7) === week)}
+                      onToggle={toggleTaskCompletion}
+                      targetTaskId={targetTaskId}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      ) : (
+        <p className="rounded-xl border border-slate-800 bg-[#121624] p-5 text-sm text-slate-400">Your roadmap does not have any phases yet.</p>
+      )}
+    </main>
   );
 };

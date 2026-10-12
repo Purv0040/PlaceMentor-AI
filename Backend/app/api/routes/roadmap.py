@@ -75,6 +75,11 @@ async def generate_roadmap(
     user_id = _get_user_id(current_user)
 
     target_role = payload.target_role if payload else None
+    duration_days = (
+        payload.duration_days
+        if payload and payload.duration_days
+        else 90
+    )
     daily_minutes = (
         payload.available_minutes_per_day
         if payload
@@ -85,6 +90,9 @@ async def generate_roadmap(
         if payload
         else False
     )
+    experience_level = payload.experience_level if payload else "intermediate"
+    start_date = payload.start_date if payload else None
+    replace_existing = payload.replace_existing if payload else False
 
     service = RoadmapService(db)
 
@@ -92,8 +100,12 @@ async def generate_roadmap(
         roadmap = await service.generate_roadmap(
             user_id=user_id,
             target_role=target_role,
+            duration_days=duration_days,
             available_minutes_per_day=daily_minutes,
             force_regenerate=force_regenerate,
+            experience_level=experience_level,
+            start_date=start_date,
+            replace_existing=replace_existing,
         )
 
         return roadmap
@@ -124,18 +136,26 @@ async def regenerate_roadmap(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
-    Force regenerate a new 90-day roadmap.
+    Force regenerate a personalized preparation roadmap.
     """
 
     user_id = _get_user_id(current_user)
 
     target_role = payload.target_role if payload else None
+    duration_days = (
+        payload.duration_days
+        if payload and payload.duration_days
+        else 90
+    )
 
     daily_minutes = (
         payload.available_minutes_per_day
         if payload
         else 120
     )
+    experience_level = payload.experience_level if payload else "intermediate"
+    start_date = payload.start_date if payload else None
+    replace_existing = payload.replace_existing if payload else False
 
     service = RoadmapService(db)
 
@@ -143,8 +163,12 @@ async def regenerate_roadmap(
         roadmap = await service.generate_roadmap(
             user_id=user_id,
             target_role=target_role,
+            duration_days=duration_days,
             available_minutes_per_day=daily_minutes,
             force_regenerate=True,
+            experience_level=experience_level,
+            start_date=start_date,
+            replace_existing=replace_existing,
         )
 
         return roadmap

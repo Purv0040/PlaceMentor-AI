@@ -21,7 +21,7 @@ class RoadmapTaskItemModel(BaseModel):
     day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     category: str
@@ -53,7 +53,7 @@ class RoadmapTaskItemModel(BaseModel):
 
 class RoadmapPhaseModel(BaseModel):
     """
-    One of the three roadmap phases.
+    Roadmap phases (e.g., Phase 1, Phase 2, Phase 3).
     """
 
     model_config = ConfigDict(
@@ -63,7 +63,7 @@ class RoadmapPhaseModel(BaseModel):
     phase_number: int = Field(
         ...,
         ge=1,
-        le=3,
+        le=10,
     )
 
     name: str
@@ -73,13 +73,13 @@ class RoadmapPhaseModel(BaseModel):
     start_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     end_day: int = Field(
         ...,
         ge=1,
-        le=90,
+        le=365,
     )
 
     goal: str
@@ -101,7 +101,7 @@ class WeeklyGoalModel(BaseModel):
     week_number: int = Field(
         ...,
         ge=1,
-        le=13,
+        le=52,
     )
 
     objective: str

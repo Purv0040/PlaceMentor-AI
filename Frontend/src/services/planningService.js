@@ -2,7 +2,7 @@
 
 import { apiRequest } from "./api";
 import { initialRoadmapData } from "../data/roadmapData";
-import { initialTaskData } from "../data/taskData";
+import { getDynamicTasks, initialTaskData } from "../data/taskData";
 import { initialProgressData } from "../data/progressData";
 
 const STORAGE_KEY = "placementor_planning_state";
@@ -11,17 +11,24 @@ export const planningService = {
   getTasksFromApi: async () => {
     try {
       const res = await apiRequest("/tasks");
-      if (res && Array.isArray(res)) {
+      if (Array.isArray(res)) {
         return res.map((t) => ({
-          id: t.id,
+          id: t.id || t.task_id,
+          taskId: t.task_id || t.id,
+          roadmapId: t.roadmap_id || null,
           title: t.title,
           description: t.description || "",
           category: t.category || "General",
-          duration: `${t.estimated_minutes || 45} mins`,
+          duration: t.estimated_minutes != null ? `${t.estimated_minutes} min` : null,
           priority: t.priority || "Medium",
+          difficulty: t.difficulty || "Intermediate",
+          skill: t.skill || "",
+          estimatedMinutes: t.estimated_minutes != null ? t.estimated_minutes : 60,
+          status: t.status || "pending",
           completed: t.status === "completed",
-          dayNumber: t.day_number || 1,
-          phaseId: t.phase_id || "phase-1",
+          completedAt: t.completed_at || null,
+          dayNumber: t.day_number ?? null,
+          phaseNumber: t.phase_number ?? null,
           route: "/tasks",
         }));
       }
@@ -38,41 +45,40 @@ export const planningService = {
         const phases = Array.isArray(res.phases)
           ? res.phases.map((phase, index) => {
               const tasks = Array.isArray(phase.tasks) ? phase.tasks : [];
+              const startDay = phase.start_day ?? phase.startDay ?? null;
+              const endDay = phase.end_day ?? phase.endDay ?? null;
               return {
                 ...phase,
-                id: phase.id || phase.phase_id || `phase-${phase.phase_number || index + 1}`,
-                title: phase.title || phase.name || `Phase ${phase.phase_number || index + 1}`,
+                id: `phase-${phase.phase_number || index + 1}`,
+                phaseNumber: phase.phase_number || index + 1,
+                title: ["Foundation", "Skill Development", "Placement Preparation"][index] || phase.name,
+                sourceTitle: phase.name || phase.title || "",
                 subtitle: phase.subtitle || phase.goal || "",
-                startDay: phase.startDay ?? phase.start_day ?? 1,
-                endDay: phase.endDay ?? phase.end_day ?? 1,
-                durationDays: phase.durationDays ?? phase.duration_days ?? Math.max(1, (phase.endDay ?? phase.end_day ?? 1) - (phase.startDay ?? phase.start_day ?? 1) + 1),
+                startDay,
+                endDay,
+                durationDays: startDay != null && endDay != null ? endDay - startDay + 1 : null,
                 status: phase.status || "upcoming",
-                progressPercent: phase.progressPercent ?? phase.progress_percentage ?? 0,
-                milestones: Array.isArray(phase.milestones)
-                  ? phase.milestones
-                  : tasks.map((task) => task.title).filter(Boolean),
+                tasks,
               };
             })
-          : initialRoadmapData.phases;
+          : [];
 
         return {
-          ...initialRoadmapData,
           id: res.id,
+          roadmapId: res.roadmap_id,
           title: res.title,
+          targetRole: res.target_role,
           description: res.description,
-          currentDay: res.current_day || 1,
-          totalDays: res.total_days || 90,
-          currentPhaseId: res.current_phase || "phase-1",
-          currentPhaseName: res.phase_name || "Phase 1: Foundations",
-          completionPercentage: Math.round(res.progress_percentage || 0),
-          lastAdapted: res.updated_at ? new Date(res.updated_at).toLocaleDateString() : "Recently",
+          currentDay: null,
+          totalDays: res.duration_days ?? res.total_days ?? 90,
+          availableMinutesPerDay: res.available_minutes_per_day ?? 120,
+          currentPhaseId: null,
+          currentPhaseName: null,
+          overallProgressPercent: null,
+          lastAdapted: res.updated_at || null,
           phases,
-          adaptiveRebalancingNotice: {
-            isAdapted: true,
-            reason: "Synced with AI Adaptive Engine Backend",
-            adaptedAt: "Live Backend",
-            adjustments: ["Real-time adaptive schedule synchronized."],
-          },
+          allTasks: Array.isArray(res.all_tasks) ? res.all_tasks : [],
+          startDate: res.start_date,
         };
       }
     } catch (e) {
@@ -81,11 +87,59 @@ export const planningService = {
     return null;
   },
 
-  completeTaskInApi: async (taskId) => {
+  generateCustomRoadmap: async ({
+    targetRole,
+    durationDays = 90,
+    dailyMinutes = 60,
+    replaceExisting = true,
+  } = {}) => {
     try {
-      await apiRequest(`/tasks/${taskId}/complete`, { method: "POST" });
+      const payload = {
+        force_regenerate: true,
+        replace_existing: replaceExisting,
+      };
+      if (targetRole) payload.target_role = targetRole;
+      if (durationDays) payload.duration_days = Number(durationDays);
+      if (dailyMinutes) payload.available_minutes_per_day = Number(dailyMinutes);
+
+      const res = await apiRequest("/roadmap/generate", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return res;
     } catch (e) {
-      console.warn("Failed to complete task in API", e);
+      console.error("Failed to generate custom roadmap", e);
+      throw e;
+    }
+  },
+
+  getRoadmapSummaryFromApi: async () => {
+    try {
+      return await apiRequest("/roadmap/summary");
+    } catch (e) {
+      console.warn("Failed to fetch roadmap summary", e);
+      return null;
+    }
+  },
+
+  updateTaskStatusInApi: async (taskId, status) => {
+    try {
+      return await apiRequest(`/tasks/${encodeURIComponent(taskId)}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+    } catch (e) {
+      console.warn("Failed to update task status in API", e);
+      return null;
+    }
+  },
+
+  getTaskProgressFromApi: async () => {
+    try {
+      return await apiRequest("/tasks/progress");
+    } catch (e) {
+      console.warn("Failed to refresh task progress", e);
+      return null;
     }
   },
 
@@ -130,44 +184,16 @@ export const planningService = {
   },
 
   adaptRoadmap: async (currentRoadmap, currentTasks) => {
-    try {
-      const res = await apiRequest("/adaptive/recalculate", { method: "POST" });
-      if (res && res.id) {
-        return {
-          ...currentRoadmap,
-          lastAdapted: "Just now (AI Adaptive Recalculated)",
-          adaptiveRebalancingNotice: {
-            isAdapted: true,
-            reason: res.reason || "AI Copilot re-balanced schedule based on performance velocity.",
-            adaptedAt: "Just now",
-            adjustments: res.adjustments || [
-              "Optimized study & drill schedule.",
-              "Synchronized with AST & DSA telemetry.",
-            ],
-          },
-        };
-      }
-    } catch (e) {
-      console.warn("Adaptive API recalculate fallback", e);
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          ...currentRoadmap,
-          lastAdapted: "Just now (Telemetry Adapted)",
-          adaptiveRebalancingNotice: {
-            isAdapted: true,
-            reason: "AI Copilot re-balanced schedule based on active task completion velocity.",
-            adaptedAt: "Just now",
-            adjustments: [
-              "Optimized DP practice schedule.",
-              "Synchronized Redis caching tasks with Project Intelligence audit.",
-            ],
-          },
-        });
-      }, 700);
+    const res = await apiRequest("/adaptive/recalculate", {
+      method: "POST",
+      body: JSON.stringify({ roadmap_id: currentRoadmap?.roadmapId }),
     });
+    if (!res?.id) throw new Error("Roadmap recalibration failed.");
+    return {
+      ...currentRoadmap,
+      lastAdapted: res.created_at || new Date().toISOString(),
+      adaptationReason: res.reason,
+    };
   },
 };
 
