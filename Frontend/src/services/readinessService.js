@@ -21,7 +21,7 @@ export function transformBackendReadiness(backendData) {
   const categoryConfigs = [
     { key: "Resume", altKey: "resume", name: "Resume Intelligence", target: 85, defaultWeight: "15%", route: "/resume" },
     { key: "DSA", altKey: "dsa", name: "DSA & Problem Solving", target: 85, defaultWeight: "20%", route: "/leetcode" },
-    { key: "Projects", altKey: "projects", name: "Project Architecture", target: 80, defaultWeight: "20%", route: "/projects" },
+    { key: "Projects", altKey: "projects", name: "Project Architecture", target: 80, defaultWeight: "20%", route: "/github" },
     { key: "GitHub", altKey: "github", name: "GitHub Impact & Code", target: 80, defaultWeight: "10%", route: "/github" },
     { key: "CS Fundamentals", altKey: "cs_fundamentals", name: "CS Fundamentals", target: 75, defaultWeight: "15%", route: "/tasks" },
     { key: "Communication", altKey: "communication", name: "Communication Skills", target: 75, defaultWeight: "10%", route: "/communication" },

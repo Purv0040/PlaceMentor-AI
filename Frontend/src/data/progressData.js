@@ -21,7 +21,6 @@ export const initialProgressData = {
     { module: "Resume Intelligence", score: 84, status: "ATS Verified", route: "/resume" },
     { module: "GitHub Intelligence", score: 82, status: "Production Grade", route: "/github" },
     { module: "LeetCode Intelligence", score: 79, status: "Knight Rank", route: "/leetcode" },
-    { module: "Project Intelligence", score: 88, status: "System Architect", route: "/projects" },
     { module: "Placement Readiness", score: 82, status: "Tier-1 Prospect", route: "/placement-readiness" },
     { module: "Skill Gap Analyzer", score: 72, status: "6 Gaps Identified", route: "/skill-gaps" },
   ]

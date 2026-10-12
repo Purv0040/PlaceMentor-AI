@@ -39,8 +39,7 @@ export const Sidebar = () => {
       items: [
         { label: 'Resume Intelligence', path: '/resume', icon: FileText },
         { label: 'GitHub Intelligence', path: '/github', icon: Github },
-        { label: 'LeetCode Analytics', path: '/leetcode', icon: Code2 },
-        { label: 'Projects Audit', path: '/projects', icon: FolderKanban }
+        { label: 'LeetCode Analytics', path: '/leetcode', icon: Code2 }
       ]
     },
     {

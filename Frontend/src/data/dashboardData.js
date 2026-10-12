@@ -66,7 +66,6 @@ export const dashboardData = {
   quickActions: [
     { label: "Resume Audit", path: "/resume", color: "indigo" },
     { label: "GitHub Telemetry", path: "/github", color: "purple" },
-    { label: "LeetCode Analytics", path: "/leetcode", color: "amber" },
-    { label: "Projects Audit", path: "/projects", color: "emerald" }
+    { label: "LeetCode Analytics", path: "/leetcode", color: "amber" }
   ]
 };
