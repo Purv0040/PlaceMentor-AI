@@ -1453,6 +1453,17 @@ class RoadmapService:
 
                 break
 
+        # Resolve latest progress percentage from ProgressRepository or active record
+        progress_percentage = float(active.get("progress", 0.0) or 0.0)
+        try:
+            progress_doc = await self.progress_service.progress_repo.get_by_user_id(user_id)
+            if progress_doc and "roadmap_completion_percentage" in progress_doc:
+                progress_percentage = float(progress_doc["roadmap_completion_percentage"] or 0.0)
+            elif progress_doc and "completion_percentage" in progress_doc:
+                progress_percentage = float(progress_doc["completion_percentage"] or 0.0)
+        except Exception as p_err:
+            logger.debug("Could not read progress_doc in roadmap summary: %s", p_err)
+
         return {
             "roadmap_id": (
                 active.get("roadmap_id")
@@ -1473,13 +1484,7 @@ class RoadmapService:
                 phases
             ),
 
-            "progress_percentage": float(
-                active.get(
-                    "progress",
-                    0.0,
-                )
-                or 0.0
-            ),
+            "progress_percentage": progress_percentage,
 
             "status": active.get(
                 "status",

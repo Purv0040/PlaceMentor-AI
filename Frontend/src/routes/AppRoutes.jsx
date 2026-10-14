@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts & Protection
 import { PublicLayout } from '../components/layout/PublicLayout';
@@ -35,8 +35,9 @@ import { PlacementReadinessPage } from '../pages/app/PlacementReadinessPage';
 import { SkillGapsPage } from '../pages/app/SkillGapsPage';
 import { RoadmapPage } from '../pages/app/RoadmapPage';
 import { TasksPage } from '../pages/app/TasksPage';
-import { ProgressPage } from '../pages/app/ProgressPage';
-import { AchievementsPage } from '../pages/app/AchievementsPage';
+// Temporarily removed: ProgressPage and AchievementsPage
+// import { ProgressPage } from '../pages/app/ProgressPage';
+// import { AchievementsPage } from '../pages/app/AchievementsPage';
 import { ProfilePage } from '../pages/app/ProfilePage';
 import { SettingsPage } from '../pages/app/SettingsPage';
 import { NotFoundPage } from '../pages/app/NotFoundPage';
@@ -80,8 +81,11 @@ export const AppRoutes = () => {
           <Route path="/skill-gaps" element={<SkillGapsPage />} />
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/achievements" element={<AchievementsPage />} />
+          {/* Temporarily removed: Progress Telemetry and Achievements */}
+          {/* <Route path="/progress" element={<ProgressPage />} /> */}
+          {/* <Route path="/achievements" element={<AchievementsPage />} /> */}
+          <Route path="/progress" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/achievements" element={<Navigate to="/dashboard" replace />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

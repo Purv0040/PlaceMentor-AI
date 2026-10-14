@@ -2,7 +2,36 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
 import { useUser } from '../../context/UserContext';
-import { ChevronDown, Clock3, RefreshCw, Calendar, Sparkles, Sliders } from 'lucide-react';
+import { ChevronDown, Clock3, RefreshCw, Calendar, Sparkles, Sliders, Edit3 } from 'lucide-react';
+
+const ROADMAP_ROLES = [
+  'Full Stack Engineer',
+  'Frontend Engineer',
+  'Frontend Developer',
+  'Frontend SDE-1',
+  'Backend Developer',
+  'Backend SDE-1 (Tier 1)',
+  'AI/ML Engineer',
+  'Machine Learning Engineer',
+  'Data Scientist',
+  'Data Scientist & Engineer',
+  'Data Analyst',
+  'Data Engineer',
+  'DevOps & Cloud Engineer',
+  'DevOps Engineer',
+  'Cloud Engineer',
+  'Android Developer',
+  'iOS Developer',
+  'Cybersecurity Analyst',
+  'Cybersecurity Engineer',
+  'Cybersecurity Analyst & Engineer',
+  'Software Engineer',
+  'Systems Software Engineer',
+  'QA / SDET Engineer',
+  'Embedded Systems Engineer',
+  'Blockchain Developer',
+  'Product Manager',
+];
 
 const TaskRow = ({ task, onToggle, isTarget }) => (
   <div
@@ -118,6 +147,17 @@ export const RoadmapPage = () => {
   const targetDay = Number(searchParams.get('day') || location.state?.day);
 
   const registeredRole = user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer';
+
+  // State for role selection (matches Resume page pattern)
+  const [selectedRole, setSelectedRole] = useState(registeredRole);
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
+  const [customRoleInput, setCustomRoleInput] = useState('');
+
+  // Sync selectedRole if user/roadmap data loads after mount
+  useEffect(() => {
+    setSelectedRole((prev) => prev || user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer');
+  }, [user?.targetRole, roadmap?.targetRole]);
 
   // State for dynamic duration & daily study time
   const [selectedDuration, setSelectedDuration] = useState(roadmap?.totalDays || 90);
@@ -252,17 +292,39 @@ export const RoadmapPage = () => {
     }
   };
 
+  const handleRoleSelect = (roleName) => {
+    if (roleName === 'custom') {
+      setShowCustomRoleInput(true);
+      return;
+    }
+    setShowCustomRoleInput(false);
+    setSelectedRole(roleName);
+    setIsEditingRole(false);
+  };
+
+  const handleCustomRoleSubmit = (e) => {
+    e.preventDefault();
+    if (customRoleInput.trim()) {
+      setSelectedRole(customRoleInput.trim());
+      setCustomRoleInput('');
+      setShowCustomRoleInput(false);
+      setIsEditingRole(false);
+    }
+  };
+
   const handleGenerateCustomRoadmap = async () => {
     const finalDays = isCustomDuration ? parseInt(customDurationInput, 10) || selectedDuration : selectedDuration;
     const finalMins = isCustomDaily ? parseInt(customDailyInput, 10) || selectedDailyMinutes : selectedDailyMinutes;
+    const finalRole = selectedRole;
 
     if (!finalDays || finalDays < 1 || finalDays > 365) return;
     if (!finalMins || finalMins < 15 || finalMins > 480) return;
+    if (!finalRole) return;
 
     setIsGenerating(true);
     try {
       await generateCustomRoadmap({
-        targetRole: registeredRole,
+        targetRole: finalRole,
         durationDays: finalDays,
         dailyMinutes: finalMins,
       });
@@ -312,16 +374,74 @@ export const RoadmapPage = () => {
               Personalized Plan Settings
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Customize your study cadence and preparation runway. Existing completed tasks are preserved.
+              Choose your target role, study cadence and preparation runway. Existing completed tasks are preserved.
             </p>
           </div>
-          {/* Target Role Sync Badge */}
+          {/* Active Role Badge */}
           <div className="flex items-center gap-2 self-start sm:self-auto rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 text-xs">
-            <span className="text-slate-400">Target Role:</span>
-            <span className="font-semibold text-indigo-300">{registeredRole}</span>
-            <span className="inline-flex items-center text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-medium">
-              Profile Synced
-            </span>
+            <span className="text-slate-400">Generating for:</span>
+            <span className="font-semibold text-indigo-300">{selectedRole}</span>
+          </div>
+        </div>
+
+        {/* Target Role Selector — matches Resume page pattern */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+            Target Role
+          </label>
+          <div className="flex items-center gap-2">
+            {isEditingRole ? (
+              <div className="flex items-center gap-1.5">
+                {showCustomRoleInput ? (
+                  <form onSubmit={handleCustomRoleSubmit} className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={customRoleInput}
+                      onChange={(e) => setCustomRoleInput(e.target.value)}
+                      placeholder="e.g. Site Reliability Engineer"
+                      autoFocus
+                      className="bg-[#111724] text-indigo-300 border border-indigo-500/50 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowCustomRoleInput(false); setIsEditingRole(false); }}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </form>
+                ) : (
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => handleRoleSelect(e.target.value)}
+                    onBlur={() => { setTimeout(() => { if (!showCustomRoleInput) setIsEditingRole(false); }, 200); }}
+                    autoFocus
+                    className="bg-[#111724] text-indigo-400 font-semibold border border-indigo-500/60 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-lg"
+                  >
+                    {ROADMAP_ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                    <option value="custom">+ Custom Target Role…</option>
+                  </select>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingRole(true)}
+                title="Click to change target role"
+                className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-semibold transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 text-xs group/role"
+              >
+                <span>{selectedRole}</span>
+                <Edit3 className="w-3 h-3 text-indigo-400/80 group-hover/role:text-indigo-300 shrink-0" />
+              </button>
+            )}
           </div>
         </div>
 

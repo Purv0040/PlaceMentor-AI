@@ -246,16 +246,27 @@ export const ResumePage = () => {
   const formatRelativeTime = (isoString) => {
     if (!isoString) return 'Just now';
     try {
-      const date = new Date(isoString);
-      const diffMinutes = Math.round((new Date() - date) / (1000 * 60));
-      if (diffMinutes < 2) return 'Just now';
-      if (diffMinutes < 60) return `${diffMinutes} mins ago`;
-      const diffHours = Math.round(diffMinutes / 60);
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      const diffDays = Math.round(diffHours / 24);
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      let dateStr = String(isoString);
+      // Ensure UTC timestamp has 'Z' suffix if no timezone offset is present
+      if (!dateStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(dateStr)) {
+        dateStr += 'Z';
+      }
+      const date = new Date(dateStr);
+      const diffMs = Date.now() - date.getTime();
+      
+      // If time difference is negative or under 60 seconds
+      if (diffMs < 60 * 1000) return 'Just now';
+      
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      if (diffMinutes < 60) return `${diffMinutes} min${diffMinutes === 1 ? '' : 's'} ago`;
+      
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+      
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
     } catch {
-      return 'Recently';
+      return 'Just now';
     }
   };
 
@@ -278,7 +289,11 @@ export const ResumePage = () => {
             fileSize: `${(active.size / (1024 * 1024)).toFixed(1)} MB`,
             pageCount: active.page_count || prev.pageCount || 1,
             lastAnalyzed: formatRelativeTime(active.analyzed_at || active.uploaded_at),
-            status: active.status === 'completed' ? 'ATS Verified' : active.status
+            status: active.status === 'completed' || active.has_analysis
+              ? 'ATS Verified'
+              : active.status === 'failed'
+              ? 'Analysis Pending'
+              : (active.status || 'ATS Verified')
           }));
           if (active.has_analysis) {
             loadAnalysis(active.id);
@@ -602,7 +617,7 @@ export const ResumePage = () => {
       </div>
 
       {/* 2. UPLOADED FILE INFO BAR */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-[#121624] p-4 rounded-2xl border border-[#232b3e] text-xs font-mono shadow-xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-[#121624] p-4 rounded-2xl border border-[#232b3e] text-xs font-mono shadow-xl">
         <div className="flex items-center gap-3 px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
           <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center font-bold text-xs">
             PDF
@@ -686,14 +701,6 @@ export const ResumePage = () => {
               <Edit3 className="w-3 h-3 text-indigo-400/80 group-hover/btn:text-indigo-300 shrink-0" />
             </button>
           )}
-        </div>
-
-        <div className="flex items-center justify-between px-3 py-2 bg-[#0f131d] rounded-xl border border-[#232b3e]">
-          <span className="text-slate-400">ATS Status</span>
-          <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold text-xs bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {resumeData.status}
-          </span>
         </div>
       </div>
 

@@ -52,6 +52,12 @@ export const PlanningProvider = ({ children }) => {
     const currentPhase = phases.find((phase) => currentDay && currentDay >= phase.startDay && currentDay <= phase.endDay);
 
     if (apiTasks && apiRoadmap && roadmapSummary) {
+      const taskTotal = activeTasks ? activeTasks.length : 0;
+      const taskCompleted = activeTasks ? activeTasks.filter((t) => t.completed || t.status === 'completed').length : 0;
+      const computedTaskPercent = taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0;
+      const apiPercent = Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage);
+      const finalPercent = (!isNaN(apiPercent) && apiPercent > 0) ? apiPercent : computedTaskPercent;
+
       setPlanningState((prev) => ({
         ...prev,
         tasks: activeTasks,
@@ -60,9 +66,17 @@ export const PlanningProvider = ({ children }) => {
           currentDay,
           currentPhaseId: currentPhase?.id || null,
           currentPhaseName: roadmapSummary.current_phase_name || currentPhase?.title || null,
-          overallProgressPercent: Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage) || 0,
+          overallProgressPercent: finalPercent,
         },
-        progress: mergeTaskProgress(prev.progress, taskProgress),
+        progress: mergeTaskProgress(
+          {
+            ...prev.progress,
+            totalTasksCount: taskTotal,
+            completedTasksCount: taskCompleted,
+            overallProgressPercent: finalPercent,
+          },
+          taskProgress
+        ),
       }));
       setPlanningError(null);
     } else {
@@ -76,45 +90,85 @@ export const PlanningProvider = ({ children }) => {
   }, [loadApiPlanning]);
 
   const toggleTaskCompletion = async (taskId) => {
-    const targetTask = planningState.tasks.find((task) => task.id === taskId);
+    const targetTask = planningState.tasks?.find((task) => task.id === taskId || task.taskId === taskId);
     if (!targetTask) return;
 
     const nextStatus = targetTask.completed ? 'pending' : 'completed';
-    const isLocalTask = !targetTask.taskId || String(targetTask.taskId).startsWith('task-skill-');
+    const isCompleted = nextStatus === 'completed';
+
+    // 1. Optimistic update of tasks AND overall progress metrics immediately
+    setPlanningState((prevState) => {
+      const nextTasks = prevState.tasks.map((task) =>
+        (task.id === targetTask.id || (targetTask.taskId && task.taskId === targetTask.taskId))
+          ? {
+              ...task,
+              status: nextStatus,
+              completed: isCompleted,
+              completedAt: isCompleted ? (task.completedAt || new Date().toISOString()) : null,
+            }
+          : task
+      );
+
+      const totalCount = nextTasks.length;
+      const completedCount = nextTasks.filter((t) => t.completed || t.status === 'completed').length;
+      const computedPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      return {
+        ...prevState,
+        tasks: nextTasks,
+        roadmap: {
+          ...prevState.roadmap,
+          overallProgressPercent: computedPercent,
+        },
+        progress: {
+          ...prevState.progress,
+          completedTasksCount: completedCount,
+          totalTasksCount: totalCount,
+          overallProgressPercent: computedPercent,
+        },
+      };
+    });
+
+    showToast(isCompleted ? 'Task completed.' : 'Task reopened.');
+
+    const backendId = targetTask.taskId || targetTask.id;
+    const isLocalTask = !backendId || String(backendId).startsWith('task-skill-');
     if (!isLocalTask) {
-      const response = await planningService.updateTaskStatusInApi(targetTask.taskId, nextStatus);
-      if (!response) {
-        showToast('Task update failed. Please try again.');
-        return;
+      try {
+        const response = await planningService.updateTaskStatusInApi(backendId, nextStatus);
+        if (response) {
+          const [roadmapSummary, taskProgress] = await Promise.all([
+            planningService.getRoadmapSummaryFromApi(),
+            planningService.getTaskProgressFromApi(),
+          ]);
+
+          setPlanningState((prev) => {
+            const total = prev.tasks?.length || 0;
+            const comp = prev.tasks?.filter((t) => t.completed || t.status === 'completed').length || 0;
+            const fallbackPercent = total > 0 ? Math.round((comp / total) * 100) : 0;
+            const apiPercent = roadmapSummary
+              ? Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage)
+              : null;
+            const finalPercent = (apiPercent != null && !isNaN(apiPercent)) ? apiPercent : fallbackPercent;
+
+            return {
+              ...prev,
+              roadmap: roadmapSummary ? {
+                ...prev.roadmap,
+                currentDay: Number(roadmapSummary.current_day) || prev.roadmap.currentDay,
+                currentPhaseName: roadmapSummary.current_phase_name || prev.roadmap.currentPhaseName,
+                overallProgressPercent: finalPercent,
+              } : {
+                ...prev.roadmap,
+                overallProgressPercent: fallbackPercent,
+              },
+              progress: mergeTaskProgress(prev.progress, taskProgress),
+            };
+          });
+        }
+      } catch (err) {
+        console.warn('Background sync for task status update failed:', err);
       }
-    }
-
-    setPlanningState((prevState) => ({
-      ...prevState,
-      tasks: prevState.tasks.map((task) => task.id === taskId
-        ? {
-            ...task,
-            status: nextStatus,
-            completed: nextStatus === 'completed',
-            completedAt: nextStatus === 'completed' ? (task.completedAt || new Date().toISOString()) : null,
-          }
-        : task),
-    }));
-
-    showToast(nextStatus === 'completed' ? 'Task completed.' : 'Task reopened.');
-    if (!isLocalTask) {
-      const roadmapSummary = await planningService.getRoadmapSummaryFromApi();
-      const taskProgress = await planningService.getTaskProgressFromApi();
-      setPlanningState((prev) => ({
-        ...prev,
-        roadmap: roadmapSummary ? {
-          ...prev.roadmap,
-          currentDay: Number(roadmapSummary.current_day) || prev.roadmap.currentDay,
-          currentPhaseName: roadmapSummary.current_phase_name || prev.roadmap.currentPhaseName,
-          overallProgressPercent: Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage) || 0,
-        } : prev.roadmap,
-        progress: mergeTaskProgress(prev.progress, taskProgress),
-      }));
     }
   };
 

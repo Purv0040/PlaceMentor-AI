@@ -240,7 +240,7 @@ export const aiService = {
 
           actions = [
             { label: "Placement Readiness", route: "/placement-readiness" },
-            { label: "View Progress", route: "/progress" }
+            { label: "90-Day Roadmap", route: "/roadmap" }
           ];
         }
         // 4. Resume Improvement

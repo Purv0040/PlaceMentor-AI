@@ -74,8 +74,15 @@ ROLE_DOMAIN_MAP: Dict[str, str] = {
     "cloud engineer": "cloud",
     "cloud architect": "cloud",
     "devops engineer": "devops",
+    "devops & cloud engineer": "devops",
+    "devops / cloud engineer": "devops",
+    "aws / devops & cloud engineer": "cloud",
     "site reliability engineer": "devops",
     "sre": "devops",
+    
+    # Backend Developer variants
+    "python developer": "backend",
+    "java developer": "backend",
     
     # Mobile & QA & DB
     "mobile app developer": "mobile",
@@ -709,17 +716,21 @@ def _generate_generic_role_curriculum(target_role: str, domain: str, high_gaps: 
         "database": (["Relational data modeling", "SQL joins and aggregation", "Transactions and isolation", "Indexes and query plans", "Constraints and normalization", "Backup and restore", "Linux database operations", "Access control", "Replication concepts", "Monitoring fundamentals"], ["Query tuning lab", "Partitioning strategy", "Replication and failover", "Backup recovery drill", "Connection pooling", "Schema migrations", "Capacity planning", "Security hardening", "Build a monitored database lab", "Automate operational checks"], ["SQL interview exercise", "Query plan review", "Failure recovery scenario", "Consistency tradeoffs", "Security review", "Project walkthrough", "Behavioral interview stories", "Tailored applications", "Mock database interview", "Readiness review"]),
         "business_analyst": (["Stakeholder and problem framing", "Requirements interviews", "User stories and acceptance criteria", "Process mapping", "SQL basics", "Spreadsheet analysis", "KPI and metric definitions", "Data quality review", "Prioritization methods", "Clear requirement documentation"], ["As-is and to-be process design", "Dashboard requirements", "Root cause analysis", "Experiment and impact measurement", "Backlog refinement", "UAT planning", "Risk and dependency analysis", "Executive presentation", "Build a measurable case study", "Validate recommendations with evidence"], ["Ambiguous case interview", "Requirements workshop simulation", "Prioritization discussion", "Metric interpretation", "Stakeholder conflict scenario", "Portfolio case presentation", "Behavioral interview stories", "Tailored applications", "Mock analyst interview", "Readiness review"]),
         "uiux": (["User research methods", "Interview planning", "Personas and journey maps", "Information architecture", "Wireframing", "Visual hierarchy", "Typography and color", "Interaction states", "Accessibility basics", "Usability testing"], ["Component and design systems", "Responsive interaction patterns", "Prototype a user flow", "Run moderated usability tests", "Synthesize research findings", "Content design", "Developer handoff", "Measure product usability", "Build an end-to-end case study", "Iterate from user feedback"], ["Portfolio case study review", "Design critique exercise", "Accessibility scenario", "Product design challenge", "Research insight presentation", "Tradeoff explanation", "Behavioral interview stories", "Tailored applications", "Mock design interview", "Readiness review"]),
+        "software_engineer": (
+            ["Arrays, Strings and Two-Pointer Patterns", "Linked Lists and Dynamic Memory", "Stacks, Queues and Monotonic Queues", "Binary Trees and Traversals (BFS/DFS)", "Binary Search Trees and Trie Structures", "Hashing and Hash Map Architectures", "Sorting and Divide-and-Conquer Algorithms", "Recursion and Backtracking Patterns", "Time and Space Complexity (Big-O)", "Object-Oriented Programming and SOLID Principles"],
+            ["Graph Algorithms (BFS/DFS, Topological Sort)", "Shortest Paths (Dijkstra, Bellman-Ford)", "Dynamic Programming: 1D and 2D Subproblems", "Knapsack and Interval DP Strategies", "Relational Database Design and SQL Indexing", "Operating Systems: Concurrency, Threads and Mutexes", "Networking Essentials: TCP/UDP, HTTP/S and Sockets", "REST API Development and Microservices", "Docker Containerization and CI/CD", "End-to-End Scalable Software Project Build"],
+            ["System Design: High Availability and Scalability", "System Design: Distributed Caching (Redis/Memcached)", "System Design: Message Queues (Kafka/RabbitMQ)", "System Design: Database Sharding and Replication", "System Design: Rate Limiting and Load Balancing", "LeetCode Hard Algorithm Speed Benchmarks", "Mock Technical Coding Interview Simulations", "Mock System Design Whiteboard Defense", "Behavioral Interview & STAR Method Polish", "Final Placement Readiness Audit & Application Sprint"]
+        ),
     }
     if domain in curriculum:
         phases = curriculum[domain]
-        gaps = list(dict.fromkeys(high_gaps + medium_gaps))
         result = []
         for day in range(1, 91):
             phase = min(2, (day - 1) // 30)
             phase_day = (day - 1) % 30
             topics = phases[phase]
             topic = topics[phase_day % len(topics)]
-            skill = gaps[0] if phase == 0 and gaps else topic
+            skill = topic
             activity = "learn and practice" if phase == 0 else "implement and validate" if phase == 1 else "explain and demonstrate"
             if phase == 1 and day % 7 in (0, 1): activity = "extend your role-specific portfolio project and test the result"
             if phase == 2 and day % 7 in (0, 1): activity = "complete a timed role-specific interview drill and review your reasoning"

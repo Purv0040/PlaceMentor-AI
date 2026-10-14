@@ -53,8 +53,9 @@ export const Sidebar = () => {
       title: 'Planning',
       items: [
         { label: '90-Day Roadmap', path: '/roadmap', icon: Map },
-        { label: "Today's Tasks", path: '/tasks', icon: CheckSquare },
-        { label: 'Progress Telemetry', path: '/progress', icon: TrendingUp }
+        { label: "Today's Tasks", path: '/tasks', icon: CheckSquare }
+        // Temporarily removed: Progress Telemetry
+        // { label: 'Progress Telemetry', path: '/progress', icon: TrendingUp }
       ]
     },
     {
@@ -68,7 +69,8 @@ export const Sidebar = () => {
     {
       title: 'Personal',
       items: [
-        { label: 'Achievements', path: '/achievements', icon: Trophy },
+        // Temporarily removed: Achievements
+        // { label: 'Achievements', path: '/achievements', icon: Trophy },
         { label: 'Profile', path: '/profile', icon: User },
         { label: 'Settings', path: '/settings', icon: Settings }
       ]
