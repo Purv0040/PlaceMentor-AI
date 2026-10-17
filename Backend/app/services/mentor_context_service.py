@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.repositories.profile_repository import ProfileRepository
+from app.repositories.user_repository import UserRepository
 from app.repositories.resume_repository import ResumeRepository
 from app.repositories.github_repository import GitHubRepository
 from app.repositories.leetcode_repository import LeetCodeRepository
@@ -24,6 +25,7 @@ class MentorContextService:
 
     def __init__(self, db: AsyncIOMotorDatabase) -> None:
         self.profile_repo = ProfileRepository(db)
+        self.user_repo = UserRepository(db)
         self.resume_repo = ResumeRepository(db)
         self.github_repo = GitHubRepository(db)
         self.leetcode_repo = LeetCodeRepository(db)
@@ -36,11 +38,32 @@ class MentorContextService:
         self.interview_repo = InterviewRepository(db)
         self.comm_repo = CommunicationRepository(db)
 
-    async def build_student_context(self, user_id: str) -> Dict[str, Any]:
+    async def build_student_context(
+        self,
+        user_id: str,
+        target_role_override: Optional[str] = None,
+        student_name_override: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Fetch and assemble student placement context across all modules."""
-        # Fetch profile
+        # Fetch profile and user
         profile = await self.profile_repo.get_by_user_id(user_id) or {}
-        target_role = profile.get("target_role")
+        user_doc = await self.user_repo.get_by_id(user_id) or {}
+
+        target_role = (
+            target_role_override
+            or profile.get("target_role")
+            or user_doc.get("target_role")
+            or user_doc.get("targetRole")
+            or None
+        )
+        name = (
+            student_name_override
+            or profile.get("full_name")
+            or profile.get("name")
+            or user_doc.get("full_name")
+            or user_doc.get("name")
+            or "Student"
+        )
 
         resume = await self.resume_repo.find_active_by_user(user_id) or {}
         github = await self.github_repo.find_by_user_id(user_id) or {}
@@ -81,7 +104,7 @@ class MentorContextService:
         return {
             "target_role": target_role,
             "profile": {
-                "name": profile.get("full_name") or "Student",
+                "name": name,
                 "target_role": target_role,
                 "target_company_tier": profile.get("target_company_tier"),
                 "skills": profile.get("skills") or [],

@@ -2,11 +2,15 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+  return (token && !token.startsWith('mock_')) ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
 export const githubService = {
   connect: async (username) => {
+    const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+    if (!token || token.startsWith('mock_')) {
+      throw new Error('Please sign in to connect your GitHub account.');
+    }
     const response = await fetch(`${API_BASE_URL}/github/connect`, {
       method: 'POST',
       headers: {
@@ -23,6 +27,9 @@ export const githubService = {
   },
 
   getProfile: async () => {
+    const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+    if (!token || token.startsWith('mock_')) return null;
+
     const response = await fetch(`${API_BASE_URL}/github`, {
       headers: {
         'Content-Type': 'application/json',

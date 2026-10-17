@@ -3,16 +3,27 @@ import { authService } from './authService';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
-  const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+  let token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
   
-  // Guard against sending unauthenticated requests to protected endpoints
-  if (!token && !options.isPublic) {
+  // Guard against sending unauthenticated or mock requests to protected endpoints
+  if ((!token || token.startsWith('mock_')) && !options.isPublic) {
     return null;
+  }
+
+  // If token is expired, proactively refresh before sending the request to prevent 401 errors
+  if (token && !token.startsWith('mock_') && authService.isTokenExpired(token)) {
+    const refreshedToken = await authService.refreshToken();
+    if (refreshedToken) {
+      token = refreshedToken;
+    } else if (!options.isPublic) {
+      await authService.logout();
+      return null;
+    }
   }
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    ...(token && !token.startsWith('mock_') ? { 'Authorization': `Bearer ${token}` } : {})
   };
 
   const config = {
@@ -48,7 +59,7 @@ export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
         }
       }
       // Session expired and unrefreshable: log out cleanly
-      authService.logout();
+      await authService.logout();
       return null;
     }
 
@@ -61,3 +72,4 @@ export const apiRequest = async (endpoint, options = {}, isRetry = false) => {
     return null;
   }
 };
+

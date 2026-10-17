@@ -12,6 +12,15 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    const handleAuthLogout = () => {
+      if (isMounted) {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+
     const verify = async () => {
       if (!authService.isAuthenticated()) {
         if (isMounted) {
@@ -35,8 +44,8 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         if (isMounted) {
-          setUser(authService.getCurrentUser());
-          setIsAuthenticated(authService.isAuthenticated());
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } finally {
         if (isMounted) {
@@ -49,6 +58,7 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
+      window.removeEventListener('auth:logout', handleAuthLogout);
     };
   }, []);
 

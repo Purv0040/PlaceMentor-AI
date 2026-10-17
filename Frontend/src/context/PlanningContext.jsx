@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 import { planningService } from '../services/planningService';
 import { authService } from '../services/authService';
 
@@ -14,9 +15,10 @@ const mergeTaskProgress = (current, apiProgress) => apiProgress ? {
 } : current;
 
 export const PlanningProvider = ({ children }) => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [planningState, setPlanningState] = useState(() => planningService.getInitialState());
   const [toastNotification, setToastNotification] = useState(null);
-  const [planningLoading, setPlanningLoading] = useState(() => authService.isAuthenticated());
+  const [planningLoading, setPlanningLoading] = useState(false);
   const [planningError, setPlanningError] = useState(null);
 
   useEffect(() => {
@@ -29,9 +31,8 @@ export const PlanningProvider = ({ children }) => {
   };
 
   const loadApiPlanning = useCallback(async () => {
-    if (!authService.isAuthenticated()) {
+    if (!isAuthenticated) {
       setPlanningLoading(false);
-      setPlanningError('Sign in to view your roadmap.');
       return;
     }
 
@@ -83,11 +84,15 @@ export const PlanningProvider = ({ children }) => {
       setPlanningError('Your roadmap could not be loaded. Check your connection and try again.');
     }
     setPlanningLoading(false);
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    loadApiPlanning();
-  }, [loadApiPlanning]);
+    if (!authLoading && isAuthenticated) {
+      loadApiPlanning();
+    } else if (!authLoading && !isAuthenticated) {
+      setPlanningLoading(false);
+    }
+  }, [authLoading, isAuthenticated, loadApiPlanning]);
 
   const toggleTaskCompletion = async (taskId) => {
     const targetTask = planningState.tasks?.find((task) => task.id === taskId || task.taskId === taskId);

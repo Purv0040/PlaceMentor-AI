@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { authService } from '../services/authService';
 import { profileService } from '../services/profileService';
 import { readinessService } from '../services/readinessService';
@@ -8,6 +9,7 @@ const USER_KEY = 'placementor_user_data';
 const UserContext = createContext(null);
 
 export const UserProvider = ({ children }) => {
+  const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const [user, setUser] = useState(() => {
     const activeUser = authService.getCurrentUser() || {};
     let savedUser = {};
@@ -60,9 +62,9 @@ export const UserProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     const fetchApiProfile = async () => {
-      if (!authService.isAuthenticated()) return;
-      const activeUser = authService.getCurrentUser();
+      const activeUser = authUser || authService.getCurrentUser();
       if (activeUser) {
         setUser(prev => ({
           ...prev,
@@ -125,7 +127,7 @@ export const UserProvider = ({ children }) => {
       }
     };
     fetchApiProfile();
-  }, []);
+  }, [authLoading, isAuthenticated, authUser]);
 
   const updateUserProfile = (newDetails) => {
     setUser(prev => {

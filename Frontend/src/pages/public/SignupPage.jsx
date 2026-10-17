@@ -106,14 +106,19 @@ export const SignupPage = () => {
 
   const validate = () => {
     const errors = {};
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName) {
       errors.name = 'Full name is required.';
+    } else if (trimmedName.length < 2) {
+      errors.name = 'Full name must be at least 2 characters.';
     }
 
-    if (!email) {
+    if (!trimmedEmail) {
       errors.email = 'Email is required.';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Please enter a valid college email address.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      errors.email = 'Please enter a valid email address.';
     }
 
     if (!password) {
@@ -133,18 +138,47 @@ export const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    setFieldErrors({});
 
     if (!validate()) return;
 
     setIsLoading(true);
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+
     try {
-      const res = await signup({ name, email, password });
-      updateUserProfile({ name, email });
-      updateProfile({ name, email });
+      const res = await signup({ name: cleanName, email: cleanEmail, password });
+      updateUserProfile({ name: cleanName, email: cleanEmail });
+      updateProfile({ name: cleanName, email: cleanEmail });
       setIsLoading(false);
       navigate('/onboarding/profile');
     } catch (err) {
       setIsLoading(false);
+
+      // Map backend field errors to field-level highlights
+      const newFieldErrors = {};
+      if (Array.isArray(err.details)) {
+        err.details.forEach((d) => {
+          const field = d.loc ? d.loc[d.loc.length - 1] : '';
+          const msg = d.msg || '';
+          if (field === 'email' || msg.toLowerCase().includes('email')) {
+            newFieldErrors.email = msg.includes('not a valid email') ? 'Please enter a valid email address.' : msg;
+          }
+          if (field === 'password' || msg.toLowerCase().includes('password')) {
+            newFieldErrors.password = msg.includes('at least 6') ? 'Password must be at least 6 characters.' : msg;
+          }
+          if (field === 'full_name' || field === 'name' || msg.toLowerCase().includes('name')) {
+            newFieldErrors.name = msg.includes('at least 2') ? 'Full name must be at least 2 characters.' : msg;
+          }
+        });
+      } else if (err.status === 409 || err.message?.toLowerCase().includes('already exists')) {
+        newFieldErrors.email = 'This email is already registered. Please log in.';
+      }
+
+      if (Object.keys(newFieldErrors).length > 0) {
+        setFieldErrors(newFieldErrors);
+      }
+
       setFormError(err.message || 'Failed to create account. Please try again.');
     }
   };

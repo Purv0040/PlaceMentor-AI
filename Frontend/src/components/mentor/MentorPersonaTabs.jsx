@@ -5,30 +5,27 @@ export const MentorPersonaTabs = ({ activePersona, onSelectPersona }) => {
     {
       id: 'tech',
       icon: 'terminal',
-      title: 'SDE Technical Interviewer',
-      subtitle: '(Google/Amazon)',
-      fillIcon: true
+      title: 'Technical Interviewer'
     },
     {
       id: 'dsa',
       icon: 'psychology_alt',
-      title: 'Socratic DSA Tutor',
-      subtitle: '(Zero Spoilers)'
+      title: 'DSA Tutor'
     },
     {
       id: 'story',
       icon: 'record_voice_over',
-      title: 'Storytelling & STAR Coach'
+      title: 'STAR Coach'
     },
     {
       id: 'strat',
       icon: 'military_tech',
-      title: 'Placement Strategist & Stamina'
+      title: 'Placement Strategist'
     }
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0a0e18] border border-[#1c1f2a] shadow-inner mb-4">
+    <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#121622] border border-[#202535] my-4 shadow-inner">
       {personas.map((p) => {
         const isActive = activePersona === p.id;
         return (
@@ -38,26 +35,18 @@ export const MentorPersonaTabs = ({ activePersona, onSelectPersona }) => {
             onClick={() => onSelectPersona(p.id)}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isActive
-                ? 'bg-[#262a35] text-white shadow-sm border border-purple-500/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#171b26]'
+                ? 'bg-purple-500/15 text-white border border-purple-500/35 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a1f30]'
             }`}
           >
             <span
               className={`material-symbols-outlined text-base ${
                 isActive ? 'text-purple-400' : 'text-slate-400'
               }`}
-              style={p.fillIcon && isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
             >
               {p.icon}
             </span>
-            <span>
-              {p.title}{' '}
-              {p.subtitle && (
-                <span className={`text-[10px] font-mono ${isActive ? 'text-purple-300' : 'text-slate-500'}`}>
-                  {p.subtitle}
-                </span>
-              )}
-            </span>
+            <span>{p.title}</span>
           </button>
         );
       })}

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { authService } from '../services/authService';
 import { onboardingService } from '../services/onboardingService';
 
@@ -56,6 +57,7 @@ const buildInitialState = () => {
 const OnboardingContext = createContext(null);
 
 export const OnboardingProvider = ({ children }) => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [onboardingData, setOnboardingData] = useState(() => {
     try {
       const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
@@ -75,7 +77,7 @@ export const OnboardingProvider = ({ children }) => {
 
   // Fetch initial onboarding state from backend if logged in
   useEffect(() => {
-    if (!authService.isAuthenticated()) return;
+    if (authLoading || !isAuthenticated) return;
 
     const fetchBackendState = async () => {
       try {
@@ -101,7 +103,7 @@ export const OnboardingProvider = ({ children }) => {
       }
     };
     fetchBackendState();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   useEffect(() => {
     try {

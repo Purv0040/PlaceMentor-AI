@@ -2,7 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+  return (token && !token.startsWith('mock_')) ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
 export const resumeService = {

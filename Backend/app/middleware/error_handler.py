@@ -118,13 +118,42 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         request_id = getattr(request.state, "request_id", "-")
         logger.warning("RequestValidationError [req_id:%s]: %s", request_id, exc.errors())
+
+        # Construct clear, user-friendly validation message from field errors
+        field_messages = []
+        for err in exc.errors():
+            loc = err.get("loc", [])
+            field = str(loc[-1]) if loc else "Field"
+            field_name = " ".join(field.split("_")).capitalize()
+            raw_msg = err.get("msg", "Invalid value")
+
+            if "not a valid email address" in raw_msg.lower():
+                clean_msg = "Please enter a valid email address."
+            elif "at least 6 characters" in raw_msg.lower():
+                clean_msg = "Password must be at least 6 characters long."
+            elif "at least 2 characters" in raw_msg.lower():
+                clean_msg = "Full name must be at least 2 characters long."
+            elif "field required" in raw_msg.lower():
+                clean_msg = f"{field_name} is required."
+            elif raw_msg.startswith("Value error, "):
+                clean_msg = raw_msg[len("Value error, "):].strip()
+                if not clean_msg.endswith("."):
+                    clean_msg += "."
+            else:
+                clean_msg = f"{field_name}: {raw_msg}."
+
+            if clean_msg not in field_messages:
+                field_messages.append(clean_msg)
+
+        error_message = " ".join(field_messages) if field_messages else "Invalid request parameters or payload."
+
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "success": False,
                 "error": {
                     "code": "VALIDATION_ERROR",
-                    "message": "Invalid request parameters or payload.",
+                    "message": error_message,
                     "details": jsonable_encoder(exc.errors()),
                 },
             },

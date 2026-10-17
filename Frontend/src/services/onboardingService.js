@@ -1,21 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
-};
+import { apiRequest } from './api';
 
 export const onboardingService = {
   getOnboardingState: async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/onboarding/`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const res = await apiRequest('/onboarding/');
+      return res || { success: true, data: null };
     } catch (err) {
       return { success: true, data: null };
     }
@@ -23,19 +12,14 @@ export const onboardingService = {
 
   updateStep: async (stepNumber, stepData) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/onboarding/step`, {
+      const res = await apiRequest('/onboarding/step', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
         body: JSON.stringify({
           step_number: stepNumber,
           ...stepData
         }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      return res || { success: true, message: `Step ${stepNumber} saved locally` };
     } catch (err) {
       return { success: true, message: `Step ${stepNumber} saved locally` };
     }
@@ -43,17 +27,13 @@ export const onboardingService = {
 
   completeOnboarding: async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/onboarding/complete`, {
+      const res = await apiRequest('/onboarding/complete', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      return res || { success: true, message: 'Onboarding completed successfully' };
     } catch (err) {
       return { success: true, message: 'Onboarding completed successfully' };
     }
   }
 };
+

@@ -59,9 +59,5 @@ export const OnboardingLayoutContent = () => {
 };
 
 export const OnboardingLayout = () => {
-  return (
-    <OnboardingProvider>
-      <OnboardingLayoutContent />
-    </OnboardingProvider>
-  );
+  return <OnboardingLayoutContent />;
 };
