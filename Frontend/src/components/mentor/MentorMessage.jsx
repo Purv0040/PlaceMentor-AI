@@ -210,7 +210,7 @@ export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
                     className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
                       oIdx === 1
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md'
-                        : 'bg-[#262a35] hover:bg-[#313540] text-slate-200'
+                        : 'mentor-checkpoint-btn bg-[#262a35] hover:bg-[#313540] text-slate-200'
                     }`}
                   >
                     {opt.label}

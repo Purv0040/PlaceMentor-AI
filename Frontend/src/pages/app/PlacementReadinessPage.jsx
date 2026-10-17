@@ -77,8 +77,12 @@ export const PlacementReadinessPage = () => {
       case 'stale evidence':
       case 'stale':
         return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+      case 'advanced':
+      case 'intermediate':
+      case 'beginner':
+        return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
       default:
-        return 'bg-slate-800 text-slate-400 border-slate-700';
+        return 'bg-slate-800 text-slate-400 border-slate-700 status-badge-neutral';
     }
   };
 

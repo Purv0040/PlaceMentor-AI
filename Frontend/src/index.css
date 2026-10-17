@@ -187,45 +187,313 @@ html[data-theme='light'] .dashboard-page .bg-gradient-to-r .text-white {
 
 html[data-theme='light'] .bg-\[\#0f131d\],
 html[data-theme='light'] .bg-\[\#0b0e17\],
+html[data-theme='light'] .bg-\[\#0a0e18\],
 html[data-theme='light'] .bg-\[\#121624\],
+html[data-theme='light'] .bg-\[\#111724\],
 html[data-theme='light'] .bg-\[\#171b26\],
 html[data-theme='light'] .bg-\[\#1a2030\],
-html[data-theme='light'] .bg-\[\#1c1f2a\] {
+html[data-theme='light'] .bg-\[\#1a2133\],
+html[data-theme='light'] .bg-\[\#1c1f2a\],
+html[data-theme='light'] .bg-obsidian-base,
+html[data-theme='light'] .bg-obsidian-surface,
+html[data-theme='light'] .bg-obsidian-card,
+html[data-theme='light'] .bg-obsidian-elevated {
   background-color: #ffffff !important;
 }
 
 html[data-theme='light'] .border-\[\#232b3e\],
-html[data-theme='light'] .border-\[\#262a35\] {
-  border-color: #d9dfeb !important;
+html[data-theme='light'] .border-\[\#262a35\],
+html[data-theme='light'] .border-\[\#1e2638\],
+html[data-theme='light'] .divide-\[\#1e2638\] > * + * {
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme='light'] .border-slate-800,
+html[data-theme='light'] .border-slate-800\/80,
+html[data-theme='light'] .border-slate-700,
+html[data-theme='light'] .border-obsidian-border,
+html[data-theme='light'] .border-obsidian-borderLight {
+  border-color: #e2e8f0 !important;
+}
+
+/* Light mode panels & cards subtle elevation */
+html[data-theme='light'] .shadow-xl,
+html[data-theme='light'] .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
 }
 
 html[data-theme='light'] .text-white,
 html[data-theme='light'] .text-slate-100,
-html[data-theme='light'] .text-slate-200,
+html[data-theme='light'] .text-slate-200 {
+  color: #0f172a !important;
+}
+
 html[data-theme='light'] .text-slate-300 {
-  color: #172033 !important;
+  color: #334155 !important;
 }
 
 html[data-theme='light'] .text-slate-400,
 html[data-theme='light'] .text-slate-500 {
-  color: #5d687c !important;
+  color: #64748b !important;
 }
 
 html[data-theme='light'] .app-shell .text-white {
-  color: #172033 !important;
+  color: #0f172a !important;
 }
 
+/* Retain high-contrast white text on solid buttons & prominent gradient badges */
 html[data-theme='light'] .app-shell [class*='from-indigo-600'].text-white,
 html[data-theme='light'] .app-shell [class*='from-purple-600'].text-white,
-html[data-theme='light'] .app-shell [class*='bg-indigo-600'].text-white {
+html[data-theme='light'] .app-shell [class*='bg-indigo-600'].text-white,
+html[data-theme='light'] .app-shell [class*='bg-purple-600'].text-white,
+html[data-theme='light'] button.text-white[class*='from-indigo-'],
+html[data-theme='light'] button.text-white[class*='bg-indigo-'] {
   color: #ffffff !important;
 }
 
+/* Hero gradient cards in light mode */
 html[data-theme='light'] .app-shell [class*='from-indigo-950'],
 html[data-theme='light'] .app-shell [class*='via-purple-950'] {
-  background: linear-gradient(110deg, #e8e8ff 0%, #f0eaff 48%, #ffffff 100%) !important;
-  border-color: #c9c9f4 !important;
-  box-shadow: none !important;
+  background: linear-gradient(115deg, #eef2ff 0%, #f5f3ff 50%, #ffffff 100%) !important;
+  border-color: #c7d2fe !important;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.08) !important;
+}
+
+/* Circular score gauge display in light mode */
+html[data-theme='light'] .app-shell [class*='rounded-full'][class*='border-indigo-500'] {
+  background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%) !important;
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Subtle badge backgrounds in light mode */
+html[data-theme='light'] .bg-indigo-500\/20,
+html[data-theme='light'] .bg-indigo-500\/10 {
+  background-color: #e0e7ff !important;
+  color: #4338ca !important;
+  border-color: #c7d2fe !important;
+}
+
+html[data-theme='light'] .bg-purple-500\/20,
+html[data-theme='light'] .bg-purple-500\/10 {
+  background-color: #f3e8ff !important;
+  color: #7e22ce !important;
+  border-color: #e9d5ff !important;
+}
+
+html[data-theme='light'] .bg-emerald-500\/20,
+html[data-theme='light'] .bg-emerald-500\/10 {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #a7f3d0 !important;
+}
+
+html[data-theme='light'] .bg-amber-500\/20,
+html[data-theme='light'] .bg-amber-500\/10 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+html[data-theme='light'] .bg-rose-500\/20,
+html[data-theme='light'] .bg-rose-500\/10 {
+  background-color: #ffe4e6 !important;
+  color: #9f1239 !important;
+  border-color: #fecdd3 !important;
+}
+
+/* Badges text enhancement */
+html[data-theme='light'] .text-emerald-400,
+html[data-theme='light'] .text-emerald-300 {
+  color: #047857 !important;
+}
+
+html[data-theme='light'] .text-amber-400,
+html[data-theme='light'] .text-amber-300 {
+  color: #b45309 !important;
+}
+
+html[data-theme='light'] .text-rose-400,
+html[data-theme='light'] .text-rose-300 {
+  color: #be123c !important;
+}
+
+html[data-theme='light'] .text-indigo-400,
+html[data-theme='light'] .text-indigo-300 {
+  color: #4f46e5 !important;
+}
+
+html[data-theme='light'] .text-purple-400,
+html[data-theme='light'] .text-purple-300 {
+  color: #7c3aed !important;
+}
+
+/* Inner card nested containers */
+html[data-theme='light'] .app-shell [class*='p-4'][class*='bg-\[\#0f131d\]'],
+html[data-theme='light'] .app-shell [class*='p-3'][class*='bg-\[\#0f131d\]'],
+html[data-theme='light'] [class*='bg-\[\#0f131d\]'],
+html[data-theme='light'] [class*='bg-\[\#121624\]'],
+html[data-theme='light'] [class*='bg-\[\#111724\]'],
+html[data-theme='light'] .roadmap-task-card,
+html[data-theme='light'] section[aria-label][class*='bg-\[\#111724\]'] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+html[data-theme='light'] .roadmap-task-card .text-slate-100,
+html[data-theme='light'] .roadmap-task-card .text-slate-200 {
+  color: #0f172a !important;
+}
+
+html[data-theme='light'] .roadmap-task-card .border-slate-800,
+html[data-theme='light'] .roadmap-task-card .border-slate-800\/80 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Light mode for unassessed/neutral status badges & slate elements */
+html[data-theme='light'] .bg-slate-800,
+html[data-theme='light'] .status-badge-neutral,
+html[data-theme='light'] [class*='bg-slate-800'] {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html[data-theme='light'] .border-slate-700,
+html[data-theme='light'] .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Neutral progress bar background and tracks */
+html[data-theme='light'] [class*='h-2'][class*='bg-\[\#121624\]'],
+html[data-theme='light'] [class*='h-3'][class*='bg-\[\#0f131d\]'],
+html[data-theme='light'] .bg-slate-700 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Light mode for AI Placement Mentor page elements */
+html[data-theme='light'] .bg-\[\#0a0e18\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme='light'] .bg-\[\#1c1f2a\] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+html[data-theme='light'] .bg-\[\#171b26\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme='light'] .border-\[\#1c1f2a\],
+html[data-theme='light'] .border-\[\#262a35\] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Mentor Quick Prompts buttons in light mode */
+html[data-theme='light'] button[class*='bg-\[\#1c1f2a\]'],
+html[data-theme='light'] button[class*='bg-\[\#171b26\]'] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+html[data-theme='light'] button[class*='bg-\[\#1c1f2a\]']:hover,
+html[data-theme='light'] button[class*='bg-\[\#171b26\]']:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Mentor Persona Mode selector tabs in light mode */
+html[data-theme='light'] .mentor-persona-tabs,
+html[data-theme='light'] div[class*='bg-\[\#0a0e18\]'][class*='mentor-persona-tabs'],
+html[data-theme='light'] [class*='p-1'][class*='rounded-xl'][class*='bg-\[\#0a0e18\]'] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+html[data-theme='light'] .mentor-persona-tabs .mentor-tab-inactive,
+html[data-theme='light'] .mentor-persona-tabs button:not(.mentor-tab-active) {
+  color: #64748b !important;
+  background-color: transparent !important;
+}
+
+html[data-theme='light'] .mentor-persona-tabs .mentor-tab-inactive:hover,
+html[data-theme='light'] .mentor-persona-tabs button:not(.mentor-tab-active):hover {
+  color: #0f172a !important;
+  background-color: #e2e8f0 !important;
+}
+
+html[data-theme='light'] .mentor-persona-tabs .mentor-tab-active,
+html[data-theme='light'] .mentor-persona-tabs button[class*='mentor-tab-active'],
+html[data-theme='light'] [class*='bg-\[\#0a0e18\]'] button[class*='bg-\[\#262a35\]'] {
+  background-color: #ffffff !important;
+  color: #4f46e5 !important;
+  border-color: #c7d2fe !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme='light'] .mentor-persona-tabs .mentor-tab-active span,
+html[data-theme='light'] .mentor-persona-tabs .mentor-tab-active span[class*='text-purple-'] {
+  color: #4f46e5 !important;
+}
+
+/* Mentor interactive checkpoint & code boxes in light mode */
+html[data-theme='light'] [class*='bg-\[\#171b26\]'][class*='border-purple-'],
+html[data-theme='light'] [class*='p-3'][class*='rounded-xl'][class*='border-purple-'] {
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+}
+
+html[data-theme='light'] .mentor-checkpoint-btn,
+html[data-theme='light'] button.mentor-checkpoint-btn,
+html[data-theme='light'] [class*='border-purple-'] button:not(.bg-indigo-600) {
+  background-color: #ede9fe !important;
+  color: #4338ca !important;
+  border: 1px solid #c7d2fe !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme='light'] .mentor-checkpoint-btn:hover,
+html[data-theme='light'] [class*='border-purple-'] button:not(.bg-indigo-600):hover {
+  background-color: #e0e7ff !important;
+  color: #3730a3 !important;
+}
+
+/* Mentor input dock textarea and styling */
+html[data-theme='light'] textarea.bg-transparent {
+  color: #0f172a !important;
+}
+
+html[data-theme='light'] textarea.bg-transparent::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Communication Readiness Lab light mode styles */
+html[data-theme='light'] button[class*='bg-\[\#1a2133\]'] {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html[data-theme='light'] button[class*='bg-\[\#1a2133\]']:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme='light'] span[class*='bg-\[\#1a2133\]'] {
+  background-color: #eef2ff !important;
+  color: #4338ca !important;
+  border-color: #c7d2fe !important;
+}
+
+html[data-theme='light'] .app-shell [class*='divide-\[\#1e2638\]'] tr:hover,
+html[data-theme='light'] tr[class*='hover:bg-\[\#1a2133\]']:hover {
+  background-color: #f8fafc !important;
 }
 
 html[data-theme='light'] .app-shell [class*='shadow-indigo-'],

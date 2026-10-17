@@ -28,7 +28,7 @@ export const MentorPersonaTabs = ({ activePersona, onSelectPersona }) => {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0a0e18] border border-[#1c1f2a] shadow-inner mb-4">
+    <div className="mentor-persona-tabs flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#0a0e18] border border-[#1c1f2a] shadow-inner mb-4">
       {personas.map((p) => {
         const isActive = activePersona === p.id;
         return (
@@ -38,8 +38,8 @@ export const MentorPersonaTabs = ({ activePersona, onSelectPersona }) => {
             onClick={() => onSelectPersona(p.id)}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isActive
-                ? 'bg-[#262a35] text-white shadow-sm border border-purple-500/30 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-[#171b26]'
+                ? 'mentor-tab-active bg-[#262a35] text-white shadow-sm border border-purple-500/30 font-semibold'
+                : 'mentor-tab-inactive text-slate-400 hover:text-slate-200 hover:bg-[#171b26]'
             }`}
           >
             <span

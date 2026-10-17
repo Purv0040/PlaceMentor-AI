@@ -86,8 +86,8 @@ const TaskGroup = ({ title, tasks, onToggle, targetTaskId }) => {
   const completed = tasks.filter((task) => task.completed);
 
   return (
-    <section aria-label={title} className="rounded-xl bg-[#111724] px-4 sm:px-5">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-800 py-3">
+    <section aria-label={title} className="roadmap-task-card rounded-xl bg-[#111724] border border-slate-800/80 px-4 sm:px-5">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-800/80 py-3">
         <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
         <span className="text-xs text-slate-500">{incomplete.length} remaining</span>
       </div>
