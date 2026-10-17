@@ -19,9 +19,9 @@ export const mentorService = {
     const roadmap = planningState?.roadmap || {};
     const progress = planningState?.progress || {};
 
-    const targetRole = user?.targetRole || onboardingData?.career?.targetRole || 'Backend Developer';
+    const targetRole = user?.targetRole || onboardingData?.career?.targetRole || null;
     const targetCompany = onboardingData?.career?.companyTier || 'Tier-1 Product (MAANG / Unicorns)';
-    const candidateName = user?.name || onboardingData?.profile?.name || 'Alex Patel';
+    const candidateName = user?.name || onboardingData?.profile?.name || null;
 
     return {
       user: {
@@ -124,11 +124,16 @@ export const mentorService = {
     }
   },
 
-  askMentor: async (message, conversationId = null) => {
+  askMentor: async (message, conversationId = null, targetRole = null, studentName = null) => {
     try {
       return await apiRequest('/mentor/ask', {
         method: 'POST',
-        body: JSON.stringify({ message, conversation_id: conversationId })
+        body: JSON.stringify({
+          message,
+          conversation_id: conversationId,
+          target_role: targetRole,
+          student_name: studentName
+        })
       });
     } catch (e) {
       console.warn('Backend unavailable for askMentor, using client fallback.', e);
@@ -143,7 +148,17 @@ export const mentorService = {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((msg) => {
+            const { checkpoint, actions, ...rest } = msg;
+            if (rest.id === 'msg-init-1') {
+              return {
+                ...rest,
+                verified: false,
+                text: "Hi! Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready."
+              };
+            }
+            return rest;
+          });
         }
       }
     } catch (e) {
@@ -169,45 +184,28 @@ export const mentorService = {
   },
 
   getInitialGreeting: (context) => {
-    const name = context.user.name || 'Candidate';
-    const role = context.user.targetRole || 'Backend Developer';
-    const day = context.roadmap.currentDay || 42;
-    const pendingCount = context.todayTasks.remaining || 2;
-    const topTask = context.todayTasks.pendingTaskList?.[0]?.title || "LeetCode #210 (Course Schedule II)";
-
     return [
       {
         id: 'msg-init-1',
         sender: 'ai',
         role: 'assistant',
-        persona: 'tech',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        verified: true,
-        text: `Hello **${name}**! I am your AI Placement Copilot. I've audited your current candidate telemetry for **${role}**.\n\nToday is **Day ${day}** of your 90-Day Roadmap. You have **${pendingCount} pending tasks** scheduled for today, starting with "*${topTask}*".\n\nHow would you like to proceed? We can review graph algorithm edge cases, analyze your skill gaps, or practice system design trade-offs.`,
-        codeSnippet: null,
-        checkpoint: {
-          title: "Interactive Checkpoint:",
-          subtitle: "Would you like to trace Kahn's Topological Sort on a 5-node graph or review your Redis Caching gap?",
-          options: [
-            { label: "Trace 5-Node Graph", prompt: "Explain Kahn's Topological Sort algorithm step by step" },
-            { label: "Review Skill Gaps", prompt: "What are my biggest skill gaps?" }
-          ]
-        },
-        actions: [
-          { label: "View Today's Tasks", route: "/tasks" },
-          { label: "Analyze Skill Gaps", route: "/skill-gaps" }
-        ]
+        verified: false,
+        text: "Hi! Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready.",
+        codeSnippet: null
       }
     ];
   },
 
-  generateMentorResponse: async (userMessage, mentorContext, persona = 'tech') => {
-    // Try real backend API first
-    const apiRes = await mentorService.askMentor(userMessage);
+  generateMentorResponse: async (userMessage, mentorContext) => {
+    // Try real backend API first with current student context
+    const targetRole = mentorContext?.user?.targetRole || null;
+    const studentName = mentorContext?.user?.name || null;
+    const apiRes = await mentorService.askMentor(userMessage, null, targetRole, studentName);
     if (apiRes && apiRes.answer) {
       return {
         text: apiRes.answer,
-        verified: true,
+        verified: apiRes.verified === true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         actions: (apiRes.suggested_actions || []).map(a => ({
           label: a.label || a.title || "View Details",
@@ -216,6 +214,6 @@ export const mentorService = {
       };
     }
     // Fallback to local AI service synthesizer if backend offline
-    return await aiService.generateMentorResponse(userMessage, mentorContext, persona);
+    return await aiService.generateMentorResponse(userMessage, mentorContext);
   }
 };

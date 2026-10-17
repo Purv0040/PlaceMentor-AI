@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
-export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
-  const navigate = useNavigate();
+export const MentorMessage = ({ message, userAvatar }) => {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user' || message.sender === 'user';
 
@@ -78,21 +76,17 @@ export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
         <div className="flex flex-col items-end gap-1 max-w-2xl">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono text-slate-400">{message.timestamp || 'Just now'}</span>
-            <span className="text-xs font-medium text-slate-200">You</span>
+            <span className="text-xs font-medium text-slate-300">You</span>
           </div>
-          <div className="p-3.5 rounded-2xl bg-indigo-600 text-white text-xs md:text-sm leading-relaxed shadow-md rounded-tr-none">
-            <p>{message.text || message.content}</p>
+          <div className="p-3.5 rounded-2xl rounded-tr-none bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs md:text-sm leading-relaxed shadow-md">
+            <p className="whitespace-pre-wrap">{message.text || message.content}</p>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-            <span className="material-symbols-outlined text-xs">done_all</span>
-            Delivered with student context vector
-          </span>
         </div>
-        <div className="w-8 h-8 rounded-xl bg-[#1c1f2a] border border-[#262a35] overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/30 overflow-hidden shrink-0 flex items-center justify-center text-purple-300">
           {userAvatar ? (
             <img src={userAvatar} alt="Candidate" className="w-full h-full object-cover" />
           ) : (
-            <span className="material-symbols-outlined text-indigo-400 text-base">person</span>
+            <span className="material-symbols-outlined text-base">person</span>
           )}
         </div>
       </div>
@@ -102,32 +96,29 @@ export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
   // Assistant Message
   return (
     <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-900/60 to-indigo-900/60 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-md shrink-0">
-        <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+      <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-sm shrink-0">
+        <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
           smart_toy
         </span>
       </div>
 
       <div className="flex flex-col gap-2 flex-grow max-w-3xl">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-white">Staff Mentor</span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 uppercase font-medium">
-            {message.persona === 'dsa' ? 'Socratic DSA Mode' : message.persona === 'story' ? 'STAR Coach Mode' : message.persona === 'strat' ? 'Strategist Mode' : 'Technical Mode'}
-          </span>
+          <span className="text-xs font-semibold text-white">AI Mentor</span>
           <span className="text-[11px] font-mono text-slate-400">{message.timestamp || 'Just now'}</span>
           {message.verified && (
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Verified Solution
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Verified
             </span>
           )}
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#1c1f2a] border border-[#262a35] text-slate-200 text-xs md:text-sm leading-relaxed shadow-sm space-y-3 rounded-tl-none">
+        <div className="p-4 rounded-2xl rounded-tl-none bg-[#141824] border border-[#232838] text-slate-200 text-xs md:text-sm leading-relaxed shadow-sm space-y-3">
           <div>{formatText(message.text || message.content)}</div>
 
           {/* Optional Visual SVG Graph Diagram */}
           {message.svgDiagram && (
-            <div className="p-3 rounded-xl bg-[#0a0e18] border border-[#232b3e] flex flex-col gap-2 my-2">
+            <div className="p-3 rounded-xl bg-[#0d101a] border border-[#1f2536] flex flex-col gap-2 my-2">
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
                 <span className="uppercase text-purple-300 flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm">schema</span>
@@ -168,28 +159,29 @@ export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
 
           {/* Code Snippet Box */}
           {message.codeSnippet && (
-            <div className="rounded-xl bg-[#0a0e18] border border-[#232b3e] overflow-hidden my-2">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-[#171b26] text-slate-400 font-mono text-[11px] border-b border-[#232b3e]">
+            <div className="rounded-xl bg-[#0d101a] border border-[#1f2536] overflow-hidden my-2">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-[#141824] text-slate-400 font-mono text-[11px] border-b border-[#1f2536]">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
-                  <span className="ml-2 text-slate-200 font-semibold">{message.codeSnippet.filename || 'code_snippet.cpp'}</span>
+                  <span className="w-2 h-2 rounded-full bg-rose-500/80"></span>
+                  <span className="w-2 h-2 rounded-full bg-amber-500/80"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500/80"></span>
+                  <span className="ml-2 text-slate-300 font-medium">{message.codeSnippet.filename || 'solution.cpp'}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleCopy(message.codeSnippet.code)}
-                  className="flex items-center gap-1 hover:text-white px-2 py-0.5 rounded bg-[#0a0e18] hover:bg-[#1c1f2a] transition-all text-slate-300"
+                  className="flex items-center gap-1 hover:text-white px-2 py-0.5 rounded bg-[#0d101a] hover:bg-[#1f2536] transition-all text-slate-400 hover:text-slate-200"
                 >
                   <span className="material-symbols-outlined text-xs">content_copy</span>
-                  <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
                 </button>
               </div>
-              <pre className="p-3.5 overflow-x-auto font-mono text-xs text-indigo-200 leading-relaxed select-text">
+              <pre className="p-3.5 overflow-x-auto font-mono text-xs text-purple-200 leading-relaxed select-text">
                 <code>{message.codeSnippet.code}</code>
               </pre>
             </div>
           )}
+<<<<<<< HEAD
 
           {/* Interactive Checkpoint Banner */}
           {message.checkpoint && (
@@ -237,6 +229,8 @@ export const MentorMessage = ({ message, onOptionClick, userAvatar }) => {
               ))}
             </div>
           )}
+=======
+>>>>>>> 1a894d91d66f19777eea497c2ae47013052dd0fa
         </div>
       </div>
     </div>

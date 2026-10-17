@@ -187,13 +187,13 @@ export const aiService = {
     });
   },
 
-  // Extended AI Mentor response generation supporting full context objects and persona tuning
-  generateMentorResponse: async (userMessage, mentorContext = null, persona = 'tech') => {
+  // Unified AI Mentor response generation automatically routing across technical, DSA, behavioral, and placement strategy
+  generateMentorResponse: async (userMessage, mentorContext = null) => {
     return new Promise((resolve) => {
       setTimeout(() => {
         const query = typeof userMessage === 'string' ? userMessage.toLowerCase().trim() : '';
-        const role = mentorContext?.user?.targetRole || 'Backend Developer';
-        const name = mentorContext?.user?.name || 'Alex Patel';
+        const role = mentorContext?.user?.targetRole || null;
+        const name = mentorContext?.user?.name || null;
         const day = mentorContext?.roadmap?.currentDay || 42;
         const score = mentorContext?.readiness?.overallScore || 78;
         const tasks = mentorContext?.todayTasks?.pendingTaskList || [];
@@ -207,52 +207,75 @@ export const aiService = {
         let checkpoint = null;
         let actions = [];
 
-        // 1. Daily Planning & Today's Tasks
-        if (query.includes("today") || query.includes("task") || query.includes("schedule") || query.includes("work on") || query.includes("daily")) {
+        const roleText = role ? ` for **${role}**` : '';
+        const greetingPrefix = name ? `Hello **${name}**!` : 'Hello!';
+
+        // 0. Friendly Greeting (Brief & natural, avoiding repeating welcome or dumping capabilities)
+        if (query === 'hi' || query === 'hello' || query === 'hey' || query.startsWith('hi ') || query.startsWith('hello ') || query.startsWith('hey ') || query === 'hi there' || query === 'greetings') {
+          responseText = role
+            ? `Hey there! How can I help with your ${role} preparation today?`
+            : "Hey there! How can I help with your placement preparation today?";
+          actions = [
+            { label: "Help me learn DSA", route: "/leetcode" },
+            { label: "Practice a technical interview", route: "/mock-interview" },
+            { label: "Help me plan my preparation", route: "/roadmap" }
+          ];
+        }
+        // 1. Technical Interview Practice (Explicit match)
+        else if (query.includes("practice a technical interview") || query.includes("technical interview practice") || query.includes("practice interview")) {
+          responseText = `Let's practice a technical interview question${roleText}!\n\n**Problem: Design an In-Memory Key-Value Store with TTL (Time-To-Live)**\n\n- **Requirements**:\n  1. \`set(key, value, ttl)\`: Store a key with an expiration timestamp in milliseconds.\n  2. \`get(key)\`: Return value if not expired, otherwise return \`null\`.\n  3. \`count()\`: Return the number of active, non-expired keys.\n\nBefore writing code, explain:\n1. What data structures would you use for $O(1)$ lookups and efficient expired key cleanup?\n2. How would you handle passive vs active cleanup of expired keys?\n\nShare your thought process and initial approach!`;
+          actions = [
+            { label: "Start Mock Interview", route: "/mock-interview" },
+            { label: "Practice DSA", route: "/leetcode" }
+          ];
+        }
+        // 2. Placement Strategy, Daily Planning & Tasks / Plan My Preparation
+        else if (query.includes("today") || query.includes("task") || query.includes("schedule") || query.includes("work on") || query.includes("daily") || query.includes("plan") || query.includes("what can i do") || query.includes("what i can do")) {
           const firstTask = tasks[0]?.title || "Solve LC #210 (Course Schedule II)";
           const firstTaskCat = tasks[0]?.category || "DSA & Algorithms";
           const firstTaskDur = tasks[0]?.duration || "45 mins";
 
-          responseText = `Hello **${name}**! Today is **Day ${day}** of your 90-Day Placement Roadmap.\n\nYou have **${tasks.length || 2} pending tasks** scheduled for today:\n\n1. 📌 **${firstTask}** (${firstTaskCat}, ${firstTaskDur})\n${tasks[1] ? `2. 📌 **${tasks[1].title}** (${tasks[1].category})\n` : ''}\nCompleting the **${firstTaskCat}** task first directly addresses your target role execution goals.`;
+          responseText = `${greetingPrefix} Today is **Day ${day}** of your 90-Day Placement Roadmap${roleText}.\n\nYou have **${tasks.length || 2} pending tasks** scheduled for today:\n\n1. 📌 **${firstTask}** (${firstTaskCat}, ${firstTaskDur})\n${tasks[1] ? `2. 📌 **${tasks[1].title}** (${tasks[1].category})\n` : ''}\nCompleting the **${firstTaskCat}** task first directly addresses your preparation goals.`;
 
           actions = [
             { label: "View Today's Tasks", route: "/tasks" },
             { label: "Open 90-Day Roadmap", route: "/roadmap" }
           ];
         }
-        // 2. Skill Gaps & Weaknesses
-        else if (query.includes("gap") || query.includes("weakness") || query.includes("learn") || query.includes("improve skill")) {
+        // 3. Skill Gaps & Weakness Diagnosis
+        else if (query.includes("gap") || query.includes("weakness") || query.includes("learn") || query.includes("improve skill") || query.includes("priority")) {
           const topGaps = mentorContext?.skillGaps?.topGaps || [];
           const topGap1 = topGaps[0]?.skill || "Redis Distributed Caching";
           const topGap2 = topGaps[1]?.skill || "Dynamic Programming (2D & Tree DP)";
           const topGap3 = topGaps[2]?.skill || "Kubernetes Orchestration";
 
-          responseText = `Based on your **${role}** target role audit, your overall skill coverage is **${mentorContext?.skillGaps?.overallCoverage || 72}%**.\n\nYour top critical skill gaps identified by our diagnostic engine are:\n\n- 🔴 **${topGap1}** (Critical - Required for Tier-1 SDE-1 high-throughput endpoints)\n- 🟡 **${topGap2}** (High - Appears in 40% of MAANG / Unicorn screening rounds)\n- 🟡 **${topGap3}** (High - Cloud microservices evidence)\n\nClosing **${topGap1}** will boost your System Architecture score by **+15%**.`;
+          responseText = `Based on your diagnostic audit${roleText}, your overall skill coverage is **${mentorContext?.skillGaps?.overallCoverage || 72}%**.\n\nYour top critical skill gaps identified by our diagnostic engine are:\n\n- 🔴 **${topGap1}** (Critical - High-throughput systems)\n- 🟡 **${topGap2}** (High - Frequently tested in screening rounds)\n- 🟡 **${topGap3}** (High - Cloud microservices evidence)\n\nClosing **${topGap1}** will boost your System Architecture score by **+15%**.`;
 
           actions = [
             { label: "View Skill Gaps", route: "/skill-gaps" },
             { label: "Add to Roadmap", route: "/roadmap" }
           ];
         }
-        // 3. Placement Readiness & Overall Progress
+        // 4. Placement Readiness & Overall Progress
         else if (query.includes("readiness") || query.includes("how am i doing") || query.includes("progress") || query.includes("status") || query.includes("score")) {
-          responseText = `Here is your real-time candidate readiness breakdown for **${role}**:\n\n- 🎯 **Overall Readiness**: **${score}/100** (${mentorContext?.readiness?.status || 'Strong Tier-1 Prospect'})\n- 🧩 **LeetCode**: **${solved} Solved** (${mentorContext?.leetcode?.rankTitle || 'Knight'} Rank, ${mentorContext?.leetcode?.contestRating || 1842} Rating)\n- 💻 **GitHub Impact**: **${githubScore}/100** (${mentorContext?.github?.commits || 342} Commits, ${mentorContext?.github?.streakDays || 14}-day streak)\n- 📄 **ATS Resume**: **${ats}/100** (STAR bullet compliance)\n- 🗺️ **Roadmap Progress**: **${mentorContext?.roadmap?.completionPercent || 46}%** (Day ${day}/90)\n\nYour strongest vector is **Projects & Coding Velocity**, while **Redis Distributed Caching** is your highest-priority gap.`;
+          responseText = `Here is your real-time candidate readiness breakdown${roleText}:\n\n- 🎯 **Overall Readiness**: **${score}/100** (${mentorContext?.readiness?.status || 'Strong Tier-1 Prospect'})\n- 🧩 **LeetCode**: **${solved} Solved** (${mentorContext?.leetcode?.rankTitle || 'Knight'} Rank, ${mentorContext?.leetcode?.contestRating || 1842} Rating)\n- 💻 **GitHub Impact**: **${githubScore}/100** (${mentorContext?.github?.commits || 342} Commits, ${mentorContext?.github?.streakDays || 14}-day streak)\n- 📄 **ATS Resume**: **${ats}/100** (STAR bullet compliance)\n- 🗺️ **Roadmap Progress**: **${mentorContext?.roadmap?.completionPercent || 46}%** (Day ${day}/90)\n\nYour strongest vector is **Projects & Coding Velocity**, while **Redis Distributed Caching** is your highest-priority gap.`;
 
           actions = [
             { label: "Placement Readiness", route: "/placement-readiness" },
             { label: "90-Day Roadmap", route: "/roadmap" }
           ];
         }
-        // 4. Resume Improvement
+        // 5. Resume & Profile Optimization
         else if (query.includes("resume") || query.includes("ats") || query.includes("cv") || query.includes("bullet")) {
-          responseText = `Your resume currently scores **${ats}/100** on ATS compliance.\n\nKey optimization recommendations:\n1. **Quantify impact**: Add explicit metric gains to your project bullet points (e.g. "*Engineered PlaceMentor AI REST backend with sub-200ms latency and high concurrency*").\n2. **Keyword alignment**: Ensure explicit mentions of **Redis**, **Kafka**, and **Docker** to pass automated Tier-1 ATS filters for ${role}.`;
+          const roleKeywords = role ? ` for ${role}` : '';
+          responseText = `Your resume currently scores **${ats}/100** on ATS compliance.\n\nKey optimization recommendations:\n1. **Quantify impact**: Add explicit metric gains to your project bullet points (e.g. "*Engineered PlaceMentor AI REST backend with sub-200ms latency and high concurrency*").\n2. **Keyword alignment**: Ensure explicit mentions of core technologies to pass automated ATS filters${roleKeywords}.`;
 
           actions = [
             { label: "Review Resume", route: "/resume" },
             { label: "Review Projects", route: "/projects" }
           ];
         }
-        // 5. GitHub & Projects
+        // 6. GitHub & Technical Projects
         else if (query.includes("github") || query.includes("git") || query.includes("project") || query.includes("repo") || query.includes("ast")) {
           responseText = `Your GitHub profile shows strong commit cadence:\n\n- 🌟 **Impact Score**: **${githubScore}/100** (Top 12% among peer candidates)\n- 🔥 **Active Streak**: **${mentorContext?.github?.streakDays || 14} days** with ${mentorContext?.github?.commits || 342} total commits\n- 📂 **Portfolio Projects**: **${mentorContext?.projects?.count || 4} audited projects** (Avg architectural score: ${mentorContext?.projects?.avgScore || 88}/100)\n\nTo raise your GitHub score above 90, consider adding containerization manifests (Docker Compose / Minikube) to your main repository.`;
 
@@ -261,42 +284,46 @@ export const aiService = {
             { label: "Review Projects", route: "/projects" }
           ];
         }
-        // 6. LeetCode / DSA / Kahn's Algo / Graph Questions
-        else if (query.includes("kahn") || query.includes("topological") || query.includes("graph") || query.includes("dsa") || query.includes("dp") || query.includes("leetcode") || query.includes("hint")) {
-          responseText = `Excellent question! Let's examine **Kahn's Topological Sort algorithm** for **LeetCode #210 (Course Schedule II)** with **O(V + E)** runtime complexity.\n\nIn Kahn's algorithm:\n1. We calculate the in-degree for all vertices.\n2. Add all vertices with \`inDegree == 0\` to a Queue.\n3. Poll nodes from queue, add to topological order, and decrement neighbor in-degrees.\n4. If count of processed nodes equals total vertices $V$, no cycle exists! If less than $V$, a cycle was detected.\n\nHere is the C++ cycle reconstruction DFS implementation for reference:`;
+        // 7. DSA Learning & Coding Help / Help Me Learn DSA
+        else if (query.includes("kahn") || query.includes("topological") || query.includes("graph") || query.includes("dsa") || query.includes("dp") || query.includes("leetcode") || query.includes("hint") || query.includes("binary search") || query.includes("tree") || query.includes("array") || query.includes("complexity") || query.includes("algorithm")) {
+          if (query.includes("kahn") || query.includes("topological")) {
+            responseText = `Let's tackle this DSA problem! Examining **Kahn's Topological Sort algorithm** for **LeetCode #210 (Course Schedule II)** with **O(V + E)** runtime complexity:\n\nIn Kahn's algorithm:\n1. Compute the in-degree for all vertices.\n2. Add all vertices with \`inDegree == 0\` to a Queue.\n3. Poll nodes from queue, append to topological sequence, and decrement neighbor in-degrees.\n4. If the count of processed nodes equals total vertices $V$, no cycle exists! If less than $V$, a cycle was detected.\n\nHere is the C++ cycle reconstruction DFS implementation for reference:`;
 
-          codeSnippet = {
-            filename: "cycle_reconstruction_dfs.cpp",
-            language: "cpp",
-            code: `// State 0: Unvisited, 1: Visiting (Gray), 2: Visited (Black)\nbool reconstructCycleDFS(int u, const vector<vector<int>>& adj, vector<int>& state, vector<int>& parent, vector<int>& cycle) {\n    state[u] = 1; // Mark Gray\n    for (int v : adj[u]) {\n        if (state[v] == 1) {\n            // Cycle found! Backtrack along parent chain\n            cycle.push_back(v);\n            for (int curr = u; curr != v; curr = parent[curr]) {\n                cycle.push_back(curr);\n            }\n            cycle.push_back(v);\n            reverse(cycle.begin(), cycle.end());\n            return true;\n        } else if (state[v] == 0) {\n            parent[v] = u;\n            if (reconstructCycleDFS(v, adj, state, parent, cycle)) return true;\n        }\n    }\n    state[u] = 2; // Mark Black\n    return false;\n}`
-          };
+            codeSnippet = {
+              filename: "cycle_reconstruction_dfs.cpp",
+              language: "cpp",
+              code: `// State 0: Unvisited, 1: Visiting (Gray), 2: Visited (Black)\nbool reconstructCycleDFS(int u, const vector<vector<int>>& adj, vector<int>& state, vector<int>& parent, vector<int>& cycle) {\n    state[u] = 1; // Mark Gray\n    for (int v : adj[u]) {\n        if (state[v] == 1) {\n            // Cycle found! Backtrack along parent chain\n            cycle.push_back(v);\n            for (int curr = u; curr != v; curr = parent[curr]) {\n                cycle.push_back(curr);\n            }\n            cycle.push_back(v);\n            reverse(cycle.begin(), cycle.end());\n            return true;\n        } else if (state[v] == 0) {\n            parent[v] = u;\n            if (reconstructCycleDFS(v, adj, state, parent, cycle)) return true;\n        }\n    }\n    state[u] = 2; // Mark Black\n    return false;\n}`
+            };
 
-          svgDiagram = true;
-
-          checkpoint = {
-            title: "Interactive Checkpoint:",
-            subtitle: "Would you like to trace this on a 5-node graph or switch to a System Design Rate Limiter drill?",
-            options: [
-              { label: "Trace 5-Node Graph", prompt: "Trace Kahn's algorithm on a 5-node graph" },
-              { label: "Switch to Rate Limiter", prompt: "Explain how to design a distributed Rate Limiter" }
-            ]
-          };
+            svgDiagram = true;
+          } else {
+            responseText = `Here is your high-yield strategy to **learn and master DSA**${roleText}:\n\n1. **Core Patterns First**: Focus on patterns rather than memorizing questions (Sliding Window, Two Pointers, Monotonic Stack, BFS/DFS, Top-K Heap, DP).\n2. **Daily Consistency**: Practice 2 Medium-level problems daily on LeetCode.\n3. **Interview Habit**: Always state Time and Space complexity before writing code, and verify edge cases (empty inputs, single elements, negative values).\n\nWhich topic would you like to start with: Arrays & Hashing, Two Pointers, Trees, or Graphs?`;
+          }
 
           actions = [
             { label: "Practice LeetCode", route: "/leetcode" },
             { label: "Start Mock Interview", route: "/mock-interview" }
           ];
         }
-        // 7. Mock Interview / Behavioral / Technical Drills
-        else if (query.includes("interview") || query.includes("mock") || query.includes("drill") || query.includes("behavioral") || query.includes("conflict")) {
-          responseText = `During technical and behavioral interviews for **${role}** at Tier-1 companies:\n\n1. **Technical Framework**: Clarify constraints → State brute force time complexity → Derive optimal algorithm → Walk through dry-run with invariants.\n2. **Behavioral STAR Method**: Situation → Task → Action → Quantified Result.\n\nYour latest Mock Interview technical score was **${mentorContext?.interview?.technicalScore || 82}%**.`;
+        // 8. HR & Behavioral Interview Preparation (STAR Method)
+        else if (query.includes("behavioral") || query.includes("star") || query.includes("hr") || query.includes("conflict") || query.includes("leadership") || query.includes("tell me about") || query.includes("strength") || query.includes("culture")) {
+          responseText = `For HR and behavioral rounds, always structure your responses using the **STAR Method**:\n\n- **S — Situation**: Set the engineering context in 1-2 sentences. What was the critical deadline, architecture constraint, or team challenge?\n- **T — Task**: Clearly articulate your direct responsibility. Avoid "we"—say *"I was responsible for optimizing the query latency."*\n- **A — Action**: Describe the specific engineering decision you executed. What tools, profiling benchmarks, or collaboration strategies did you apply?\n- **R — Result**: Quantify the outcome (e.g. *"-38% p99 latency drop, zero downtime migration, or project delivered 4 days ahead of campus drive deadline"*).\n\nWould you like to simulate a common question like *"Tell me about a time you had a technical disagreement with a team member"*?`;
+
+          actions = [
+            { label: "Communication Lab", route: "/communication" },
+            { label: "Mock Interview", route: "/mock-interview" }
+          ];
+        }
+        // 9. Technical Interview Preparation & System Design
+        else if (query.includes("system design") || query.includes("architecture") || query.includes("rate limit") || query.includes("cache") || query.includes("microservice") || query.includes("database") || query.includes("sql") || query.includes("nosql") || query.includes("concurrency") || query.includes("interview")) {
+          responseText = `When preparing for **Technical & System Design Interviews**${roleText}:\n\n1. **Requirements Clarification**: Scope Functional requirements (APIs, read/write ratios) and Non-Functional requirements (latency p99 < 50ms, 99.99% availability, CAP trade-offs).\n2. **Back-of-Envelope Math**: Calculate QPS (e.g., 10M daily active users * 10 reqs = 1,150 QPS write, 11,500 QPS read), storage/bandwidth estimates.\n3. **High-Level Design**: Client → DNS/CDN → API Gateway/Load Balancer → Stateless Application Cluster → Distributed Cache (Redis) → Primary/Replica DB.\n4. **Deep Dive Bottlenecks**: Single points of failure, partition tolerance, and message queuing (Kafka/RabbitMQ) for asynchronous processing.\n\nYour current Technical Interview readiness score is **${mentorContext?.interview?.technicalScore || 82}%**.`;
 
           actions = [
             { label: "Start Mock Interview", route: "/mock-interview" },
-            { label: "Practice Communication", route: "/communication" }
+            { label: "Analyze Skill Gaps", route: "/skill-gaps" }
           ];
         }
-        // 8. Communication Coaching
+        // 10. Verbal Communication & Delivery Coaching
         else if (query.includes("communication") || query.includes("speak") || query.includes("pitch") || query.includes("wpm")) {
           responseText = `Your verbal communication diagnostic score is **${mentorContext?.communication?.clarityScore || 82}%**.\n\n- ⏱️ **Speaking Pace**: **${mentorContext?.communication?.wpm || 145} WPM** (Optimal 130-160 WPM interview cadence)\n- 💡 **Tip**: When explaining architectural trade-offs, pause 1-2 seconds after stating scale throughput numbers for clarity.`;
 
@@ -304,21 +331,14 @@ export const aiService = {
             { label: "Practice Communication", route: "/communication" }
           ];
         }
-        // 9. Persona-based General Fallback
+        // 11. General Mentor Fallback (Answers according to user query, avoiding capability dumping)
         else {
-          if (persona === 'dsa') {
-            responseText = `As your **Socratic DSA Tutor**, I won't give away the solution directly! Let's analyze your problem structure:\n\n1. What are the constraints on input size $N$?\n2. Does the problem exhibit optimal substructure or overlapping subproblems?\n\nTell me your initial thought process, and we'll refine the time complexity together.`;
-          } else if (persona === 'story') {
-            responseText = `As your **STAR Storyteller & Behavioral Coach**, let's frame your response effectively:\n\n- **Situation**: Define the engineering context and urgency.\n- **Task**: State your specific ownership role.\n- **Action**: Explain the exact technical decision you engineered.\n- **Result**: Highlight quantified scale improvement (e.g. +35% latency boost).`;
-          } else if (persona === 'strat') {
-            responseText = `As your **Placement Strategist**, let's review your timeline strategy:\n\nYou are on **Day ${day} of 90** targeting **${role}** at ${mentorContext?.user?.targetCompany || 'Tier-1 Product Companies'}.\nMaintain a steady pace of 90 minutes daily commitment. Prioritize high-impact skill gaps like Redis Caching and 2D Dynamic Programming.`;
-          } else {
-            responseText = `As your **Senior Staff Technical Mentor**, I've logged your query into your candidate telemetry stream.\n\nTo tailor my feedback precisely for **${role}**, let me know if you want to focus on:\n1. **Algorithm Optimization** (Time/Space Complexity)\n2. **System Design & Microservices Architecture**\n3. **Mock Interview Drills**`;
-          }
+          responseText = `Regarding **"${userMessage}"**${roleText}:\n\nI can help break down this topic, discuss key architectural and algorithmic trade-offs, and recommend targeted practice problems.\n\nWould you like an algorithmic code example, an architectural breakdown, or an interview-style practice question?`;
 
           actions = [
-            { label: "View Today's Tasks", route: "/tasks" },
-            { label: "Analyze Skill Gaps", route: "/skill-gaps" }
+            { label: "Help me learn DSA", route: "/leetcode" },
+            { label: "Practice a technical interview", route: "/mock-interview" },
+            { label: "Help me plan my preparation", route: "/roadmap" }
           ];
         }
 
@@ -326,7 +346,7 @@ export const aiService = {
           response: responseText,
           text: responseText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          verified: true,
+          verified: false,
           codeSnippet,
           svgDiagram,
           checkpoint,

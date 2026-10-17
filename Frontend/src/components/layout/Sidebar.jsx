@@ -61,7 +61,7 @@ export const Sidebar = () => {
     {
       title: 'Practice & Interview',
       items: [
-        { label: 'AI Placement Mentor', path: '/mentor', icon: Bot },
+        { label: 'AI Mentor', path: '/mentor', icon: Bot },
         { label: 'Communication Lab', path: '/communication', icon: Mic },
         { label: 'Mock Interview', path: '/interviews', icon: Video }
       ]

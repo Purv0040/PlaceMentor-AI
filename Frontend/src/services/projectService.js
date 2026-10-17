@@ -2,11 +2,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+  return (token && !token.startsWith('mock_')) ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
 export const projectService = {
   getProjects: async (includeArchived = false) => {
+    const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+    if (!token || token.startsWith('mock_')) return null;
+
     const response = await fetch(`${API_BASE_URL}/projects?include_archived=${includeArchived}`, {
       headers: {
         'Content-Type': 'application/json',

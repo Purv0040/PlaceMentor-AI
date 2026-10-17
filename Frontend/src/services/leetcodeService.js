@@ -2,11 +2,15 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
-  return token ? { 'Authorization': `Bearer ${token}` } : {};
+  return (token && !token.startsWith('mock_')) ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
 export const leetcodeService = {
   connect: async (username) => {
+    const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+    if (!token || token.startsWith('mock_')) {
+      throw new Error('Please sign in to connect your LeetCode account.');
+    }
     const response = await fetch(`${API_BASE_URL}/leetcode/connect`, {
       method: 'POST',
       headers: {
@@ -23,6 +27,9 @@ export const leetcodeService = {
   },
 
   getProfile: async () => {
+    const token = localStorage.getItem('placementor_auth_token') || localStorage.getItem('access_token');
+    if (!token || token.startsWith('mock_')) return null;
+
     const response = await fetch(`${API_BASE_URL}/leetcode`, {
       headers: {
         'Content-Type': 'application/json',

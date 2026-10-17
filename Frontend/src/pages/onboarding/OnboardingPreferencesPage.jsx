@@ -19,18 +19,6 @@ export const OnboardingPreferencesPage = () => {
             <option value="180">3 Hours / Day (Placement Sprint Mode)</option>
           </select>
         </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">AI Mentor Tone Preference</label>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <button type="button" className="p-3 rounded-xl bg-indigo-600/20 border border-indigo-500 text-left text-xs font-semibold text-white">
-              Socratic Coach (Probing Questions)
-            </button>
-            <button type="button" className="p-3 rounded-xl bg-[#0b0e17] border border-[#232b3e] text-left text-xs text-slate-400 hover:border-slate-700">
-              Direct Senior Engineer (Code-First)
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="flex items-center justify-between">

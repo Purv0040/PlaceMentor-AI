@@ -63,6 +63,8 @@ class MentorAskSchema(BaseModel):
         description="Quick mentor query text",
     )
     conversation_id: Optional[str] = Field(default=None, example="conv_user_123_1791481...", description="Optional existing conversation ID")
+    target_role: Optional[str] = Field(default=None, example="AWS / DevOps & Cloud Engineer", description="Target role from client session")
+    student_name: Optional[str] = Field(default=None, example="digisha savaliya", description="Student name from client session")
 
     @field_validator("message")
     @classmethod
@@ -81,4 +83,5 @@ class MentorResponseSchema(BaseModel):
     confidence: float = Field(0.9, ge=0.0, le=1.0, example=0.9)
     conversation_id: Optional[str] = Field(None, example="conv_user_123_1791481...")
     created_at: Optional[datetime] = None
+    verified: bool = Field(default=False, description="Verification status of response")
 

@@ -116,6 +116,8 @@ async def ask_mentor(
             user_id=user_id,
             message_text=payload.message,
             conversation_id=payload.conversation_id,
+            target_role=payload.target_role,
+            student_name=payload.student_name,
         )
     except HTTPException:
         raise

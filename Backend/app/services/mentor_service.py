@@ -55,6 +55,8 @@ class MentorService:
         user_id: str,
         conversation_id: str,
         message_text: str,
+        target_role: Optional[str] = None,
+        student_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Send a message to the mentor, get context-aware AI guidance, and store conversation memory."""
         if not message_text or not message_text.strip():
@@ -91,7 +93,11 @@ class MentorService:
         await self.mentor_repo.add_message(user_msg_data)
 
         # 3. Build relevant student context
-        student_context = await self.context_service.build_student_context(user_id)
+        student_context = await self.context_service.build_student_context(
+            user_id,
+            target_role_override=target_role,
+            student_name_override=student_name
+        )
 
         # 4. Fetch recent conversation memory (last 5 messages)
         recent_messages = await self.mentor_repo.get_messages_by_conversation(conversation_id, limit=10)
@@ -149,7 +155,14 @@ class MentorService:
 
         return created_asst_msg
 
-    async def ask_mentor(self, user_id: str, message_text: str, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+    async def ask_mentor(
+        self,
+        user_id: str,
+        message_text: str,
+        conversation_id: Optional[str] = None,
+        target_role: Optional[str] = None,
+        student_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Quick mentor query handler."""
         if not message_text or not message_text.strip():
             raise HTTPException(
@@ -175,7 +188,13 @@ class MentorService:
             conv = await self.create_conversation(user_id, title=clean_message[:30] + ("..." if len(clean_message) > 30 else ""))
             conversation_id = conv["conversation_id"]
 
-        asst_msg = await self.send_message(user_id=user_id, conversation_id=conversation_id, message_text=clean_message)
+        asst_msg = await self.send_message(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            message_text=clean_message,
+            target_role=target_role,
+            student_name=student_name,
+        )
         return {
             "answer": asst_msg.get("content", ""),
             "intent": asst_msg.get("intent", "general_placement"),
@@ -185,4 +204,5 @@ class MentorService:
             "confidence": asst_msg.get("confidence", 0.85),
             "conversation_id": conversation_id,
             "created_at": asst_msg.get("created_at"),
+            "verified": asst_msg.get("verified", False),
         }
