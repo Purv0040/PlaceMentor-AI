@@ -181,8 +181,6 @@ export const MentorMessage = ({ message, userAvatar }) => {
               </pre>
             </div>
           )}
-<<<<<<< HEAD
-
           {/* Interactive Checkpoint Banner */}
           {message.checkpoint && (
             <div className="p-3 rounded-xl bg-[#171b26] border border-purple-500/30 flex flex-col md:flex-row items-center justify-between gap-3 my-2">
@@ -229,8 +227,6 @@ export const MentorMessage = ({ message, userAvatar }) => {
               ))}
             </div>
           )}
-=======
->>>>>>> 1a894d91d66f19777eea497c2ae47013052dd0fa
         </div>
       </div>
     </div>

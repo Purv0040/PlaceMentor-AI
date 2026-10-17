@@ -405,14 +405,18 @@ def test_event_deduplication_and_boundary_integrity():
 
 def test_missing_payload_graceful_handling():
     """Verify that when GitHub API omits payload.size and payload.commits, each push event counts as 1 commit."""
+    from datetime import datetime, timedelta, timezone
     from app.services.github_service import calculate_event_metrics
+
+    # Use a recent timestamp so event falls into the current week (W6) regardless of the run date
+    recent_dt = datetime.now(timezone.utc) - timedelta(days=1)
 
     # GitHub public event payload format (omits size and commits)
     events = [
         {
             "id": "p-1",
             "type": "PushEvent",
-            "created_at": "2026-10-09T12:00:00Z",
+            "created_at": recent_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "payload": {
                 "repository_id": 12345,
                 "push_id": 11111,
