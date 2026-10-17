@@ -8,18 +8,27 @@ from pydantic import BaseModel, Field
 class StudentContext(BaseModel):
     """Encapsulates the student's actual placement context."""
     target_role: Optional[str] = Field(None, description="Target placement role")
+    student_name: Optional[str] = Field(None, description="Student name")
     profile: Optional[Dict[str, Any]] = Field(None, description="StudentIntelligenceProfile data")
     resume_analysis: Optional[Dict[str, Any]] = Field(None, description="ResumeAnalysis data")
     github_analysis: Optional[Dict[str, Any]] = Field(None, description="GitHubAnalysis data")
     leetcode_analysis: Optional[Dict[str, Any]] = Field(None, description="LeetCodeAnalysis data")
+    leetcode_weak_topics: Optional[List[str]] = Field(None, description="LeetCode weak areas")
     projects: Optional[List[Dict[str, Any]]] = Field(None, description="Extracted projects data")
     skill_gaps: Optional[Dict[str, Any]] = Field(None, description="SkillGapAnalysis data")
     readiness: Optional[Dict[str, Any]] = Field(None, description="PlacementReadinessAnalysis data")
     roadmap: Optional[Dict[str, Any]] = Field(None, description="PersonalizedRoadmap data")
     today_tasks: Optional[Dict[str, Any]] = Field(None, description="TodayTasksResponse data")
+    yesterday_completed_tasks: Optional[Dict[str, Any]] = Field(None, description="Tasks completed yesterday")
+    all_pending_tasks: Optional[Dict[str, Any]] = Field(None, description="All pending tasks across roadmap")
+    tasks_by_day: Optional[Dict[str, Any]] = Field(None, description="Tasks grouped by roadmap day")
     progress: Optional[Dict[str, Any]] = Field(None, description="StudentProgressPayload data")
+    next_recommended_task: Optional[Dict[str, Any]] = Field(None, description="Next incomplete task recommended")
+    overdue_tasks: Optional[Dict[str, Any]] = Field(None, description="Overdue tasks list and count")
     interview_results: Optional[List[Dict[str, Any]]] = Field(None, description="Mock interview results")
     communication_results: Optional[List[Dict[str, Any]]] = Field(None, description="Communication skill results")
+
+    model_config = {"extra": "allow"}
 
 
 class ChatMessage(BaseModel):

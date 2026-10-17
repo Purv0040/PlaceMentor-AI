@@ -24,46 +24,76 @@ class ContextBuilder:
                 "context_keys": ["resume_analysis", "profile"]
             },
             "dsa": {
-                "keywords": ["dsa", "leetcode", "algorithm", "data structure", "problem"],
-                "context_keys": ["leetcode_analysis", "roadmap", "progress", "skill_gaps"]
+                "keywords": ["dsa", "leetcode", "algorithm", "data structure", "problem", "kahn", "binary search", "bfs", "dfs", "tree", "graph", "dp"],
+                "context_keys": ["leetcode_analysis", "leetcode_weak_topics", "roadmap", "progress", "skill_gaps"]
             },
             "today": {
-                "keywords": ["today", "now", "focus", "work on", "next"],
-                "context_keys": ["today_tasks", "roadmap", "skill_gaps", "progress"]
+                "keywords": ["today", "now", "focus", "work on", "next", "do today", "can i do", "should i do", "today's", "learn next", "what should i learn", "study next"],
+                "context_keys": ["today_tasks", "next_recommended_task", "roadmap", "all_pending_tasks", "skill_gaps", "progress", "profile"]
+            },
+            "yesterday": {
+                "keywords": ["yesterday", "completed yesterday", "did yesterday", "done yesterday"],
+                "context_keys": ["yesterday_completed_tasks", "today_tasks", "progress", "roadmap", "profile"]
+            },
+            "pending": {
+                "keywords": ["pending", "incomplete", "unfinished", "left", "why 84", "why", "84", "overdue", "past due", "late"],
+                "context_keys": ["all_pending_tasks", "overdue_tasks", "today_tasks", "roadmap", "progress", "profile"]
             },
             "roadmap": {
-                "keywords": ["roadmap", "plan", "future", "schedule", "month", "days"],
-                "context_keys": ["roadmap", "skill_gaps", "target_role"]
+                "keywords": ["roadmap", "plan", "future", "schedule", "month", "days", "day", "remaining", "how many days", "days are remaining"],
+                "context_keys": ["roadmap", "today_tasks", "all_pending_tasks", "tasks_by_day", "skill_gaps", "target_role", "profile"]
             },
             "progress": {
                 "keywords": ["progress", "score", "readiness", "ready", "improving"],
-                "context_keys": ["readiness", "progress", "interview_results"]
+                "context_keys": ["readiness", "progress", "interview_results", "roadmap"]
             },
             "projects": {
                 "keywords": ["github", "project", "repo", "commit", "code"],
                 "context_keys": ["github_analysis", "projects", "profile"]
             },
             "skills": {
-                "keywords": ["skill", "missing", "learn", "know", "tech"],
+                "keywords": ["skill", "missing", "learn", "know", "tech", "gap"],
                 "context_keys": ["skill_gaps", "profile", "target_role"]
+            },
+            "interview": {
+                "keywords": ["interview", "mock", "ask me", "questions", "interview question", "behavioral", "hr", "quiz"],
+                "context_keys": ["profile", "target_role", "interview_results", "skill_gaps"]
+            },
+            "role": {
+                "keywords": ["target role", "my role", "role am i", "my target", "target position", "what role", "what is my target role"],
+                "context_keys": ["profile", "target_role", "roadmap", "skill_gaps"]
+            },
+            "technical": {
+                "keywords": ["python", "oop", "class", "encapsulation", "polymorphism", "inheritance", "abstraction", "error", "exception", "traceback", "typeerror", "indexerror", "keyerror", "fix", "code", "reverse", "algorithm", "system design", "microservice", "cache", "redis", "kafka", "api", "database", "sql", "numpy", "broadcasting", "pandas", "step by step"],
+                "context_keys": ["profile", "target_role", "skill_gaps", "roadmap"]
             }
         }
 
-    def build_context(self, message: str, context: StudentContext) -> Dict[str, Any]:
+    def build_context(self, message: str, context: StudentContext, conversation_history: Optional[List[Any]] = None) -> Dict[str, Any]:
         """
-        Extract relevant context based on intent. Always includes basic identifiers.
+        Extract relevant context based on intent and conversation history. Always includes basic identifiers.
         """
         message_lower = message.lower()
-        selected_keys = set(["target_role"]) # Always include target role
+        if conversation_history:
+            recent_texts = " ".join([getattr(m, "content", "") or (m.get("content", "") if isinstance(m, dict) else "") for m in conversation_history[-3:]])
+            search_text = f"{recent_texts.lower()} {message_lower}"
+        else:
+            search_text = message_lower
+
+        selected_keys = set(["target_role", "student_name", "profile"]) # Always include profile identifiers
         
         # Check rules
         for category, rule in self.rules.items():
-            if any(re.search(rf"\b{kw}\b", message_lower) for kw in rule["keywords"]):
+            if any(re.search(rf"\b{re.escape(kw)}\b", search_text) for kw in rule["keywords"]):
                 selected_keys.update(rule["context_keys"])
+
+        # Check for specific day queries like "Day 13"
+        if re.search(r"\bday\s*\d+\b", search_text):
+            selected_keys.update(["tasks_by_day", "roadmap", "today_tasks", "all_pending_tasks"])
                 
-        # If no specific intent matched, provide a balanced general context
-        if len(selected_keys) == 1: 
-            selected_keys.update(["profile", "skill_gaps", "progress", "today_tasks"])
+        # If no specific intent matched or general query, provide rich balanced context
+        if len(selected_keys) <= 3: 
+            selected_keys.update(["roadmap", "today_tasks", "yesterday_completed_tasks", "all_pending_tasks", "tasks_by_day", "progress", "skill_gaps"])
             
         # Build the filtered context dictionary
         context_dict = context.model_dump(exclude_none=True)
@@ -85,8 +115,8 @@ class PersonalMentorEngine:
         """
         Process a mentor chat request.
         """
-        # 1. Filter context dynamically
-        filtered_context = self.context_builder.build_context(request.message, request.student_context)
+        # 1. Filter context dynamically considering conversation history for follow-ups
+        filtered_context = self.context_builder.build_context(request.message, request.student_context, request.conversation_history)
         
         # 2. Prepare conversation history string if provided
         history_str = ""

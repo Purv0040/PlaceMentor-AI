@@ -598,5 +598,17 @@ export const aiService = {
         });
       }, 600);
     });
+  },
+
+  generateMentorResponse: async (userMessage, mentorContext) => {
+    return {
+      text: `Regarding "${userMessage}": I'm here to help guide your placement roadmap, DSA practice, resume, and interview prep. Check your Today's Tasks to stay on track!`,
+      verified: false,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      actions: [
+        { label: "What can I do today?", route: "/tasks" },
+        { label: "How many days are remaining?", route: "/roadmap" }
+      ]
+    };
   }
 };
