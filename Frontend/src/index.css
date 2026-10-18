@@ -13,6 +13,22 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
+
+  /* Custom Sleek Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(147, 51, 234, 0.2);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 51, 234, 0.45);
+  }
 }
 
 html[data-theme='light'] body {
@@ -834,3 +850,119 @@ html[data-theme='light'] .progress-track {
     scrollbar-width: none;
   }
 }
+
+/* ============================================================
+   AI Mentor & Chat History Light Mode Perfection
+   ============================================================ */
+html[data-theme='light'] .mentor-shell,
+html[data-theme='light'] .mentor-history-sidebar,
+html[data-theme='light'] .mentor-chat-container {
+  color: #0f172a !important;
+}
+
+/* Top bar, borders and backgrounds in Mentor page */
+html[data-theme='light'] .bg-\[\#141824\] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme='light'] .bg-\[\#0d111c\],
+html[data-theme='light'] .bg-\[\#0d101a\],
+html[data-theme='light'] .bg-\[\#0b0e17\],
+html[data-theme='light'] .bg-\[\#0a0d15\],
+html[data-theme='light'] .bg-\[\#101422\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html[data-theme='light'] .bg-\[\#131826\],
+html[data-theme='light'] .bg-\[\#121622\],
+html[data-theme='light'] .bg-\[\#191e2e\],
+html[data-theme='light'] .bg-\[\#181d2c\],
+html[data-theme='light'] .bg-\[\#1c1f2a\] {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme='light'] .border-\[\#1f2433\],
+html[data-theme='light'] .border-\[\#232838\],
+html[data-theme='light'] .border-\[\#222838\],
+html[data-theme='light'] .border-\[\#1f2638\],
+html[data-theme='light'] .border-\[\#1c2233\],
+html[data-theme='light'] .border-\[\#252b3d\],
+html[data-theme='light'] .border-\[\#252b3e\],
+html[data-theme='light'] .border-\[\#23293d\],
+html[data-theme='light'] .border-\[\#1e2333\] {
+  border-color: #e2e8f0 !important;
+}
+
+/* History active chat session item */
+html[data-theme='light'] .bg-\[\#1e2335\] {
+  background-color: #ede9fe !important;
+  border-color: #c4b5fd !important;
+  color: #5b21b6 !important;
+}
+
+html[data-theme='light'] .hover\:bg-\[\#151928\]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html[data-theme='light'] .hover\:bg-\[\#191e2e\]:hover,
+html[data-theme='light'] .hover\:bg-\[\#1b2132\]:hover,
+html[data-theme='light'] .hover\:bg-\[\#20273a\]:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* History search input in light mode */
+html[data-theme='light'] input[placeholder*='Search chats'] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+html[data-theme='light'] input[placeholder*='Search chats']::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Mentor input dock textarea */
+html[data-theme='light'] textarea[placeholder*='Ask your AI Mentor'] {
+  color: #0f172a !important;
+  background-color: transparent !important;
+}
+html[data-theme='light'] textarea[placeholder*='Ask your AI Mentor']::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Suggested prompts in light mode */
+html[data-theme='light'] .mentor-chat-container button,
+html[data-theme='light'] .bg-\[\#1c1f2a\] {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Ensure solid purple buttons maintain white text */
+html[data-theme='light'] button.bg-purple-600,
+html[data-theme='light'] .bg-purple-600.text-white,
+html[data-theme='light'] .bg-gradient-to-r.from-purple-600 {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+html[data-theme='light'] button.bg-purple-600:hover {
+  background-color: #7e22ce !important;
+}
+
+/* Custom scrollbars in light mode */
+html[data-theme='light'] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.25) !important;
+}
+html[data-theme='light'] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.5) !important;
+}
+html[data-theme='light'] ::-webkit-scrollbar-track {
+  background: #f8fafc !important;
+}
+html[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+}
+

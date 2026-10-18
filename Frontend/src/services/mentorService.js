@@ -168,6 +168,28 @@ export const mentorService = {
     }
   },
 
+  // Retrieve all stored chat sessions
+  getStoredSessions: () => {
+    try {
+      const saved = localStorage.getItem('placementMentorSessions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse mentor sessions from localStorage', e);
+    }
+    return [];
+  },
+
+  saveStoredSessions: (sessions) => {
+    try {
+      localStorage.setItem('placementMentorSessions', JSON.stringify(sessions));
+    } catch (e) {
+      console.error('Failed to save mentor sessions to localStorage', e);
+    }
+  },
+
   // Retrieve stored conversation from localStorage
   getStoredChat: () => {
     try {
@@ -210,15 +232,22 @@ export const mentorService = {
     }
   },
 
-  getInitialGreeting: (context) => {
+  getInitialGreeting: (context, persona = 'tech') => {
+    const greetingsByPersona = {
+      tech: "Hi! I'm your Technical Interviewer & DSA Copilot 🚀\n\nAsk me about algorithms, coding problems, system design, or code review.",
+      dsa: "Welcome to DSA Mode! 🧠\n\nLet's master patterns like Two Pointers, Sliding Window, Trees, and Dynamic Programming.",
+      story: "Hello! I'm your STAR Behavioral Coach 🎯\n\nLet's refine your behavioral answers using Situation, Task, Action, and Result with quantifiable impact.",
+      strat: "Welcome! I'm your Placement Strategist 📈\n\nI can analyze your 90-day roadmap, skill gaps, company tier targets, and interview milestones."
+    };
+
     return [
       {
-        id: 'msg-init-1',
+        id: `msg-init-${Date.now()}`,
         sender: 'ai',
         role: 'assistant',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         verified: false,
-        text: "Hi! Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready.",
+        text: greetingsByPersona[persona] || "Hi! Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready.",
         codeSnippet: null
       }
     ];
@@ -235,7 +264,15 @@ export const mentorService = {
     const allPendingTotal = mentorContext?.allPendingTasks?.totalPending ?? (mentorContext?.roadmap?.pendingTasksCount || 0);
 
     let text = '';
-    if (q.includes('not working properly') || q.includes('not working') || q.includes('working properly')) {
+    
+    // Mode/Persona specific prefix logic if appropriate
+    if (persona === 'story' && !q.includes('yesterday') && !q.includes('remaining') && !q.includes('tasks')) {
+      text = `**STAR Method Framework for: "${userMessage}"**\n\n- **Situation**: Set the project background and challenge context.\n- **Task**: Specify your direct responsibility and success criteria.\n- **Action**: Explain the concrete technical decisions and leadership steps *you* took.\n- **Result**: Highlight quantifiable impact (e.g. "Reduced API latency by 35% across 50K users").\n\nWould you like me to help draft your exact talking points?`;
+    } else if (persona === 'dsa' && (q.includes('dsa') || q.includes('algorithm') || q.includes('leetcode') || q.includes('problem') || q.includes('array') || q.includes('tree') || q.includes('graph'))) {
+      text = `**DSA Pattern Analysis for: "${userMessage}"**\n\n1. **Core Pattern**: Identify whether this maps to Two Pointers, Sliding Window, Monotonic Stack, or Dynamic Programming.\n2. **Optimal Invariant**: Focus on what state changes at each step.\n3. **Target Complexity**: Aim for $O(N)$ or $O(N \\log N)$ time and $O(1)$ auxiliary space.\n\nShare the problem constraints or code snippet and we'll derive the optimal solution together!`;
+    } else if (persona === 'strat' && (q.includes('plan') || q.includes('strategy') || q.includes('tier') || q.includes('placement') || q.includes('offer'))) {
+      text = `**Placement Strategy Assessment**:\n\n- **Current Milestone**: Day ${currentDay} of ${totalDays} (${remainingDays} days remaining).\n- **Pending Roadmap Tasks**: ${allPendingTotal} tasks scheduled.\n- **Priority Focus**: Finish today's scheduled preparation tasks and solve 2 medium problems daily to ensure Tier-1 readiness.\n\nKeep high consistency to maximize your shortlisting conversion!`;
+    } else if (q.includes('not working properly') || q.includes('not working') || q.includes('working properly')) {
       text = "I apologize for the misunderstanding! I'm here to give you accurate information directly from your placement profile and roadmap.\n\nYou can ask me:\n1. 📅 \"What can I do today?\"\n2. ✅ \"What did I complete yesterday?\"\n3. 📋 \"What are my pending tasks?\"\n4. ⏳ \"How many days are remaining?\"\n5. 💡 \"Help me learn DSA\" or \"Practice a technical interview\"\n\nWhat would you like to check?";
     } else if (q.includes('yesterday')) {
       text = `According to your records, you did not complete any tasks yesterday.\n\nYou can dive into today's tasks (Day ${currentDay} of ${totalDays}) to keep your preparation on track!`;
@@ -262,7 +299,7 @@ export const mentorService = {
       text = targetRole ? `Hey there! How can I help with your ${targetRole} preparation today?` : `Hey there! How can I help with your placement preparation today?`;
     } else if (q.includes('typeerror') || q.includes('nonetype') || q.includes('subscriptable')) {
       text = "**Fixing `TypeError: 'NoneType' object is not subscriptable`**:\n\n**Root Cause**: Attempting to index or slice an object (`obj[key]` or `obj[index]`) that is `None`.\n\n**Fix**:\n```python\nif data is not None and isinstance(data, dict):\n    print(data.get('key'))\n```";
-    } else if (q.includes('error') && (q.includes('python') || q.includes('code') || q.includes('fix'))) {
+    } else if (q.includes('error') && (q.includes('python') || q.includes('code') || q.fix)) {
       text = "Could you please share your Python code snippet and the exact error message or traceback you are receiving?\n\nOnce you share them, I'll identify the root cause and provide the corrected code!";
     } else if (q.includes('oop') || q.includes('encapsulation') || q.includes('polymorphism')) {
       text = "**The 4 Pillars of Object-Oriented Programming (OOP)**:\n\n1. 🔒 **Encapsulation**: Bundling state and methods inside classes and hiding private attributes.\n2. 🎭 **Abstraction**: Exposing clean interfaces while hiding complex internal logic (`abc.ABC`).\n3. 🧬 **Inheritance**: Code reusability through child classes.\n4. 🔄 **Polymorphism**: Unified method signatures with subclass-specific behaviors.";
@@ -285,7 +322,7 @@ export const mentorService = {
     };
   },
 
-  generateMentorResponse: async (userMessage, mentorContext, conversationId = null, conversationHistory = null) => {
+  generateMentorResponse: async (userMessage, mentorContext, conversationId = null, conversationHistory = null, persona = 'tech') => {
     // Try real backend API first with current student context
     const targetRole = mentorContext?.user?.targetRole || null;
     const studentName = mentorContext?.user?.name || null;
@@ -303,6 +340,6 @@ export const mentorService = {
       };
     }
     // Fallback to local AI service synthesizer if backend offline
-    return mentorService.generateLocalFallback(userMessage, mentorContext);
+    return mentorService.generateLocalFallback(userMessage, mentorContext, persona);
   }
 };

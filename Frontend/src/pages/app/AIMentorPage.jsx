@@ -7,6 +7,8 @@ import { mentorService } from '../../services/mentorService';
 import { MentorHeader } from '../../components/mentor/MentorHeader';
 import { MentorMessage } from '../../components/mentor/MentorMessage';
 import { MentorInputDock } from '../../components/mentor/MentorInputDock';
+import { MentorHistorySidebar } from '../../components/mentor/MentorHistorySidebar';
+import { MentorQuickPrompts } from '../../components/mentor/MentorQuickPrompts';
 
 export const AIMentorPage = () => {
   const { user } = useUser();
@@ -16,7 +18,9 @@ export const AIMentorPage = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
-  
+  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
+  const [activePersona, setActivePersona] = useState('tech');
+
   const messagesEndRef = useRef(null);
 
   // Build normalized context object aggregating active application data
@@ -26,28 +30,143 @@ export const AIMentorPage = () => {
     planningState
   });
 
-  // Active backend conversation ID for conversational memory
-  const [conversationId, setConversationId] = useState(() => {
-    return localStorage.getItem('placementMentorActiveConvId') || null;
+  // Load chat sessions list from storage
+  const [sessions, setSessions] = useState(() => {
+    const stored = mentorService.getStoredSessions();
+    if (stored && stored.length > 0) return stored;
+    
+    // Check if an existing single chat exists to migrate
+    const legacyChat = mentorService.getStoredChat();
+    const defaultSessionId = `session-${Date.now()}`;
+    const initialSession = {
+      id: defaultSessionId,
+      title: 'Technical Preparation',
+      persona: 'tech',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      messages: legacyChat && legacyChat.length > 0 ? legacyChat : mentorService.getInitialGreeting(mentorContext, 'tech')
+    };
+    return [initialSession];
   });
 
-  // Load chat history from localStorage or fallback to initial contextual greeting
-  const [messages, setMessages] = useState(() => {
-    const saved = mentorService.getStoredChat();
-    if (saved && saved.length > 0) return saved;
-    return mentorService.getInitialGreeting(mentorContext);
+  // Active session ID
+  const [activeSessionId, setActiveSessionId] = useState(() => {
+    return sessions[0]?.id || `session-${Date.now()}`;
   });
 
-  // Save chat history to localStorage whenever messages update
+  // Find active session object
+  const currentSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
+
+  // Active messages derived from current session
+  const messages = currentSession?.messages || [];
+
+  // Persist sessions whenever they change
   useEffect(() => {
-    mentorService.saveChat(messages);
-  }, [messages]);
+    mentorService.saveStoredSessions(sessions);
+    if (currentSession?.messages) {
+      mentorService.saveChat(currentSession.messages);
+    }
+  }, [sessions, activeSessionId]);
+
+  // Sync active persona when session changes
+  useEffect(() => {
+    if (currentSession?.persona && currentSession.persona !== activePersona) {
+      setActivePersona(currentSession.persona);
+    }
+  }, [activeSessionId]);
 
   // Auto-scroll to bottom of conversation timeline
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  // Handle Ctrl+N keyboard shortcut for new chat
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNewChat();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activePersona]);
+
+  // Create a brand new chat session
+  const handleNewChat = () => {
+    const newSessionId = `session-${Date.now()}`;
+    const newSession = {
+      id: newSessionId,
+      title: 'New Chat',
+      persona: activePersona,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      messages: mentorService.getInitialGreeting(mentorContext, activePersona)
+    };
+
+    setSessions((prev) => [newSession, ...prev]);
+    setActiveSessionId(newSessionId);
+    setInput('');
+  };
+
+  // Select an existing conversation session
+  const handleSelectSession = (sessionId) => {
+    setActiveSessionId(sessionId);
+    // On small screens, auto-close the drawer on selection
+    if (window.innerWidth < 1024) {
+      setIsHistoryOpen(false);
+    }
+  };
+
+  // Delete a session
+  const handleDeleteSession = (sessionId) => {
+    if (sessions.length <= 1) {
+      // If deleting the only session, reset it to a fresh chat
+      const freshSession = {
+        id: `session-${Date.now()}`,
+        title: 'New Chat',
+        persona: activePersona,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        messages: mentorService.getInitialGreeting(mentorContext, activePersona)
+      };
+      setSessions([freshSession]);
+      setActiveSessionId(freshSession.id);
+      return;
+    }
+
+    const updated = sessions.filter((s) => s.id !== sessionId);
+    setSessions(updated);
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(updated[0].id);
+    }
+  };
+
+  // Rename a session title
+  const handleRenameSession = (sessionId, newTitle) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle, updatedAt: new Date().toISOString() } : s))
+    );
+  };
+
+  // Change mode / persona
+  const handleSelectPersona = (personaId) => {
+    setActivePersona(personaId);
+    // Update active session persona
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId
+          ? {
+              ...s,
+              persona: personaId,
+              updatedAt: new Date().toISOString()
+            }
+          : s
+      )
+    );
+  };
+
+  // Send message
   const handleSendMessage = async (textToSend = input) => {
     const queryText = typeof textToSend === 'string' ? textToSend.trim() : input.trim();
     if (!queryText || isLoading) return;
@@ -60,12 +179,33 @@ export const AIMentorPage = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Auto-derive title if currently "New Chat" or "Untitled Session"
+    let updatedTitle = currentSession?.title;
+    if (!currentSession || currentSession.title === 'New Chat' || currentSession.title === 'Untitled Session') {
+      updatedTitle = queryText.slice(0, 32) + (queryText.length > 32 ? '...' : '');
+    }
+
+    const updatedMessages = [...messages, userMessage];
+
+    // Optimistically update session messages
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId
+          ? {
+              ...s,
+              title: updatedTitle,
+              messages: updatedMessages,
+              updatedAt: new Date().toISOString()
+            }
+          : s
+      )
+    );
+
     setInput('');
     setIsLoading(true);
 
     try {
-      const historyPayload = messages.slice(-6).map((m) => ({
+      const historyPayload = updatedMessages.slice(-6).map((m) => ({
         role: m.role || (m.sender === 'user' ? 'user' : 'assistant'),
         content: m.text || m.content || ''
       }));
@@ -73,14 +213,10 @@ export const AIMentorPage = () => {
       const response = await mentorService.generateMentorResponse(
         queryText,
         mentorContext,
-        conversationId,
-        historyPayload
+        activeSessionId,
+        historyPayload,
+        activePersona
       );
-
-      if (response.conversation_id && response.conversation_id !== conversationId) {
-        setConversationId(response.conversation_id);
-        localStorage.setItem('placementMentorActiveConvId', response.conversation_id);
-      }
 
       const assistantMessage = {
         id: `ai-${Date.now()}`,
@@ -93,7 +229,17 @@ export const AIMentorPage = () => {
         svgDiagram: response.svgDiagram || false
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                messages: [...s.messages, assistantMessage],
+                updatedAt: new Date().toISOString()
+              }
+            : s
+        )
+      );
     } catch (error) {
       console.error('Failed to generate mentor response', error);
       const errorMessage = {
@@ -104,19 +250,36 @@ export const AIMentorPage = () => {
         verified: false,
         text: "I couldn't generate a response right now due to a network interruption. Please try asking again."
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                messages: [...s.messages, errorMessage],
+                updatedAt: new Date().toISOString()
+              }
+            : s
+        )
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleClearChat = () => {
-    if (window.confirm("Are you sure you want to clear the conversation history?")) {
-      mentorService.clearChat();
-      localStorage.removeItem('placementMentorActiveConvId');
-      setConversationId(null);
-      const resetGreeting = mentorService.getInitialGreeting(mentorContext);
-      setMessages(resetGreeting);
+  const handleClearCurrentChat = () => {
+    if (window.confirm('Are you sure you want to clear the messages in this chat?')) {
+      const resetGreeting = mentorService.getInitialGreeting(mentorContext, activePersona);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                messages: resetGreeting,
+                updatedAt: new Date().toISOString()
+              }
+            : s
+        )
+      );
     }
   };
 
@@ -142,74 +305,118 @@ export const AIMentorPage = () => {
         <div className="absolute top-10 right-0 w-80 h-80 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Page Top Header Bar */}
-        <MentorHeader />
+        <MentorHeader
+          isHistoryOpen={isHistoryOpen}
+          onToggleHistory={() => setIsHistoryOpen((prev) => !prev)}
+          activePersona={activePersona}
+          onNewChat={handleNewChat}
+        />
 
-        {/* Main Chat Workspace */}
-        <div className="w-full max-w-5xl mx-auto flex flex-col gap-4 pb-10 pt-4">
-          <div className="flex flex-col rounded-2xl bg-[#141824] border border-[#232838] shadow-xl p-4 md:p-6 gap-4">
-            {/* Top Action Bar */}
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                onClick={handleClearChat}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 px-2.5 py-1 rounded-lg hover:bg-[#191e2e] transition-colors"
-                title="Clear conversation history"
-              >
-                <span className="material-symbols-outlined text-sm">delete_sweep</span>
-                <span>Clear Chat</span>
-              </button>
-            </div>
-
-            {/* Chat Timeline Stream */}
-            <div className="flex flex-col gap-4 min-h-[460px] max-h-[620px] overflow-y-auto pr-1">
-              {messages.map((msg) => (
-                <MentorMessage
-                  key={msg.id}
-                  message={msg}
-                  userAvatar={user?.avatarUrl}
+        {/* Main Body Layout: History Panel + Chat Space - Equal Height and Bottom Baseline */}
+        <div className="w-full flex items-stretch gap-4 pt-4 pb-4 h-[calc(100vh-140px)] min-h-[580px]">
+          {/* ChatGPT-style History Sidebar */}
+          {isHistoryOpen && (
+            <div className="hidden lg:block shrink-0 h-full">
+              <div className="rounded-2xl border border-[#232838] overflow-hidden shadow-xl h-full flex flex-col">
+                <MentorHistorySidebar
+                  isOpen={isHistoryOpen}
+                  onClose={() => setIsHistoryOpen(false)}
+                  sessions={sessions}
+                  activeSessionId={activeSessionId}
+                  onSelectSession={handleSelectSession}
+                  onNewChat={handleNewChat}
+                  onDeleteSession={handleDeleteSession}
+                  onRenameSession={handleRenameSession}
                 />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Suggested Prompts (Shown only at conversation start) */}
-            {messages.length <= 1 && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
-                <span className="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm text-purple-400">tips_and_updates</span>
-                  Suggested:
-                </span>
-                {[
-                  "Help me learn DSA",
-                  "Practice a technical interview",
-                  "Help me plan my preparation"
-                ].map((suggestion, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSendMessage(suggestion)}
-                    disabled={isLoading}
-                    className="px-3 py-1.5 rounded-xl bg-[#181d2c] hover:bg-purple-600/20 text-slate-200 hover:text-purple-300 border border-[#252b3e] hover:border-purple-500/40 text-xs font-medium transition-all shadow-sm flex items-center gap-1.5 group disabled:opacity-50"
-                  >
-                    <span>{suggestion}</span>
-                    <span className="material-symbols-outlined text-xs text-purple-400 group-hover:translate-x-0.5 transition-transform">
-                      arrow_forward
-                    </span>
-                  </button>
-                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Clean Input Dock */}
-            <MentorInputDock
-              input={input}
-              setInput={setInput}
-              onSend={() => handleSendMessage()}
-              isLoading={isLoading}
-              onAttachCode={handleAttachCode}
-              isVoiceActive={isVoiceActive}
-              onToggleVoice={handleToggleVoice}
+          {/* Mobile slide-over drawer */}
+          <div className="lg:hidden">
+            <MentorHistorySidebar
+              isOpen={isHistoryOpen}
+              onClose={() => setIsHistoryOpen(false)}
+              sessions={sessions}
+              activeSessionId={activeSessionId}
+              onSelectSession={handleSelectSession}
+              onNewChat={handleNewChat}
+              onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
             />
+          </div>
+
+          {/* Central Chat Workspace */}
+          <div className="flex-1 flex flex-col min-w-0 h-full">
+            {/* Chat Container Box */}
+            <div className="flex flex-col rounded-2xl bg-[#141824] border border-[#232838] shadow-xl p-4 md:p-5 gap-3 h-full">
+              {/* Top Sub-Bar: Active Session Title & Actions */}
+              <div className="flex items-center justify-between pb-2 border-b border-[#1c2233] shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="material-symbols-outlined text-purple-400 text-sm">chat_bubble</span>
+                  <span className="text-xs font-semibold text-slate-200 truncate">
+                    {currentSession?.title || 'Active Chat'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="flex items-center gap-1 text-xs font-medium text-purple-400 hover:text-purple-300 px-2.5 py-1 rounded-lg hover:bg-purple-500/10 transition-colors"
+                    title="Start fresh conversation"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    <span className="hidden sm:inline">New Chat</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClearCurrentChat}
+                    className="flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-rose-400 px-2.5 py-1 rounded-lg hover:bg-[#191e2e] transition-colors"
+                    title="Clear messages in current chat"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete_sweep</span>
+                    <span>Clear</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat Timeline Stream */}
+              <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 min-h-0 custom-scrollbar">
+                {messages.map((msg) => (
+                  <MentorMessage
+                    key={msg.id}
+                    message={msg}
+                    userAvatar={user?.avatarUrl}
+                  />
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Quick Prompt Suggestions */}
+              {messages.length <= 1 && (
+                <div className="shrink-0">
+                  <MentorQuickPrompts
+                    onSelectPrompt={(prompt) => handleSendMessage(prompt)}
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
+
+              {/* Clean Input Dock */}
+              <div className="shrink-0">
+                <MentorInputDock
+                  input={input}
+                  setInput={setInput}
+                  onSend={() => handleSendMessage()}
+                  isLoading={isLoading}
+                  onAttachCode={handleAttachCode}
+                  isVoiceActive={isVoiceActive}
+                  onToggleVoice={handleToggleVoice}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
