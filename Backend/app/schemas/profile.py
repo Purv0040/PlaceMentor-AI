@@ -198,24 +198,26 @@ class PreferencesInfoSchema(BaseModel):
 
     preferred_language: str = "English"
 
-<<<<<<< HEAD
-    @field_validator("studyDurationDays")
+    @field_validator("studyDurationDays", mode="before")
     @classmethod
     def validate_study_duration(cls, v):
+        if v is None:
+            return "90"
+        if isinstance(v, (int, float)):
+            return str(int(v))
         if isinstance(v, str):
             v = v.strip()
+            if not v:
+                return "90"
             if v.isdigit():
                 days = int(v)
-                if days < 1 or days > 365:
-                    raise ValueError(
-                        "Study duration days must be between 1 and 365."
-                    )
-        return v
+                if 1 <= days <= 365:
+                    return str(days)
+                return "90"
+            return v
+        return "90"
 
-    @field_validator("dailyGoalMinutes")
-=======
     @field_validator("dailyGoalMinutes", mode="before")
->>>>>>> 43b07ddd632a814987d6db1c57622e9835d6bc89
     @classmethod
     def validate_daily_minutes(cls, v):
         if v is None:
