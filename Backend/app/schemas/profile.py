@@ -67,9 +67,11 @@ class PersonalInfoSchema(BaseModel):
             if v.isdigit():
                 year = int(v)
                 if year < 2020 or year > 2035:
-                    return "2026"
+                    raise ValueError(
+                        "Graduation year must be between 2020 and 2035."
+                    )
                 return str(year)
-            return v
+            raise ValueError("Graduation year must be a valid year.")
         return "2026"
 
 
