@@ -66,6 +66,7 @@ export const AnalysisStep = () => {
       selectedSkills: onboardingData.skills?.selectedSkills || [],
       mentorTone: onboardingData.preferences?.mentorTone || 'Socratic Coach (Probing Questions)',
       dailyGoalMinutes: onboardingData.preferences?.dailyGoalMinutes || '90',
+      studyDurationDays: onboardingData.preferences?.studyDurationDays || '45',
       studyCadence: onboardingData.preferences?.studyCadence || 'Daily Evening Sprint',
       targetDrive: onboardingData.goals?.targetDrive || 'August 2026 (Campus Phase 1)',
       targetCtc: onboardingData.goals?.targetCtc || '14 - 24 LPA (Product Tier)',
@@ -93,7 +94,12 @@ export const AnalysisStep = () => {
     } catch (e) {}
 
     try {
-      planningService.resetForRole(profilePayload.targetRole, profilePayload.selectedSkills);
+      planningService.resetForRole(
+        profilePayload.targetRole,
+        profilePayload.selectedSkills,
+        Number(profilePayload.studyDurationDays || 45),
+        Number(profilePayload.dailyGoalMinutes || 90)
+      );
     } catch (e) {}
 
     // Mark completed locally so client route guards never block entry
@@ -103,6 +109,15 @@ export const AnalysisStep = () => {
     try {
       await Promise.race([
         Promise.allSettled([
+          onboardingService.updateStep(5, {
+            step_number: 5,
+            preferences: {
+              dailyGoalMinutes: String(profilePayload.dailyGoalMinutes),
+              studyDurationDays: String(profilePayload.studyDurationDays),
+              mentorTone: profilePayload.mentorTone,
+              studyCadence: profilePayload.studyCadence
+            }
+          }),
           onboardingService.updateStep(7, {
             step_number: 7,
             career: {
@@ -117,12 +132,24 @@ export const AnalysisStep = () => {
               frameworkLevel: profilePayload.frameworkLevel,
               selectedSkills: profilePayload.selectedSkills
             },
+            preferences: {
+              dailyGoalMinutes: String(profilePayload.dailyGoalMinutes),
+              studyDurationDays: String(profilePayload.studyDurationDays),
+              mentorTone: profilePayload.mentorTone,
+              studyCadence: profilePayload.studyCadence
+            },
             overallReadinessScore: profilePayload.overallReadinessScore
           }),
           onboardingService.completeOnboarding(),
+          planningService.generateCustomRoadmap({
+            targetRole: profilePayload.targetRole,
+            durationDays: Number(profilePayload.studyDurationDays || 45),
+            dailyMinutes: Number(profilePayload.dailyGoalMinutes || 90),
+            replaceExisting: true
+          }),
           readinessService.calculateReadiness(profilePayload.targetRole)
         ]),
-        new Promise((resolve) => setTimeout(resolve, 1200))
+        new Promise((resolve) => setTimeout(resolve, 1500))
       ]);
     } catch (err) {
       console.warn('Backend complete sync note:', err);

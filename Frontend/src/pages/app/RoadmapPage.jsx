@@ -2,36 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
 import { useUser } from '../../context/UserContext';
-import { ChevronDown, Clock3, RefreshCw, Calendar, Sparkles, Sliders, Edit3 } from 'lucide-react';
+import { ChevronDown, Clock3, RefreshCw, Calendar } from 'lucide-react';
 
-const ROADMAP_ROLES = [
-  'Full Stack Engineer',
-  'Frontend Engineer',
-  'Frontend Developer',
-  'Frontend SDE-1',
-  'Backend Developer',
-  'Backend SDE-1 (Tier 1)',
-  'AI/ML Engineer',
-  'Machine Learning Engineer',
-  'Data Scientist',
-  'Data Scientist & Engineer',
-  'Data Analyst',
-  'Data Engineer',
-  'DevOps & Cloud Engineer',
-  'DevOps Engineer',
-  'Cloud Engineer',
-  'Android Developer',
-  'iOS Developer',
-  'Cybersecurity Analyst',
-  'Cybersecurity Engineer',
-  'Cybersecurity Analyst & Engineer',
-  'Software Engineer',
-  'Systems Software Engineer',
-  'QA / SDET Engineer',
-  'Embedded Systems Engineer',
-  'Blockchain Developer',
-  'Product Manager',
-];
+
 
 const TaskRow = ({ task, onToggle, isTarget }) => (
   <div
@@ -135,7 +108,6 @@ export const RoadmapPage = () => {
     tasks,
     toggleTaskCompletion,
     adaptRoadmap,
-    generateCustomRoadmap,
     toastNotification,
     planningLoading,
     planningError,
@@ -148,58 +120,8 @@ export const RoadmapPage = () => {
 
   const registeredRole = user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer';
 
-  // State for role selection (matches Resume page pattern)
-  const [selectedRole, setSelectedRole] = useState(registeredRole);
-  const [isEditingRole, setIsEditingRole] = useState(false);
-  const [showCustomRoleInput, setShowCustomRoleInput] = useState(false);
-  const [customRoleInput, setCustomRoleInput] = useState('');
-
-  // Sync selectedRole if user/roadmap data loads after mount
-  useEffect(() => {
-    setSelectedRole((prev) => prev || user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer');
-  }, [user?.targetRole, roadmap?.targetRole]);
-
-  // State for dynamic duration & daily study time
-  const [selectedDuration, setSelectedDuration] = useState(roadmap?.totalDays || 90);
-  const [isCustomDuration, setIsCustomDuration] = useState(false);
-  const [customDurationInput, setCustomDurationInput] = useState('');
-
-  const [selectedDailyMinutes, setSelectedDailyMinutes] = useState(
-    Number(user?.dailyGoalMinutes) || roadmap?.availableMinutesPerDay || 60
-  );
-  const [isCustomDaily, setIsCustomDaily] = useState(false);
-  const [customDailyInput, setCustomDailyInput] = useState('');
-
   const [activePhaseId, setActivePhaseId] = useState(null);
   const [isAdapting, setIsAdapting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  // Sync initial inputs with loaded roadmap state
-  useEffect(() => {
-    if (roadmap?.totalDays) {
-      if ([15, 30, 45, 60, 90].includes(roadmap.totalDays)) {
-        setSelectedDuration(roadmap.totalDays);
-        setIsCustomDuration(false);
-      } else {
-        setSelectedDuration(roadmap.totalDays);
-        setIsCustomDuration(true);
-        setCustomDurationInput(String(roadmap.totalDays));
-      }
-    }
-  }, [roadmap?.totalDays]);
-
-  useEffect(() => {
-    if (roadmap?.availableMinutesPerDay) {
-      if ([30, 45, 60, 120].includes(roadmap.availableMinutesPerDay)) {
-        setSelectedDailyMinutes(roadmap.availableMinutesPerDay);
-        setIsCustomDaily(false);
-      } else {
-        setSelectedDailyMinutes(roadmap.availableMinutesPerDay);
-        setIsCustomDaily(true);
-        setCustomDailyInput(String(roadmap.availableMinutesPerDay));
-      }
-    }
-  }, [roadmap?.availableMinutesPerDay]);
 
   const phases = Array.isArray(roadmap?.phases) ? roadmap.phases : [];
   const activePhase = phases.find((phase) => phase.id === activePhaseId)
@@ -241,7 +163,7 @@ export const RoadmapPage = () => {
   }, [targetTaskId, activePhaseId]);
 
   const currentDay = Number(roadmap?.currentDay) || 0;
-  const totalDays = Number(roadmap?.totalDays) || selectedDuration || 90;
+  const totalDays = Number(roadmap?.totalDays) || 90;
   const progressPercent = Math.min(100, Math.max(0, Number(roadmap?.overallProgressPercent) || 0));
   const currentPhase = phases.find((phase) => currentDay >= phase.startDay && currentDay <= phase.endDay);
   const phaseTasks = useMemo(() => {
@@ -261,75 +183,6 @@ export const RoadmapPage = () => {
       if (await adaptRoadmap()) await reloadPlanning();
     } finally {
       setIsAdapting(false);
-    }
-  };
-
-  const handleDurationPreset = (days) => {
-    setIsCustomDuration(false);
-    setSelectedDuration(days);
-  };
-
-  const handleCustomDurationChange = (e) => {
-    const val = e.target.value;
-    setCustomDurationInput(val);
-    const num = parseInt(val, 10);
-    if (!isNaN(num) && num >= 1 && num <= 365) {
-      setSelectedDuration(num);
-    }
-  };
-
-  const handleDailyPreset = (mins) => {
-    setIsCustomDaily(false);
-    setSelectedDailyMinutes(mins);
-  };
-
-  const handleCustomDailyChange = (e) => {
-    const val = e.target.value;
-    setCustomDailyInput(val);
-    const num = parseInt(val, 10);
-    if (!isNaN(num) && num >= 15 && num <= 480) {
-      setSelectedDailyMinutes(num);
-    }
-  };
-
-  const handleRoleSelect = (roleName) => {
-    if (roleName === 'custom') {
-      setShowCustomRoleInput(true);
-      return;
-    }
-    setShowCustomRoleInput(false);
-    setSelectedRole(roleName);
-    setIsEditingRole(false);
-  };
-
-  const handleCustomRoleSubmit = (e) => {
-    e.preventDefault();
-    if (customRoleInput.trim()) {
-      setSelectedRole(customRoleInput.trim());
-      setCustomRoleInput('');
-      setShowCustomRoleInput(false);
-      setIsEditingRole(false);
-    }
-  };
-
-  const handleGenerateCustomRoadmap = async () => {
-    const finalDays = isCustomDuration ? parseInt(customDurationInput, 10) || selectedDuration : selectedDuration;
-    const finalMins = isCustomDaily ? parseInt(customDailyInput, 10) || selectedDailyMinutes : selectedDailyMinutes;
-    const finalRole = selectedRole;
-
-    if (!finalDays || finalDays < 1 || finalDays > 365) return;
-    if (!finalMins || finalMins < 15 || finalMins > 480) return;
-    if (!finalRole) return;
-
-    setIsGenerating(true);
-    try {
-      await generateCustomRoadmap({
-        targetRole: finalRole,
-        durationDays: finalDays,
-        dailyMinutes: finalMins,
-      });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -365,231 +218,6 @@ export const RoadmapPage = () => {
         </div>
       </header>
 
-      {/* Dynamic Roadmap Preferences & Generation Controls */}
-      <section aria-label="Roadmap Preparation Plan Configuration" className="rounded-2xl border border-slate-800 bg-[#121624] p-5 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-          <div>
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <Sliders size={18} className="text-indigo-400" />
-              Personalized Plan Settings
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Choose your target role, study cadence and preparation runway. Existing completed tasks are preserved.
-            </p>
-          </div>
-          {/* Active Role Badge */}
-          <div className="flex items-center gap-2 self-start sm:self-auto rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 text-xs">
-            <span className="text-slate-400">Generating for:</span>
-            <span className="font-semibold text-indigo-300">{selectedRole}</span>
-          </div>
-        </div>
-
-        {/* Target Role Selector — matches Resume page pattern */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-            Target Role
-          </label>
-          <div className="flex items-center gap-2">
-            {isEditingRole ? (
-              <div className="flex items-center gap-1.5">
-                {showCustomRoleInput ? (
-                  <form onSubmit={handleCustomRoleSubmit} className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      value={customRoleInput}
-                      onChange={(e) => setCustomRoleInput(e.target.value)}
-                      placeholder="e.g. Site Reliability Engineer"
-                      autoFocus
-                      className="bg-[#111724] text-indigo-300 border border-indigo-500/50 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 w-56"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowCustomRoleInput(false); setIsEditingRole(false); }}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </form>
-                ) : (
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => handleRoleSelect(e.target.value)}
-                    onBlur={() => { setTimeout(() => { if (!showCustomRoleInput) setIsEditingRole(false); }, 200); }}
-                    autoFocus
-                    className="bg-[#111724] text-indigo-400 font-semibold border border-indigo-500/60 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-lg"
-                  >
-                    {ROADMAP_ROLES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                    <option value="custom">+ Custom Target Role…</option>
-                  </select>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsEditingRole(true)}
-                title="Click to change target role"
-                className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-semibold transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 text-xs group/role"
-              >
-                <span>{selectedRole}</span>
-                <Edit3 className="w-3 h-3 text-indigo-400/80 group-hover/role:text-indigo-300 shrink-0" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
-          {/* Preparation Duration */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Calendar size={14} className="text-indigo-400" />
-                Study Duration
-              </span>
-              <span className="text-indigo-300 font-semibold">{selectedDuration} Days</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {[15, 30, 45, 60, 90].map((days) => (
-                <button
-                  key={days}
-                  type="button"
-                  onClick={() => handleDurationPreset(days)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                    !isCustomDuration && selectedDuration === days
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                      : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
-                  }`}
-                >
-                  {days} Days
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCustomDuration(true);
-                  if (!customDurationInput) setCustomDurationInput(String(selectedDuration));
-                }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                  isCustomDuration
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                    : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
-                }`}
-              >
-                Custom
-              </button>
-            </div>
-            {isCustomDuration && (
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={customDurationInput}
-                  onChange={handleCustomDurationChange}
-                  placeholder="Days (1-365)"
-                  className="w-32 rounded-lg bg-[#111724] border border-slate-700 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                />
-                <span className="text-xs text-slate-400">days (1–365)</span>
-              </div>
-            )}
-          </div>
-
-          {/* Daily Study Time */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Clock3 size={14} className="text-indigo-400" />
-                Daily Study Time
-              </span>
-              <span className="text-indigo-300 font-semibold">
-                {selectedDailyMinutes >= 60 && selectedDailyMinutes % 60 === 0
-                  ? `${selectedDailyMinutes / 60} Hour${selectedDailyMinutes > 60 ? 's' : ''}`
-                  : `${selectedDailyMinutes} Mins`}/day
-              </span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: '30 Mins', value: 30 },
-                { label: '45 Mins', value: 45 },
-                { label: '1 Hour', value: 60 },
-                { label: '2 Hours', value: 120 },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleDailyPreset(opt.value)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                    !isCustomDaily && selectedDailyMinutes === opt.value
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                      : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCustomDaily(true);
-                  if (!customDailyInput) setCustomDailyInput(String(selectedDailyMinutes));
-                }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                  isCustomDaily
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
-                    : 'bg-[#111724] text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
-                }`}
-              >
-                Custom
-              </button>
-            </div>
-            {isCustomDaily && (
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="number"
-                  min="15"
-                  max="480"
-                  value={customDailyInput}
-                  onChange={handleCustomDailyChange}
-                  placeholder="Mins (15-480)"
-                  className="w-32 rounded-lg bg-[#111724] border border-slate-700 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                />
-                <span className="text-xs text-slate-400">minutes/day (15–480)</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-800/80">
-          <p className="text-xs text-slate-400">
-            Estimated runway: <span className="text-slate-200 font-medium">~{Math.round((selectedDuration * selectedDailyMinutes) / 60)} study hours</span> across <span className="text-slate-200 font-medium">{selectedDuration} days</span>
-          </p>
-          <button
-            type="button"
-            onClick={handleGenerateCustomRoadmap}
-            disabled={isGenerating || planningLoading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors shadow-sm shadow-indigo-600/25"
-          >
-            {isGenerating ? (
-              <>
-                <RefreshCw size={13} className="animate-spin" />
-                Generating Adaptive Roadmap…
-              </>
-            ) : (
-              <>
-                <Sparkles size={13} />
-                Generate {selectedDuration}-Day Roadmap
-              </>
-            )}
-          </button>
-        </div>
-      </section>
 
       <section aria-label="Roadmap progress" className="rounded-2xl border border-slate-800 bg-[#121624] p-5 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">

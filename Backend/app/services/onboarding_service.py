@@ -107,11 +107,14 @@ class OnboardingService:
             from app.services.roadmap_service import RoadmapService
             from app.services.readiness_service import ReadinessService
             target_role = career.get("targetRole") or career.get("target_role")
-            daily_mins = int(profile.get("preferences", {}).get("dailyGoalMinutes") or 90)
+            prefs = profile.get("preferences", {}) or {}
+            daily_mins = int(prefs.get("dailyGoalMinutes") or 90)
+            duration_days = int(prefs.get("studyDurationDays") or 90)
             roadmap_service = RoadmapService(self.profile_repo.db)
             await roadmap_service.generate_roadmap(
                 user_id=user_id,
                 target_role=target_role,
+                duration_days=duration_days,
                 available_minutes_per_day=daily_mins,
                 force_regenerate=True
             )

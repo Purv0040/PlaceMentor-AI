@@ -41,6 +41,7 @@ const buildInitialState = () => {
     },
     preferences: {
       dailyGoalMinutes: '90',
+      studyDurationDays: '45',
       mentorTone: 'Socratic Coach (Probing Questions)',
       studyCadence: 'Daily Evening Sprint'
     },

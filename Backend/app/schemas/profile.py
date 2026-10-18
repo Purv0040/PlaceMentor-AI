@@ -198,6 +198,8 @@ class IntegrationsInfoSchema(BaseModel):
 class PreferencesInfoSchema(BaseModel):
     dailyGoalMinutes: str = "90"
 
+    studyDurationDays: Optional[str] = "90"
+
     mentorTone: str = (
         "Socratic Coach (Probing Questions)"
     )
@@ -207,6 +209,19 @@ class PreferencesInfoSchema(BaseModel):
     )
 
     preferred_language: str = "English"
+
+    @field_validator("studyDurationDays")
+    @classmethod
+    def validate_study_duration(cls, v):
+        if isinstance(v, str):
+            v = v.strip()
+            if v.isdigit():
+                days = int(v)
+                if days < 1 or days > 365:
+                    raise ValueError(
+                        "Study duration days must be between 1 and 365."
+                    )
+        return v
 
     @field_validator("dailyGoalMinutes")
     @classmethod

@@ -1,7 +1,7 @@
 // Service layer for Planning, Tasks, Roadmap, and Progress calculation
 
 import { apiRequest } from "./api";
-import { initialRoadmapData } from "../data/roadmapData";
+import { initialRoadmapData, getDynamicRoadmap } from "../data/roadmapData";
 import { getDynamicTasks, initialTaskData } from "../data/taskData";
 import { initialProgressData } from "../data/progressData";
 
@@ -47,12 +47,13 @@ export const planningService = {
               const tasks = Array.isArray(phase.tasks) ? phase.tasks : [];
               const startDay = phase.start_day ?? phase.startDay ?? null;
               const endDay = phase.end_day ?? phase.endDay ?? null;
+              const dynamicTitle = phase.name || phase.title || `Phase ${phase.phase_number || index + 1}`;
               return {
                 ...phase,
                 id: `phase-${phase.phase_number || index + 1}`,
                 phaseNumber: phase.phase_number || index + 1,
-                title: ["Foundation", "Skill Development", "Placement Preparation"][index] || phase.name,
-                sourceTitle: phase.name || phase.title || "",
+                title: dynamicTitle,
+                sourceTitle: dynamicTitle,
                 subtitle: phase.subtitle || phase.goal || "",
                 startDay,
                 endDay,
@@ -159,17 +160,20 @@ export const planningService = {
     };
   },
 
-  resetForRole: (targetRole, selectedSkills) => {
+  resetForRole: (targetRole, selectedSkills, durationDays = 90, dailyMinutes = 90) => {
     const freshTasks = getDynamicTasks(targetRole, selectedSkills, 1);
+    const duration = Number(durationDays) || 90;
+    const dynamicRoadmap = getDynamicRoadmap(targetRole, duration, dailyMinutes);
+
     const newState = {
-      roadmap: initialRoadmapData,
+      roadmap: dynamicRoadmap,
       tasks: freshTasks,
       progress: {
         ...initialProgressData,
         completedTasksCount: 0,
         totalTasksCount: freshTasks.length,
-        overallProgressPercent: 12
-      }
+        overallProgressPercent: 0,
+      },
     };
     planningService.saveState(newState);
     return newState;

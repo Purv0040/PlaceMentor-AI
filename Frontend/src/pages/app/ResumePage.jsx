@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { usePlanning } from '../../context/PlanningContext';
 import { initialResumeData } from '../../data/resumeData';
 import { aiService } from '../../services/aiService';
 import { resumeService } from '../../services/resumeService';
@@ -27,6 +28,7 @@ import {
 export const ResumePage = () => {
   const navigate = useNavigate();
   const { user, updateUserProfile } = useUser();
+  const { generateCustomRoadmap, roadmap } = usePlanning();
   const [resumeData, setResumeData] = useState(() => {
     const userResume = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
     return {
@@ -211,6 +213,17 @@ export const ResumePage = () => {
     }
     setShowCustomRoleInput(false);
     updateUserProfile({ targetRole: roleName });
+
+    // Dynamically regenerate roadmap and tasks for this specific role
+    const currentDuration = Number(roadmap?.totalDays || user?.studyDurationDays || 90);
+    const currentMins = Number(roadmap?.availableMinutesPerDay || user?.dailyGoalMinutes || 90);
+    if (typeof generateCustomRoadmap === 'function') {
+      generateCustomRoadmap({
+        targetRole: roleName,
+        durationDays: currentDuration,
+        dailyMinutes: currentMins,
+      }).catch((e) => console.warn('Roadmap sync note:', e));
+    }
     
     setResumeData(prev => {
       const detectedNames = (prev.detectedSkills || []).map(s => s.name);
