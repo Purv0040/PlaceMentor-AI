@@ -57,6 +57,7 @@ class MentorService:
         message_text: str,
         target_role: Optional[str] = None,
         student_name: Optional[str] = None,
+        client_history: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Send a message to the mentor, get context-aware AI guidance, and store conversation memory."""
         if not message_text or not message_text.strip():
@@ -99,13 +100,26 @@ class MentorService:
             student_name_override=student_name
         )
 
-        # 4. Fetch recent conversation memory (last 5 messages)
-        recent_messages = await self.mentor_repo.get_messages_by_conversation(conversation_id, limit=10)
-        history_payload = [
-            {"role": m.get("role", "user"), "content": m.get("content", "")}
-            for m in recent_messages[-5:]
-            if m.get("content")
-        ]
+        # 4. Fetch recent conversation memory (prior turns excluding the newly added message)
+        recent_messages = await self.mentor_repo.get_messages_by_conversation(conversation_id, limit=12)
+        prior_messages = [m for m in recent_messages if m.get("message_id") != user_msg_id]
+        if prior_messages:
+            history_payload = [
+                {"role": m.get("role", "user"), "content": m.get("content", "")}
+                for m in prior_messages[-6:]
+                if m.get("content")
+            ]
+        elif client_history:
+            history_payload = [
+                {
+                    "role": m.get("role") or ("user" if m.get("sender") == "user" else "assistant"),
+                    "content": m.get("content") or m.get("text", "")
+                }
+                for m in client_history[-6:]
+                if (m.get("content") or m.get("text")) and (m.get("content") or m.get("text", "")).strip() != clean_message
+            ]
+        else:
+            history_payload = []
 
         # 5. Call AI service or local fallback engine
         ai_payload = {
@@ -162,6 +176,7 @@ class MentorService:
         conversation_id: Optional[str] = None,
         target_role: Optional[str] = None,
         student_name: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Quick mentor query handler."""
         if not message_text or not message_text.strip():
@@ -194,6 +209,7 @@ class MentorService:
             message_text=clean_message,
             target_role=target_role,
             student_name=student_name,
+            client_history=conversation_history,
         )
         return {
             "answer": asst_msg.get("content", ""),

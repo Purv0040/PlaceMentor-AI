@@ -26,6 +26,11 @@ export const AIMentorPage = () => {
     planningState
   });
 
+  // Active backend conversation ID for conversational memory
+  const [conversationId, setConversationId] = useState(() => {
+    return localStorage.getItem('placementMentorActiveConvId') || null;
+  });
+
   // Load chat history from localStorage or fallback to initial contextual greeting
   const [messages, setMessages] = useState(() => {
     const saved = mentorService.getStoredChat();
@@ -60,10 +65,22 @@ export const AIMentorPage = () => {
     setIsLoading(true);
 
     try {
+      const historyPayload = messages.slice(-6).map((m) => ({
+        role: m.role || (m.sender === 'user' ? 'user' : 'assistant'),
+        content: m.text || m.content || ''
+      }));
+
       const response = await mentorService.generateMentorResponse(
         queryText,
-        mentorContext
+        mentorContext,
+        conversationId,
+        historyPayload
       );
+
+      if (response.conversation_id && response.conversation_id !== conversationId) {
+        setConversationId(response.conversation_id);
+        localStorage.setItem('placementMentorActiveConvId', response.conversation_id);
+      }
 
       const assistantMessage = {
         id: `ai-${Date.now()}`,
@@ -96,6 +113,8 @@ export const AIMentorPage = () => {
   const handleClearChat = () => {
     if (window.confirm("Are you sure you want to clear the conversation history?")) {
       mentorService.clearChat();
+      localStorage.removeItem('placementMentorActiveConvId');
+      setConversationId(null);
       const resetGreeting = mentorService.getInitialGreeting(mentorContext);
       setMessages(resetGreeting);
     }

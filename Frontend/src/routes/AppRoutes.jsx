@@ -28,7 +28,6 @@ import { DashboardPage } from '../pages/app/DashboardPage';
 import { ResumePage } from '../pages/app/ResumePage';
 import { GithubPage } from '../pages/app/GithubPage';
 import { LeetcodePage } from '../pages/app/LeetcodePage';
-import { CommunicationPage } from '../pages/app/CommunicationPage';
 import { MockInterviewPage } from '../pages/app/MockInterviewPage';
 import { AIMentorPage } from '../pages/app/AIMentorPage';
 import { PlacementReadinessPage } from '../pages/app/PlacementReadinessPage';
@@ -74,7 +73,7 @@ export const AppRoutes = () => {
           <Route path="/resume" element={<ResumePage />} />
           <Route path="/github" element={<GithubPage />} />
           <Route path="/leetcode" element={<LeetcodePage />} />
-          <Route path="/communication" element={<CommunicationPage />} />
+          <Route path="/communication" element={<Navigate to="/dashboard" replace />} />
           <Route path="/interviews" element={<MockInterviewPage />} />
           <Route path="/mock-interview" element={<MockInterviewPage />} />
           <Route path="/placement-readiness" element={<PlacementReadinessPage />} />

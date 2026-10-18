@@ -65,6 +65,7 @@ class MentorAskSchema(BaseModel):
     conversation_id: Optional[str] = Field(default=None, example="conv_user_123_1791481...", description="Optional existing conversation ID")
     target_role: Optional[str] = Field(default=None, example="AWS / DevOps & Cloud Engineer", description="Target role from client session")
     student_name: Optional[str] = Field(default=None, example="digisha savaliya", description="Student name from client session")
+    conversation_history: Optional[List[Dict[str, Any]]] = Field(default=None, description="Optional previous conversation turns for context")
 
     @field_validator("message")
     @classmethod

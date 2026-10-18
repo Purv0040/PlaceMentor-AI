@@ -367,6 +367,15 @@ class EndToEndPipelineOrchestrator:
 
         # Step 11: Ask AI mentor
         logger.info("Step 11/11: Interrogating AI Mentor ('What should I focus on today?')...")
+        all_roadmap_tasks = []
+        if roadmap and hasattr(roadmap, "phases"):
+            for phase in roadmap.phases:
+                for task in phase.tasks:
+                    all_roadmap_tasks.append(task.model_dump() if hasattr(task, "model_dump") else task)
+
+        simulated_set = set(simulated_completed_tasks or [])
+        pending_list = [t for t in all_roadmap_tasks if (t.get("id") or t.get("task_id")) not in simulated_set]
+
         student_context = StudentContext(
             target_role=target_role,
             profile=unified_profile.model_dump(),
@@ -377,7 +386,15 @@ class EndToEndPipelineOrchestrator:
             readiness=readiness.model_dump(),
             roadmap=roadmap.model_dump(),
             today_tasks=today_tasks.model_dump(),
-            progress={"completed_tasks": simulated_completed_tasks, "completion_rate": 100.0}
+            all_pending_tasks={
+                "total_pending": len(pending_list),
+                "tasks": pending_list
+            },
+            progress={
+                "completed_tasks": len(simulated_completed_tasks),
+                "completed_tasks_list": simulated_completed_tasks,
+                "completion_rate": 100.0 if simulated_completed_tasks else 0.0
+            }
         )
 
         mentor_req = MentorChatRequest(

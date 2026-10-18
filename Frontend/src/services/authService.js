@@ -434,6 +434,18 @@ export const authService = {
     return { success: true };
   },
 
+  getAccessToken: () => {
+    const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token || token.startsWith('mock_')) return null;
+    return token;
+  },
+
+  getToken: () => {
+    const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token || token.startsWith('mock_')) return null;
+    return token;
+  },
+
   getCurrentUser: () => {
     const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
     const userJson = localStorage.getItem(USER_KEY);

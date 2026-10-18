@@ -148,9 +148,10 @@ export const UserProvider = ({ children }) => {
       // Build structured payload for backend profile update
       const structuredPayload = {
         personal: {
-          name: updated.name || '',
+          name: updated.name || updated.full_name || 'Student Candidate',
           college: updated.college || '',
           degree: updated.degree || '',
+          branch: updated.branch || 'Computer Science / IT',
           graduationYear: String(updated.graduationYear || '2026'),
           email: updated.email || undefined
         },
@@ -187,7 +188,10 @@ export const UserProvider = ({ children }) => {
         overallReadinessScore: updated.overallReadinessScore || undefined
       };
 
-      profileService.updateProfileInApi(structuredPayload).catch(() => {});
+      const token = typeof authService.getAccessToken === 'function' ? authService.getAccessToken() : (authService.isAuthenticated?.() || null);
+      if (token) {
+        profileService.updateProfileInApi(structuredPayload).catch(() => {});
+      }
       return updated;
     });
   };

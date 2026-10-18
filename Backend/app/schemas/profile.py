@@ -11,26 +11,23 @@ from app.core.roles import ALLOWED_TARGET_ROLES
 # ============================================================
 
 class PersonalInfoSchema(BaseModel):
-    name: str = Field(
-        ...,
-        min_length=1,
+    name: Optional[str] = Field(
+        default="Student Candidate",
         description="Student full name",
     )
 
-    college: str = Field(
-        ...,
-        min_length=1,
+    college: Optional[str] = Field(
+        default="",
         description="College / University name",
     )
 
-    degree: str = Field(
-        ...,
-        min_length=1,
+    degree: Optional[str] = Field(
+        default="",
         description="Degree & Branch",
     )
 
-    graduationYear: str = Field(
-        ...,
+    graduationYear: Optional[str] = Field(
+        default="2026",
         description="Graduation year, e.g. 2027",
     )
 
@@ -53,30 +50,29 @@ class PersonalInfoSchema(BaseModel):
     @classmethod
     def strip_whitespace(cls, v):
         if isinstance(v, str):
-            v = v.strip()
+            return v.strip()
+        return v or ""
 
-            if not v:
-                raise ValueError(
-                    "Field cannot be empty string."
-                )
-
-        return v
-
-    @field_validator("graduationYear")
+    @field_validator("graduationYear", mode="before")
     @classmethod
     def validate_graduation_year(cls, v):
+        if v is None:
+            return "2026"
+        if isinstance(v, int):
+            v = str(v)
         if isinstance(v, str):
             v = v.strip()
-
+            if not v:
+                return "2026"
             if v.isdigit():
                 year = int(v)
-
                 if year < 2020 or year > 2035:
                     raise ValueError(
                         "Graduation year must be between 2020 and 2035."
                     )
-
-        return v
+                return str(year)
+            raise ValueError("Graduation year must be a valid year.")
+        return "2026"
 
 
 # ============================================================
@@ -103,23 +99,15 @@ class CareerInfoSchema(BaseModel):
     preferred_domain: Optional[str] = None
     preferred_work_mode: Optional[str] = None
 
-    @field_validator("targetRole")
+    @field_validator("targetRole", mode="before")
     @classmethod
     def validate_target_role(cls, v):
         if isinstance(v, str):
             v = v.strip()
-
             if not v:
-                raise ValueError(
-                    "Target role cannot be empty."
-                )
-
-            # Allowed roles are validated when present.
-            # Custom non-empty roles are also accepted.
-            if v not in ALLOWED_TARGET_ROLES:
-                return v
-
-        return v
+                return "Full Stack Engineer"
+            return v
+        return v or "Full Stack Engineer"
 
 
 # ============================================================
@@ -210,6 +198,7 @@ class PreferencesInfoSchema(BaseModel):
 
     preferred_language: str = "English"
 
+<<<<<<< HEAD
     @field_validator("studyDurationDays")
     @classmethod
     def validate_study_duration(cls, v):
@@ -224,20 +213,26 @@ class PreferencesInfoSchema(BaseModel):
         return v
 
     @field_validator("dailyGoalMinutes")
+=======
+    @field_validator("dailyGoalMinutes", mode="before")
+>>>>>>> 43b07ddd632a814987d6db1c57622e9835d6bc89
     @classmethod
     def validate_daily_minutes(cls, v):
+        if v is None:
+            return "90"
+        if isinstance(v, (int, float)):
+            return str(int(v))
         if isinstance(v, str):
             v = v.strip()
-
+            if not v:
+                return "90"
             if v.isdigit():
                 minutes = int(v)
-
-                if minutes < 0 or minutes > 1440:
-                    raise ValueError(
-                        "Daily goal minutes must be between 0 and 1440."
-                    )
-
-        return v
+                if 0 <= minutes <= 1440:
+                    return str(minutes)
+                return "90"
+            return v
+        return "90"
 
 
 # ============================================================
@@ -245,11 +240,11 @@ class PreferencesInfoSchema(BaseModel):
 # ============================================================
 
 class GoalsInfoSchema(BaseModel):
-    targetDrive: str = (
+    targetDrive: Optional[str] = (
         "August 2026 (Campus Phase 1)"
     )
 
-    targetCtc: str = (
+    targetCtc: Optional[str] = (
         "14 - 24 LPA (Product Tier)"
     )
 

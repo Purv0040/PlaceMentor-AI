@@ -276,3 +276,331 @@ def test_ai_failure_fallback_mentor(client: TestClient, auth_headers: dict):
         assert "answer" in ask_data
         assert len(ask_data["answer"]) > 0
         assert ask_data["intent"] in ["github", "projects", "general_placement"]
+
+
+# ===========================================================================
+# Unit & Integration Tests for AI Mentor Intent Handling & Technical Responses
+# ===========================================================================
+
+def test_mentor_engine_python_error_missing_code():
+    """Verify that vague Python error query asks user to provide code and error traceback."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "My Python code is giving an error",
+        "student_context": {"target_role": "Backend Developer"},
+    })
+    assert res["intent"] == "python_error_missing"
+    assert "share your python code" in res["answer"].lower()
+    assert "traceback" in res["answer"].lower()
+
+
+def test_mentor_engine_python_error_diagnosis():
+    """Verify that specific Python error with traceback diagnoses root cause and provides defensive fix."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Why do I get TypeError: 'NoneType' object is not subscriptable in Python?",
+        "student_context": {"target_role": "Backend Developer"},
+    })
+    assert res["intent"] == "python_error"
+    assert "TypeError: 'NoneType' object is not subscriptable" in res["answer"]
+    assert "Root Cause" in res["answer"]
+    assert "```python" in res["answer"]
+
+
+def test_mentor_engine_oop_four_pillars():
+    """Verify that OOP query returns concise explanation of the 4 pillars and code."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Explain OOP concepts and the 4 pillars",
+        "student_context": {"target_role": "Software Engineer"},
+    })
+    assert res["intent"] == "oop"
+    ans = res["answer"]
+    assert "Encapsulation" in ans
+    assert "Abstraction" in ans
+    assert "Inheritance" in ans
+    assert "Polymorphism" in ans
+    assert "```python" in ans
+
+
+def test_mentor_engine_leetcode_missing_problem():
+    """Verify that vague LeetCode query asks user for problem name or number."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Help me solve this LeetCode problem",
+        "student_context": {"target_role": "Software Engineer"},
+    })
+    assert res["intent"] == "leetcode_missing"
+    assert "Which LeetCode problem are you working on?" in res["answer"]
+
+
+def test_mentor_engine_leetcode_two_sum():
+    """Verify that LeetCode Two Sum query returns optimal O(N) hash map solution."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "How do I solve LeetCode 1 Two Sum?",
+        "student_context": {"target_role": "Software Engineer"},
+    })
+    assert res["intent"] == "leetcode"
+    ans = res["answer"]
+    assert "Two Sum" in ans
+    assert "Hash Map" in ans or "complement" in ans
+    assert "O(N)" in ans
+    assert "def twoSum" in ans
+
+
+def test_mentor_engine_followup_conversation_history():
+    """Verify that follow-up asking for code example uses conversation history."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    history = [
+        {"role": "user", "content": "What is encapsulation in OOP?"},
+        {"role": "assistant", "content": "Encapsulation bundles data and methods and hides internal state with private attributes."},
+    ]
+    res = engine.chat({
+        "message": "Can you give me a code example in Python?",
+        "student_context": {"target_role": "Software Engineer"},
+        "conversation_history": history,
+    })
+    assert res["intent"] == "followup_code"
+    ans = res["answer"]
+    assert "BankAccount" in ans or "balance" in ans.lower()
+    assert "```python" in ans
+
+
+def test_mentor_engine_roadmap_task_progress_real_data():
+    """Verify real application data is used for remaining days and pending count without hallucination."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    context = {
+        "target_role": "Cloud / DevOps Engineer",
+        "roadmap": {
+            "current_day": 7,
+            "total_days": 90,
+            "remaining_days": 83,
+            "total_tasks_count": 180,
+        },
+        "all_pending_tasks": {
+            "total_pending": 84,
+            "tasks": [{"title": "Docker Multi-stage Builds", "day": 7, "category": "DevOps", "estimated_minutes": 45}],
+        },
+        "today_tasks": {
+            "pending_tasks": [{"title": "Docker Multi-stage Builds", "day": 7, "category": "DevOps", "estimated_minutes": 45}],
+            "completed_tasks": [],
+        },
+        "progress": {"completed_tasks": 96},
+    }
+
+    # Remaining days query
+    res_days = engine.chat({
+        "message": "How many days are remaining?",
+        "student_context": context,
+    })
+    assert res_days["intent"] == "remaining_days"
+    assert "83 days remaining" in res_days["answer"]
+    assert "Day 7" in res_days["answer"]
+    assert "90-day" in res_days["answer"]
+
+    # Why 84 tasks pending query
+    res_why = engine.chat({
+        "message": "Why are 84 tasks pending?",
+        "student_context": context,
+    })
+    assert res_why["intent"] == "why_pending"
+    assert "84" in res_why["answer"]
+    assert "180" in res_why["answer"]
+    assert "96" in res_why["answer"]
+
+
+def test_mentor_engine_coding_binary_search():
+    """Verify coding question for binary search returns time complexity and code."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Explain binary search and implement it in Python",
+        "student_context": {"target_role": "Software Engineer"},
+    })
+    assert res["intent"] in ["coding", "leetcode"]
+    ans = res["answer"]
+    assert "Binary Search" in ans
+    assert "O(\\log N)" in ans or "O(log N)" in ans
+    assert "def binary_search" in ans
+
+
+# ===========================================================================
+# Backend Engine Regression Tests (8 Required Problem Archetypes)
+# ===========================================================================
+
+def test_mentor_engine_regression_ask_5_python_interview_questions():
+    """Regression Test 1: Ask me 5 Python interview questions returns 5 questions with interactive prompt."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Ask me 5 Python interview questions",
+        "student_context": {"target_role": "Data Engineer", "roadmap": {"total_days": 60}},
+    })
+    assert res["intent"] in ["interview_questions", "interview_practice"]
+    ans = res["answer"]
+    assert "5 Python" in ans
+    assert "Mutability" in ans or "GIL" in ans or "Generators" in ans
+    assert "Interactive Practice" in ans
+
+
+def test_mentor_engine_regression_what_about_day_13():
+    """Regression Test 2: What about Day 13? retrieves scheduled tasks for Day 13 dynamically from context."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "What about Day 13?",
+        "student_context": {
+            "target_role": "Full Stack Engineer",
+            "roadmap": {"current_day": 10, "total_days": 60},
+            "tasks_by_day": {
+                "13": [
+                    {
+                        "title": "PostgreSQL Query Optimization & Indexing",
+                        "category": "Databases",
+                        "estimated_minutes": 90,
+                        "difficulty": "Hard",
+                        "status": "pending"
+                    }
+                ]
+            }
+        },
+    })
+    assert res["intent"] == "day_specific"
+    ans = res["answer"]
+    assert "Day 13" in ans
+    assert "PostgreSQL Query Optimization & Indexing" in ans
+    assert "Databases" in ans
+
+
+def test_mentor_engine_regression_what_should_i_learn_next():
+    """Regression Test 3: What should I learn next? dynamically recommends the next appropriate incomplete task."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "What should I learn next?",
+        "student_context": {
+            "target_role": "Site Reliability Engineer",
+            "roadmap": {"current_day": 5, "total_days": 45},
+            "next_recommended_task": {
+                "title": "Prometheus & Grafana Alerting Setup",
+                "day": 5,
+                "category": "Monitoring",
+                "difficulty": "Medium",
+                "estimated_minutes": 60
+            }
+        },
+    })
+    assert res["intent"] == "learn_next"
+    ans = res["answer"]
+    assert "Prometheus & Grafana Alerting Setup" in ans
+    assert "Day 5" in ans
+    assert "Monitoring" in ans
+
+
+def test_mentor_engine_regression_what_is_my_target_role():
+    """Regression Test 4: What is my target role? returns actual saved role without hardcoding."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "What is my target role?",
+        "student_context": {
+            "target_role": "AI / Machine Learning Engineer",
+            "roadmap": {"total_days": 120, "start_date": "2026-09-01"},
+            "profile": {"skills": ["PyTorch", "Transformers", "CUDA"]}
+        },
+    })
+    assert res["intent"] == "target_role"
+    ans = res["answer"]
+    assert "AI / Machine Learning Engineer" in ans
+    assert "120-day" in ans
+    assert "PyTorch" in ans
+    assert "AWS / DevOps" not in ans
+
+
+def test_mentor_engine_regression_which_tasks_are_overdue():
+    """Regression Test 5: Which tasks are overdue? finds and reports incomplete tasks past due date."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Which tasks are overdue?",
+        "student_context": {
+            "target_role": "Backend Developer",
+            "roadmap": {"current_day": 12, "total_days": 60},
+            "overdue_tasks": {
+                "total_overdue": 2,
+                "tasks": [
+                    {"title": "Redis Pub/Sub Setup", "day": 8, "category": "Backend", "estimated_minutes": 45},
+                    {"title": "Celery Distributed Workers", "day": 10, "category": "Backend", "estimated_minutes": 60}
+                ]
+            }
+        },
+    })
+    assert res["intent"] == "overdue_tasks"
+    ans = res["answer"]
+    assert "2" in ans
+    assert "overdue" in ans.lower()
+    assert "Redis Pub/Sub Setup" in ans
+    assert "Celery Distributed Workers" in ans
+
+
+def test_mentor_engine_regression_explain_numpy_broadcasting():
+    """Regression Test 6: Explain NumPy broadcasting provides compatibility rules, code example, and memory model."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Explain NumPy broadcasting",
+        "student_context": {"target_role": "Data Scientist"},
+    })
+    assert res["intent"] == "numpy"
+    ans = res["answer"]
+    assert "NumPy Broadcasting" in ans
+    assert "Broadcasting Rules" in ans or "Dimension Compatibility" in ans
+    assert "Trailing dimensions" in ans or "dimensions are compatible" in ans or "Rule 1" in ans
+    assert "```python" in ans
+    assert "np.array" in ans
+
+
+def test_mentor_engine_regression_explain_oop_concepts_for_interviews():
+    """Regression Test 7: Explain OOP concepts for interviews provides 4 pillars, top interview questions, and payment gateway code."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Explain OOP concepts for interviews",
+        "student_context": {"target_role": "Backend Engineer"},
+    })
+    assert res["intent"] == "oop_interview"
+    ans = res["answer"]
+    assert "OOP Concepts for Technical Interviews" in ans
+    assert "Encapsulation" in ans
+    assert "Abstraction" in ans
+    assert "Inheritance" in ans
+    assert "Polymorphism" in ans
+    assert "Composition vs" in ans or "Abstract Class" in ans
+    assert "PaymentGateway" in ans or "abstractmethod" in ans
+    assert "```python" in ans
+
+
+def test_mentor_engine_regression_explain_binary_search_step_by_step():
+    """Regression Test 8: Explain binary search step by step provides walkthrough, formula, trace example, and Python code."""
+    from app.engines.mentor_engine import AIMentorEngine
+    engine = AIMentorEngine()
+    res = engine.chat({
+        "message": "Explain binary search step by step",
+        "student_context": {"target_role": "Software Development Engineer"},
+    })
+    assert res["intent"] == "binary_search_step"
+    ans = res["answer"]
+    assert "Step-by-Step" in ans
+    assert "mid = low + (high - low) // 2" in ans
+    assert "Step-by-Step Walkthrough" in ans or "Pass 1" in ans
+    assert "def binary_search" in ans
+
+

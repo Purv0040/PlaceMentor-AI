@@ -33,3 +33,26 @@ def test_update_my_profile(client: TestClient, auth_headers: Dict[str, str]) -> 
     data = response.json()
     assert data["success"] is True
     assert data["data"]["personal"]["name"] == "Alex Patel Updated"
+
+
+def test_update_my_profile_empty_fields_regression(client: TestClient, auth_headers: Dict[str, str]) -> None:
+    """Regression test for 422 Unprocessable Content when updating profile with empty strings for college/degree."""
+    partial_payload = {
+        "personal": {
+            "name": "Alex Patel",
+            "college": "",
+            "degree": "",
+            "graduationYear": "2026",
+            "email": "test@example.com"
+        },
+        "career": {
+            "targetRole": "Full Stack Engineer"
+        }
+    }
+    response = client.put("/api/v1/users/me/profile", json=partial_payload, headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert data["data"]["personal"]["name"] == "Alex Patel"
+    assert data["data"]["personal"]["college"] == ""
+
