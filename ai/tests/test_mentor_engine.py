@@ -555,3 +555,108 @@ def test_regression_explain_binary_search_step_by_step():
     assert "def binary_search" in ans
     assert "O(\\log N)" in ans or "O(log N)" in ans
 
+
+# ===========================================================================
+# Robustness & Context Data-Contract Regression Tests
+# ===========================================================================
+
+def test_regression_integer_counts_context():
+    """Verify mentor handles standard integer-count semantics without type errors."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    import json
+    ctx = {
+        "target_role": "Backend Engineer",
+        "roadmap": {"current_day": 5, "total_days": 90, "total_tasks_count": 180},
+        "all_pending_tasks": {
+            "total_pending": 75,
+            "tasks": [{"title": "API Design", "day": 5, "category": "Backend"}]
+        },
+        "progress": {
+            "completed_tasks": 105,
+            "completion_rate": 58.3
+        }
+    }
+    prompt = (
+        f"=== STUDENT CONTEXT ===\n"
+        f"{json.dumps(ctx)}\n\n"
+        f"=== CURRENT QUESTION ===\n"
+        f"STUDENT: How many tasks are incomplete?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert "75" in res["answer"]
+    assert "Total Pending Tasks: 75" in res["evidence"]
+
+
+def test_regression_task_lists_as_counts_context():
+    """Verify mentor handles task collections passed as lists for completed_tasks or total_pending."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    import json
+    ctx = {
+        "target_role": "AI/ML Engineer",
+        "roadmap": {"current_day": 2, "total_days": 60},
+        "all_pending_tasks": {
+            "total_pending": ["task_1", "task_2", "task_3"],
+            "tasks": [{"title": "PyTorch Tensors"}, {"title": "CNNs"}]
+        },
+        "progress": {
+            "completed_tasks": ["task_comp_1", "task_comp_2"],
+            "completion_rate": 40.0
+        }
+    }
+    prompt = (
+        f"=== STUDENT CONTEXT ===\n"
+        f"{json.dumps(ctx)}\n\n"
+        f"=== CURRENT QUESTION ===\n"
+        f"STUDENT: What are my pending tasks?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert "3" in res["answer"]
+
+
+def test_regression_missing_and_null_context():
+    """Verify mentor handles completely missing or explicitly null context objects gracefully."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    import json
+    ctx = {
+        "target_role": "DevOps Engineer",
+        "roadmap": None,
+        "today_tasks": None,
+        "all_pending_tasks": None,
+        "progress": None,
+        "overdue_tasks": None,
+        "yesterday_completed_tasks": None
+    }
+    prompt = (
+        f"=== STUDENT CONTEXT ===\n"
+        f"{json.dumps(ctx)}\n\n"
+        f"=== CURRENT QUESTION ===\n"
+        f"STUDENT: What can I do today?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert isinstance(res["evidence"], list)
+
+
+def test_regression_malformed_context_types():
+    """Verify mentor handles malformed context data types (strings, unexpected types) without raising unhandled TypeErrors."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    import json
+    ctx = {
+        "target_role": "Data Analyst",
+        "roadmap": "invalid_roadmap_string",
+        "all_pending_tasks": "not_a_dict",
+        "progress": "not_a_dict",
+        "today_tasks": 12345,
+        "overdue_tasks": False
+    }
+    prompt = (
+        f"=== STUDENT CONTEXT ===\n"
+        f"{json.dumps(ctx)}\n\n"
+        f"=== CURRENT QUESTION ===\n"
+        f"STUDENT: Why are 84 tasks pending?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert "84" in res["answer"]
+

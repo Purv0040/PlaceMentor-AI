@@ -76,7 +76,7 @@ export const profileService = {
   buildApiPayload: (profile) => {
     return {
       personal: {
-        name: profile.name || '',
+        name: profile.name || profile.full_name || 'Student Candidate',
         college: profile.college || '',
         degree: profile.degree || '',
         branch: profile.branch || 'Computer Science / IT',

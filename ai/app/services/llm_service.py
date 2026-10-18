@@ -149,45 +149,118 @@ def _build_grounded_mentor_response(prompt: str) -> Dict[str, Any]:
         except Exception:
             context = {}
 
-    target_role = context.get("target_role") or context.get("profile", {}).get("target_role") or None
-    name = context.get("student_name") or context.get("profile", {}).get("name") or None
+    target_role = context.get("target_role") or (context.get("profile") or {}).get("target_role") or None
+    name = context.get("student_name") or (context.get("profile") or {}).get("name") or None
 
-    roadmap_obj = context.get("roadmap", {})
+    roadmap_obj = context.get("roadmap") or {}
+    if not isinstance(roadmap_obj, dict):
+        roadmap_obj = {}
     current_day = roadmap_obj.get("current_day") or 1
     total_days = roadmap_obj.get("total_days") or 90
     remaining_days = roadmap_obj.get("remaining_days", max(0, total_days - current_day))
 
-    today_tasks_obj = context.get("today_tasks", {})
-    today_pending_tasks = today_tasks_obj.get("pending_tasks", []) or []
-    today_completed_tasks = today_tasks_obj.get("completed_tasks", []) or []
+    today_tasks_obj = context.get("today_tasks") or {}
+    if isinstance(today_tasks_obj, dict):
+        today_pending_tasks = today_tasks_obj.get("pending_tasks") or []
+        today_completed_tasks = today_tasks_obj.get("completed_tasks") or []
+    elif isinstance(today_tasks_obj, list):
+        today_pending_tasks = today_tasks_obj
+        today_completed_tasks = []
+    else:
+        today_pending_tasks = []
+        today_completed_tasks = []
 
-    yesterday_obj = context.get("yesterday_completed_tasks", {})
-    yesterday_tasks = yesterday_obj.get("tasks", []) or []
+    yesterday_obj = context.get("yesterday_completed_tasks") or {}
+    if isinstance(yesterday_obj, dict):
+        yesterday_tasks = yesterday_obj.get("tasks") or []
+    elif isinstance(yesterday_obj, list):
+        yesterday_tasks = yesterday_obj
+    else:
+        yesterday_tasks = []
 
-    all_pending_obj = context.get("all_pending_tasks", {})
-    all_pending_tasks_list = all_pending_obj.get("tasks", []) or []
-    total_pending_count = all_pending_obj.get("total_pending", len(all_pending_tasks_list))
+    all_pending_obj = context.get("all_pending_tasks") or {}
+    if isinstance(all_pending_obj, dict):
+        all_pending_tasks_list = all_pending_obj.get("tasks") or []
+        raw_total_pending = all_pending_obj.get("total_pending")
+        if isinstance(raw_total_pending, int):
+            total_pending_count = raw_total_pending
+        elif isinstance(raw_total_pending, list):
+            total_pending_count = len(raw_total_pending)
+        elif raw_total_pending is not None:
+            try:
+                total_pending_count = int(raw_total_pending)
+            except (ValueError, TypeError):
+                total_pending_count = len(all_pending_tasks_list)
+        else:
+            total_pending_count = len(all_pending_tasks_list)
+    elif isinstance(all_pending_obj, list):
+        all_pending_tasks_list = all_pending_obj
+        total_pending_count = len(all_pending_obj)
+    elif isinstance(all_pending_obj, int):
+        all_pending_tasks_list = []
+        total_pending_count = all_pending_obj
+    else:
+        all_pending_tasks_list = []
+        total_pending_count = 0
 
-    progress_obj = context.get("progress", {})
-    completed_tasks_count = progress_obj.get("completed_tasks", 0)
-    total_tasks_count = roadmap_obj.get("total_tasks_count") or (total_pending_count + completed_tasks_count)
+    progress_obj = context.get("progress") or {}
+    if isinstance(progress_obj, dict):
+        raw_completed = progress_obj.get("completed_tasks", 0)
+        if isinstance(raw_completed, int):
+            completed_tasks_count = raw_completed
+        elif isinstance(raw_completed, list):
+            completed_tasks_count = len(raw_completed)
+        elif raw_completed is not None:
+            try:
+                completed_tasks_count = int(raw_completed)
+            except (ValueError, TypeError):
+                completed_tasks_count = 0
+        else:
+            completed_tasks_count = 0
+    elif isinstance(progress_obj, list):
+        completed_tasks_count = len(progress_obj)
+    elif isinstance(progress_obj, int):
+        completed_tasks_count = progress_obj
+    else:
+        completed_tasks_count = 0
 
-    tasks_by_day = context.get("tasks_by_day", {})
+    raw_total_tasks = roadmap_obj.get("total_tasks_count")
+    if isinstance(raw_total_tasks, int) and raw_total_tasks > 0:
+        total_tasks_count = raw_total_tasks
+    else:
+        total_tasks_count = total_pending_count + completed_tasks_count
 
-    skill_gaps_obj = context.get("skill_gaps", {})
-    top_gaps = skill_gaps_obj.get("top_gaps", []) or []
+    tasks_by_day = context.get("tasks_by_day") or {}
+    if not isinstance(tasks_by_day, dict):
+        tasks_by_day = {}
 
-    readiness_obj = context.get("readiness", {})
-    readiness_score = readiness_obj.get("overall_score")
-    readiness_label = readiness_obj.get("readiness_label")
+    skill_gaps_obj = context.get("skill_gaps") or {}
+    top_gaps = (skill_gaps_obj.get("top_gaps") if isinstance(skill_gaps_obj, dict) else []) or []
 
-    leetcode_obj = context.get("leetcode_analysis", {})
-    weak_topics = context.get("leetcode_weak_topics", []) or leetcode_obj.get("weak_topics", []) or []
+    readiness_obj = context.get("readiness") or {}
+    readiness_score = readiness_obj.get("overall_score") if isinstance(readiness_obj, dict) else None
+    readiness_label = readiness_obj.get("readiness_label") if isinstance(readiness_obj, dict) else None
+
+    leetcode_obj = context.get("leetcode_analysis") or {}
+    weak_topics = context.get("leetcode_weak_topics", []) or (leetcode_obj.get("weak_topics", []) if isinstance(leetcode_obj, dict) else []) or []
 
     start_date = roadmap_obj.get("start_date")
-    overdue_obj = context.get("overdue_tasks", {})
-    overdue_tasks_list = overdue_obj.get("tasks", []) or []
-    overdue_count = overdue_obj.get("total_overdue", len(overdue_tasks_list))
+    overdue_obj = context.get("overdue_tasks") or {}
+    if isinstance(overdue_obj, dict):
+        overdue_tasks_list = overdue_obj.get("tasks") or []
+        raw_overdue_count = overdue_obj.get("total_overdue")
+        if isinstance(raw_overdue_count, int):
+            overdue_count = raw_overdue_count
+        elif isinstance(raw_overdue_count, list):
+            overdue_count = len(raw_overdue_count)
+        else:
+            overdue_count = len(overdue_tasks_list)
+    elif isinstance(overdue_obj, list):
+        overdue_tasks_list = overdue_obj
+        overdue_count = len(overdue_obj)
+    else:
+        overdue_tasks_list = []
+        overdue_count = 0
     next_task_obj = context.get("next_recommended_task")
 
     query = student_msg.lower().strip()
