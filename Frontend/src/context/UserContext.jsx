@@ -188,7 +188,8 @@ export const UserProvider = ({ children }) => {
         overallReadinessScore: updated.overallReadinessScore || undefined
       };
 
-      if (authService.getAccessToken()) {
+      const token = typeof authService.getAccessToken === 'function' ? authService.getAccessToken() : (authService.isAuthenticated?.() || null);
+      if (token) {
         profileService.updateProfileInApi(structuredPayload).catch(() => {});
       }
       return updated;

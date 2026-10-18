@@ -310,7 +310,6 @@ export const aiService = {
           responseText = `For HR and behavioral rounds, always structure your responses using the **STAR Method**:\n\n- **S — Situation**: Set the engineering context in 1-2 sentences. What was the critical deadline, architecture constraint, or team challenge?\n- **T — Task**: Clearly articulate your direct responsibility. Avoid "we"—say *"I was responsible for optimizing the query latency."*\n- **A — Action**: Describe the specific engineering decision you executed. What tools, profiling benchmarks, or collaboration strategies did you apply?\n- **R — Result**: Quantify the outcome (e.g. *"-38% p99 latency drop, zero downtime migration, or project delivered 4 days ahead of campus drive deadline"*).\n\nWould you like to simulate a common question like *"Tell me about a time you had a technical disagreement with a team member"*?`;
 
           actions = [
-            { label: "Communication Lab", route: "/communication" },
             { label: "Mock Interview", route: "/mock-interview" }
           ];
         }
@@ -328,7 +327,7 @@ export const aiService = {
           responseText = `Your verbal communication diagnostic score is **${mentorContext?.communication?.clarityScore || 82}%**.\n\n- ⏱️ **Speaking Pace**: **${mentorContext?.communication?.wpm || 145} WPM** (Optimal 130-160 WPM interview cadence)\n- 💡 **Tip**: When explaining architectural trade-offs, pause 1-2 seconds after stating scale throughput numbers for clarity.`;
 
           actions = [
-            { label: "Practice Communication", route: "/communication" }
+            { label: "Practice Behavioral Interview", route: "/mock-interview" }
           ];
         }
         // 11. General Mentor Fallback (Answers according to user query, avoiding capability dumping)

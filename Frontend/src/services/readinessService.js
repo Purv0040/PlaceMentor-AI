@@ -24,7 +24,7 @@ export function transformBackendReadiness(backendData) {
     { key: "Projects", altKey: "projects", name: "Project Architecture", target: 80, defaultWeight: "20%", route: "/github" },
     { key: "GitHub", altKey: "github", name: "GitHub Impact & Code", target: 80, defaultWeight: "10%", route: "/github" },
     { key: "CS Fundamentals", altKey: "cs_fundamentals", name: "CS Fundamentals", target: 75, defaultWeight: "15%", route: "/tasks" },
-    { key: "Communication", altKey: "communication", name: "Communication Skills", target: 75, defaultWeight: "10%", route: "/communication" },
+    { key: "Communication", altKey: "communication", name: "Communication Skills", target: 75, defaultWeight: "10%", route: "/interviews" },
     { key: "Interview", altKey: "interview", name: "Mock Technical Interview", target: 75, defaultWeight: "10%", route: "/interviews" },
   ];
 
@@ -127,7 +127,7 @@ export function transformBackendReadiness(backendData) {
       actionRoute = "/github";
     } else if (lower.includes("communication") || lower.includes("speaking") || lower.includes("star")) {
       recCategory = "COMMUNICATION";
-      actionRoute = "/communication";
+      actionRoute = "/interviews";
     } else if (lower.includes("mock") || lower.includes("interview")) {
       recCategory = "INTERVIEWS";
       actionRoute = "/interviews";
