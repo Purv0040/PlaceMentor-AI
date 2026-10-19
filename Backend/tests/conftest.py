@@ -167,6 +167,18 @@ class AsyncMockCollection:
 
         return DeleteResult()
 
+    async def delete_many(self, filter_dict: Dict[str, Any]):
+        to_del = [doc_id for doc_id, doc in self.docs.items() if self._matches_filter(doc, filter_dict)]
+        for doc_id in to_del:
+            if doc_id in self.docs:
+                del self.docs[doc_id]
+
+        class DeleteResult:
+            deleted_count = len(to_del)
+
+        return DeleteResult()
+
+
     def find(self, filter_dict: Dict[str, Any]):
         matched = []
         for doc in self.docs.values():

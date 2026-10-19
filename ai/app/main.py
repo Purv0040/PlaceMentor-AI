@@ -23,7 +23,7 @@ from app.schemas.daily_task import TodayTasksRequest, TodayTasksResponse
 from app.schemas.adaptive import AdaptiveRoadmapRequest, AdaptiveRoadmapResponse
 from app.schemas.mentor import MentorChatRequest, MentorChatResponse
 from app.schemas.pipeline import PipelineRunRequest, PipelineRunResponse
-from app.services.llm_service import LLMService
+from app.services.llm_service import LLMService, _load_env_safely
 from app.analyzers.resume_analyzer import ResumeAnalyzer
 from app.engines.github_engine import GitHubIntelligence
 from app.engines.leetcode_engine import LeetCodeIntelligence
@@ -48,7 +48,7 @@ from app.services.leetcode_service import (
 )
 
 # Load environment variables
-load_dotenv()
+_load_env_safely()
 
 app = FastAPI(
     title="AI Placement Copilot - AI Service",

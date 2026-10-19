@@ -41,7 +41,19 @@ export const interviewService = {
     return await apiRequest(`/interviews/${interviewId}`);
   },
 
+<<<<<<< HEAD
   getInterviewQuestions: async (interviewId) => {
     return await apiRequest(`/interviews/${interviewId}/questions`);
+=======
+  getSessionQuestions: async (interviewId) => {
+    const res = await apiRequest(`/interviews/${interviewId}/questions`);
+    return Array.isArray(res) ? res : [];
+  },
+
+  deleteInterview: async (interviewId) => {
+    return await apiRequest(`/interviews/${interviewId}`, {
+      method: 'DELETE',
+    });
+>>>>>>> f5f3d0fa4107f7c6729cfe2cb922a1872ad02460
   },
 };

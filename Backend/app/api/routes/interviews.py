@@ -160,3 +160,18 @@ async def complete_interview(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to complete interview: {str(e)}")
+
+
+@router.delete("/{interview_id}", status_code=status.HTTP_200_OK)
+async def delete_interview(
+    interview_id: str,
+    current_user: dict = Depends(get_current_user),
+    service: InterviewService = Depends(get_interview_service),
+):
+    """Delete an interview session and its questions."""
+    user_id = _extract_user_id(current_user)
+    success = await service.delete_interview(interview_id, user_id=user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Interview session not found or already deleted.")
+    return {"status": "success", "message": "Interview session deleted successfully"}
+

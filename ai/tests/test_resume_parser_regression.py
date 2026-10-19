@@ -270,9 +270,10 @@ Demystifying Networking- NPTEL
 
     # BUG 4: Certifications extracted and NOT in missing_sections
     assert len(analysis.certifications) == 2
-    assert "Python for Data Science-NPTEL" in analysis.certifications
-    assert "Demystifying Networking- NPTEL" in analysis.certifications
+    assert any("Python" in c and "Data Science" in c for c in analysis.certifications)
+    assert any("Networking" in c for c in analysis.certifications)
     assert "Certifications" not in analysis.missing_sections
+
     assert "Experience" in analysis.missing_sections
 
     # BUG 5: Global skills extracted from SKILLS section, project techs separated

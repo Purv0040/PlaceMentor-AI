@@ -152,12 +152,16 @@ export const mentorService = {
 
   askMentor: async (message, conversationId = null, targetRole = null, studentName = null, conversationHistory = null) => {
     try {
+      const validBackendId = (conversationId && !conversationId.startsWith('session-') && !conversationId.startsWith('local_'))
+        ? conversationId
+        : null;
+
       return await apiRequest('/mentor/ask', {
         method: 'POST',
         isPublic: true,
         body: JSON.stringify({
           message,
-          conversation_id: conversationId,
+          conversation_id: validBackendId,
           target_role: targetRole,
           student_name: studentName,
           conversation_history: conversationHistory
@@ -255,6 +259,10 @@ export const mentorService = {
   },
 
   generateLocalFallback: (userMessage, mentorContext, persona = 'tech') => {
+<<<<<<< HEAD
+=======
+    const activePersona = persona || mentorContext?.persona || 'tech';
+>>>>>>> f5f3d0fa4107f7c6729cfe2cb922a1872ad02460
     const q = userMessage.toLowerCase().trim();
     const targetRole = mentorContext?.user?.targetRole || null;
     const roleDesc = targetRole ? ` for **${targetRole}**` : '';
@@ -393,6 +401,7 @@ def reverseList(head: ListNode) -> ListNode:
 def binary_search(arr: list[int], target: int) -> int:
     left, right = 0, len(arr) - 1
     
+<<<<<<< HEAD
     while left <= right:
         mid = left + (right - left) // 2  # Prevents integer overflow
         if arr[mid] == target:
@@ -502,6 +511,30 @@ When designing scalable distributed systems in technical rounds:
 
     // 6. Roadmap / Task Specific Queries
     else if (q.includes('do today') || q.includes('can i do') || q.includes('should i do') || q === 'today') {
+=======
+    // Mode/Persona specific prefix logic if appropriate
+    if (activePersona === 'story' && !q.includes('yesterday') && !q.includes('remaining') && !q.includes('tasks')) {
+      text = `**STAR Method Framework for: "${userMessage}"**\n\n- **Situation**: Set the project background and challenge context.\n- **Task**: Specify your direct responsibility and success criteria.\n- **Action**: Explain the concrete technical decisions and leadership steps *you* took.\n- **Result**: Highlight quantifiable impact (e.g. "Reduced API latency by 35% across 50K users").\n\nWould you like me to help draft your exact talking points?`;
+    } else if (activePersona === 'dsa' && (q.includes('dsa') || q.includes('algorithm') || q.includes('leetcode') || q.includes('problem') || q.includes('array') || q.includes('tree') || q.includes('graph'))) {
+      text = `**DSA Pattern Analysis for: "${userMessage}"**\n\n1. **Core Pattern**: Identify whether this maps to Two Pointers, Sliding Window, Monotonic Stack, or Dynamic Programming.\n2. **Optimal Invariant**: Focus on what state changes at each step.\n3. **Target Complexity**: Aim for $O(N)$ or $O(N \\log N)$ time and $O(1)$ auxiliary space.\n\nShare the problem constraints or code snippet and we'll derive the optimal solution together!`;
+    } else if (activePersona === 'strat' && (q.includes('plan') || q.includes('strategy') || q.includes('tier') || q.includes('placement') || q.includes('offer'))) {
+      text = `**Placement Strategy Assessment**:\n\n- **Current Milestone**: Day ${currentDay} of ${totalDays} (${remainingDays} days remaining).\n- **Pending Roadmap Tasks**: ${allPendingTotal} tasks scheduled.\n- **Priority Focus**: Finish today's scheduled preparation tasks and solve 2 medium problems daily to ensure Tier-1 readiness.\n\nKeep high consistency to maximize your shortlisting conversion!`;
+    } else if (q.includes('not working properly') || q.includes('not working') || q.includes('working properly')) {
+      text = "I apologize for the misunderstanding! I'm here to give you accurate information directly from your placement profile and roadmap.\n\nYou can ask me:\n1. 📅 \"What can I do today?\"\n2. ✅ \"What did I complete yesterday?\"\n3. 📋 \"What are my pending tasks?\"\n4. ⏳ \"How many days are remaining?\"\n5. 💡 \"Help me learn DSA\" or \"Practice a technical interview\"\n\nWhat would you like to check?";
+    } else if (q.includes('yesterday')) {
+      text = `According to your records, you did not complete any tasks yesterday.\n\nYou can dive into today's tasks (Day ${currentDay} of ${totalDays}) to keep your preparation on track!`;
+    } else if (/\bday\s*(\d+)\b/.test(q)) {
+      const match = q.match(/\bday\s*(\d+)\b/);
+      const targetDay = match ? match[1] : currentDay;
+      text = `Day ${targetDay} is part of your ${totalDays}-day placement roadmap${roleDesc}.\n\nYou are currently on Day ${currentDay} with ${remainingDays} days remaining. Focus on completing today's tasks to advance toward Day ${targetDay}!`;
+    } else if (q.includes('remaining') || q.includes('days left')) {
+      text = `You are currently on **Day ${currentDay}** of your **${totalDays}-day** roadmap${roleDesc}.\n\nThere are **${remainingDays} days remaining** in your placement schedule.\n\n*(Note: You have ${allPendingTotal} pending tasks remaining across the rest of the roadmap).*`;
+    } else if (q.includes('why') && (q.includes('pending') || q.includes('84') || q.includes('tasks'))) {
+      const numMatch = q.match(/\b(\d+)\b/);
+      const numStr = numMatch ? numMatch[1] : String(allPendingTotal);
+      text = `The **${numStr}** pending tasks represent all the incomplete tasks distributed across the remaining **${remainingDays}** days of your **${totalDays}-day** roadmap.\n\nFor today (Day ${currentDay}), you only have **${todayPending.length}** task(s) to focus on!`;
+    } else if (q.includes('do today') || q.includes('can i do') || q.includes('should i do') || q === 'today') {
+>>>>>>> f5f3d0fa4107f7c6729cfe2cb922a1872ad02460
       if (todayPending.length > 0) {
         const listStr = todayPending.map((t, idx) => `${idx + 1}. 📌 **${t.title}** (${t.category}, ${t.duration})`).join('\n');
         text = `Here are your incomplete tasks scheduled for today (Day ${currentDay} of ${totalDays}${roleDesc}):\n\n${listStr}\n\nStart with task #1 to maintain your daily consistency streak!`;
@@ -514,6 +547,7 @@ When designing scalable distributed systems in technical rounds:
     }
     else if (q.includes('pending task') || q.includes('incomplete')) {
       text = `You have **${allPendingTotal}** pending task(s) in total across your ${totalDays}-day roadmap (${todayPending.length} due today on Day ${currentDay}).\n\nFocus on today's tasks first to maintain steady daily progress!`;
+<<<<<<< HEAD
     }
     else if (q.includes('yesterday')) {
       text = `According to your records, you did not complete any tasks yesterday.\n\nYou can dive into today's tasks (Day ${currentDay} of ${totalDays}) to keep your preparation on track!`;
@@ -552,6 +586,31 @@ To tackle this effectively in technical placement rounds:
 
 3. **Recommended Next Actions**:
    - Would you like a **step-by-step code example**, **architectural explanation**, or **interview questions** on this topic?`;
+=======
+    } else if (['hi', 'hello', 'hey'].includes(q) || /^(hi|hello|hey)\b/.test(q)) {
+      const candName = mentorContext?.user?.name;
+      text = candName 
+        ? `Hi ${candName}! How can I help with your coding practice, interview preparation, or placement roadmap today?`
+        : "Hi there! How can I help with your coding practice, interview preparation, or placement roadmap today?";
+    } else if (q.includes('decorator')) {
+      text = "**Python Decorators**:\n\nA decorator is a callable that takes another function as an argument, extends its behavior without modifying it, and returns the modified wrapper function.\n\n```python\nimport functools\n\ndef my_logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f\"Calling {func.__name__} with args: {args}\")\n        return func(*args, **kwargs)\n    return wrapper\n\n@my_logger\ndef add(a: int, b: int) -> int:\n    return a + b\n\n# Usage:\nprint(add(3, 4))  # 7\n```\n\n**Three Facts**:\n1. **First-Class Citizens**: Decorators work because Python functions can be passed as arguments, assigned, and returned.\n2. **Syntactic Sugar**: `@my_logger` is equivalent to `add = my_logger(add)`.\n3. **Metadata Preservation**: Use `@functools.wraps` inside the wrapper so the function keeps its original `__name__` and `__doc__`.";
+    } else if ((q.includes('list') && q.includes('tuple')) || q.includes('list versus tuple') || q.includes('list vs tuple')) {
+      text = "**Python List vs Tuple Comparison**:\n\n1. **Mutability**: Lists (`[]`) are mutable (can add, remove, modify elements). Tuples (`()`) are immutable (cannot be altered after creation).\n2. **Hashability**: Tuples containing hashable items are hashable and can serve as dictionary keys or set members. Lists are unhashable.\n3. **Memory & Performance**: Tuples have a smaller memory footprint and faster read operations because their size is fixed. Lists allocate extra buffer capacity for $O(1)$ amortized appends.\n4. **Use Case**: Use lists for collections that grow or reorder dynamically; use tuples for fixed records, coordinates, or constant configurations.";
+    } else if (q.includes('aws') || (q.includes('cloud') && q.includes('interview'))) {
+      text = "**AWS Technical Interview Preparation**:\n\n1. **Core Compute**: Master EC2 (instance types, security groups), ECS/EKS (container orchestration), and Lambda (serverless patterns, event sources, cold starts).\n2. **Storage & Databases**: S3 (storage tiers, lifecycle rules), RDS (Multi-AZ deployment, read replicas), and DynamoDB (partition keys, sort keys, GSI/LSI).\n3. **Networking & Security**: VPC subnets (public/private), NAT Gateways, IAM (least privilege roles vs users), Route 53, and CloudFront.\n4. **System Architecture**: Be ready to design high-availability systems using the AWS Well-Architected Framework (Reliability, Security, Cost Optimization).";
+    } else if (q.includes('typeerror') || q.includes('nonetype') || q.includes('subscriptable')) {
+      text = "**Fixing `TypeError: 'NoneType' object is not subscriptable`**:\n\n**Root Cause**: Attempting to index or slice an object (`obj[key]` or `obj[index]`) that is `None`.\n\n**Fix**:\n```python\nif data is not None and isinstance(data, dict):\n    print(data.get('key'))\n```";
+    } else if (q.includes('error') && (q.includes('python') || q.includes('code') || q.fix)) {
+      text = "Could you please share your Python code snippet and the exact error message or traceback you are receiving?\n\nOnce you share them, I'll identify the root cause and provide the corrected code!";
+    } else if (q.includes('oop') || q.includes('encapsulation') || q.includes('polymorphism')) {
+      text = "**The 4 Pillars of Object-Oriented Programming (OOP)**:\n\n1. 🔒 **Encapsulation**: Bundling state and methods inside classes and hiding private attributes.\n2. 🎭 **Abstraction**: Exposing clean interfaces while hiding complex internal logic (`abc.ABC`).\n3. 🧬 **Inheritance**: Code reusability through child classes.\n4. 🔄 **Polymorphism**: Unified method signatures with subclass-specific behaviors.";
+    } else if (q.includes('two sum') || (q.includes('leetcode') && q.includes('1'))) {
+      text = "**LeetCode #1: Two Sum**\n\n**Approach**: Single-pass Hash Map storing `seen[target - num] = index`.\n⏱️ **Time**: $O(N)$ | 💾 **Space**: $O(N)\n\n```python\ndef twoSum(nums: list[int], target: int) -> list[int]:\n    seen = {}\n    for i, num in enumerate(nums):\n        if target - num in seen:\n            return [seen[target - num], i]\n        seen[num] = i\n    return []\n```";
+    } else if (q.includes('leetcode')) {
+      text = "Which LeetCode problem are you working on? Please share the problem number, title, or the problem statement, and I'll walk you through the optimal approach and complexity analysis!";
+    } else {
+      text = `Regarding **"${userMessage}"**:\n\nTo excel in this area for technical interviews, focus on core definitions, production-grade implementations, and Time/Space complexity trade-offs.\n\nWould you like a code demonstration, architectural breakdown, or interview-style practice?`;
+>>>>>>> f5f3d0fa4107f7c6729cfe2cb922a1872ad02460
     }
 
     return {
@@ -579,7 +638,12 @@ To tackle this effectively in technical placement rounds:
         }))
       };
     }
-    // Fallback to local AI service synthesizer if backend offline
-    return mentorService.generateLocalFallback(userMessage, mentorContext, persona);
+    // Explicit notification if backend is unreachable
+    return {
+      text: "I couldn't reach the AI mentor server right now. Please check your network connection and backend server status, then try asking again.",
+      verified: false,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      actions: [{ label: "Retry question", route: "/mentor" }]
+    };
   }
 };

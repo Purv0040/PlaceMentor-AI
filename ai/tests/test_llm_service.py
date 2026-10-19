@@ -91,3 +91,22 @@ def test_structured_generation_error_detail_logging():
     assert "Failed to generate valid structured output" in str(exc_info.value)
     assert "ValidationError" in str(exc_info.value)
 
+
+def test_groq_llm_provider_initialization():
+    """Verify GroqLLMProvider initializes ChatGroq with configured model."""
+    from app.services.llm_service import GroqLLMProvider
+    provider = GroqLLMProvider(api_key="gsk_dummy_test_key_for_unit_tests", model="openai/gpt-oss-120b")
+    assert provider.model == "openai/gpt-oss-120b"
+    assert provider.api_key == "gsk_dummy_test_key_for_unit_tests"
+    assert provider._llm is not None
+    assert provider._json_llm is not None
+
+
+def test_groq_llm_service_auto_detection():
+    """Verify LLMService automatically selects GroqLLMProvider when GROQ key or gsk_ is present."""
+    from app.services.llm_service import GroqLLMProvider
+    service = LLMService(api_key="gsk_test_1234567890abcdef")
+    assert isinstance(service.provider, GroqLLMProvider)
+    assert service.provider.api_key == "gsk_test_1234567890abcdef"
+
+
