@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_db, get_current_user, get_optional_current_user
 from app.schemas.mentor import (
     MentorConversationCreateSchema,
     MentorConversationResponseSchema,
@@ -106,12 +106,12 @@ async def archive_conversation(
 @router.post("/ask", response_model=MentorResponseSchema)
 async def ask_mentor(
     payload: MentorAskSchema,
-    current_user: dict = Depends(get_current_user),
+    current_user: Optional[dict] = Depends(get_optional_current_user),
     service: MentorService = Depends(get_mentor_service),
 ):
     """Quick single-query AI Mentor endpoint."""
     try:
-        user_id = _extract_user_id(current_user)
+        user_id = _extract_user_id(current_user) if current_user else "anonymous_student"
         return await service.ask_mentor(
             user_id=user_id,
             message_text=payload.message,

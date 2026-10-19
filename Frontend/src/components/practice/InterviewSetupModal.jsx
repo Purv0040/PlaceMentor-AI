@@ -50,13 +50,19 @@ export const InterviewSetupModal = ({ isOpen, onClose, onStartInterview }) => {
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
               Target Candidate Role
             </label>
-            <input
-              type="text"
+            <select
               value={config.role}
               onChange={(e) => setConfig({ ...config, role: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl bg-[#0b0e17] border border-[#232b3e] text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-              required
-            />
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0b0e17] border border-[#232b3e] text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="Full Stack Engineer">Full Stack Engineer</option>
+              <option value="AI/ML Engineer">AI/ML Engineer</option>
+              <option value="AWS / DevOps & Cloud Engineer">AWS / DevOps & Cloud Engineer</option>
+              <option value="Cybersecurity Analyst & Engineer">Cybersecurity Analyst & Engineer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="Software Engineer">Software Engineer</option>
+              <option value="Data Scientist">Data Scientist</option>
+            </select>
           </div>
 
           <div>

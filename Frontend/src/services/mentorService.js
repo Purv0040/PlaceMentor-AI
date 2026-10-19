@@ -154,6 +154,7 @@ export const mentorService = {
     try {
       return await apiRequest('/mentor/ask', {
         method: 'POST',
+        isPublic: true,
         body: JSON.stringify({
           message,
           conversation_id: conversationId,
@@ -253,7 +254,7 @@ export const mentorService = {
     ];
   },
 
-  generateLocalFallback: (userMessage, mentorContext) => {
+  generateLocalFallback: (userMessage, mentorContext, persona = 'tech') => {
     const q = userMessage.toLowerCase().trim();
     const targetRole = mentorContext?.user?.targetRole || null;
     const roleDesc = targetRole ? ` for **${targetRole}**` : '';
@@ -264,61 +265,300 @@ export const mentorService = {
     const allPendingTotal = mentorContext?.allPendingTasks?.totalPending ?? (mentorContext?.roadmap?.pendingTasksCount || 0);
 
     let text = '';
+    let actions = [
+      { label: 'What can I do today?', route: '/tasks' },
+      { label: 'How many days are remaining?', route: '/roadmap' }
+    ];
+
+    // 1. React & Frontend Questions
+    if (q.includes('react') || q.includes('virtual dom') || q.includes('hook') || q.includes('jsx')) {
+      if (q.includes('why') || q.includes('what is') || q.includes('used for') || q.includes('advantages')) {
+        text = `### ⚛️ What is React.js and Why is it Used?
+
+**React.js** is an open-source, component-based front-end JavaScript library developed by Meta (Facebook) used for building dynamic, high-performance user interfaces and Single Page Applications (SPAs).
+
+---
+
+### 🌟 Key Reasons React is Used:
+
+1. **Virtual DOM (Fast Rendering)**:
+   - React maintains an in-memory representation of the real DOM.
+   - When state changes, React computes the diff (*reconciliation*) and only updates modified nodes in the real browser DOM, maximizing performance.
+
+2. **Component-Based Architecture**:
+   - UI is decomposed into self-contained, reusable blocks (Header, Card, Modal, Button).
+   - Leads to cleaner codebases, easier testing, and fast team collaboration.
+
+3. **Declarative UI**:
+   - You describe *what* the UI should look like for each state, and React handles the DOM mutations efficiently.
+
+4. **Rich Ecosystem & Tooling**:
+   - Hooks (\`useState\`, \`useEffect\`, \`useMemo\`, \`useCallback\`) for state logic without classes.
+   - Next.js (SSR/SSG), React Native (Mobile), Redux Toolkit, and Vite.
+
+---
+
+### 💻 Quick Code Demonstration
+\`\`\`jsx
+import React, { useState } from 'react';
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button 
+      onClick={() => setCount(prev => prev + 1)}
+      className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+    >
+      Clicked {count} times
+    </button>
+  );
+}
+\`\`\`
+
+💡 **Placement Tip**: In frontend interviews, interviewers love asking about **Virtual DOM vs Real DOM**, **Fiber architecture**, and **Rules of Hooks**.`;
+        actions = [
+          { label: 'Explain Virtual DOM vs Real DOM', route: '/interview' },
+          { label: 'What are React Hooks?', route: '/interview' }
+        ];
+      } else {
+        text = `**React.js Mastery for Technical Interviews**:\n\n1. **Core Fundamentals**: Components, JSX, Props vs State, Lifecycle/Hooks.\n2. **Optimization**: \`React.memo\`, \`useMemo\`, \`useCallback\`, code-splitting with \`React.lazy\`.\n3. **State Management**: Context API, Zustand, or Redux Toolkit.\n\nWhich specific React topic or coding pattern would you like to explore?`;
+      }
+    }
+
+    // 2. DSA / Algorithms / LeetCode
+    else if (q.includes('two sum') || (q.includes('leetcode') && q.includes('1'))) {
+      text = `### 🧩 LeetCode #1: Two Sum
+
+**Problem Statement**: Given an array of integers \`nums\` and an integer \`target\`, return indices of the two numbers such that they add up to \`target\`.
+
+---
+
+### 💡 Optimal Approach: Single-Pass Hash Map
+- As we iterate through \`nums\`, calculate the complement: \`complement = target - num\`.
+- Check if \`complement\` already exists in our dictionary:
+  - If yes, return \`[seen[complement], current_index]\`.
+  - Otherwise, insert \`seen[num] = current_index\`.
+
+### 💻 Python Implementation:
+\`\`\`python
+def twoSum(nums: list[int], target: int) -> list[int]:
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+\`\`\`
+
+- ⏱️ **Time Complexity**: $O(N)$ — Single pass through the array.
+- 💾 **Space Complexity**: $O(N)$ — Stores up to $N$ elements in the dictionary.`;
+      actions = [
+        { label: 'Solve LeetCode #20: Valid Parentheses', route: '/leetcode' },
+        { label: 'View Today\'s Tasks', route: '/tasks' }
+      ];
+    }
+    else if (q.includes('reverse') && q.includes('list')) {
+      text = `### 🔗 LeetCode #206: Reverse Linked List
+
+**Approach**: Iterative 3-pointers (\`prev\`, \`curr\`, \`next_node\`).
+
+\`\`\`python
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def reverseList(head: ListNode) -> ListNode:
+    prev = None
+    curr = head
+    while curr:
+        next_node = curr.next  # Save next
+        curr.next = prev       # Reverse pointer
+        prev = curr            # Move prev forward
+        curr = next_node       # Move curr forward
+    return prev
+\`\`\`
+
+- ⏱️ **Time Complexity**: $O(N)$
+- 💾 **Space Complexity**: $O(1)$ in-place reversal`;
+    }
+    else if (q.includes('binary search')) {
+      text = `### 🔍 Binary Search Algorithm
+
+**Prerequisite**: The input array must be **sorted**.
+
+\`\`\`python
+def binary_search(arr: list[int], target: int) -> int:
+    left, right = 0, len(arr) - 1
     
-    // Mode/Persona specific prefix logic if appropriate
-    if (persona === 'story' && !q.includes('yesterday') && !q.includes('remaining') && !q.includes('tasks')) {
-      text = `**STAR Method Framework for: "${userMessage}"**\n\n- **Situation**: Set the project background and challenge context.\n- **Task**: Specify your direct responsibility and success criteria.\n- **Action**: Explain the concrete technical decisions and leadership steps *you* took.\n- **Result**: Highlight quantifiable impact (e.g. "Reduced API latency by 35% across 50K users").\n\nWould you like me to help draft your exact talking points?`;
-    } else if (persona === 'dsa' && (q.includes('dsa') || q.includes('algorithm') || q.includes('leetcode') || q.includes('problem') || q.includes('array') || q.includes('tree') || q.includes('graph'))) {
-      text = `**DSA Pattern Analysis for: "${userMessage}"**\n\n1. **Core Pattern**: Identify whether this maps to Two Pointers, Sliding Window, Monotonic Stack, or Dynamic Programming.\n2. **Optimal Invariant**: Focus on what state changes at each step.\n3. **Target Complexity**: Aim for $O(N)$ or $O(N \\log N)$ time and $O(1)$ auxiliary space.\n\nShare the problem constraints or code snippet and we'll derive the optimal solution together!`;
-    } else if (persona === 'strat' && (q.includes('plan') || q.includes('strategy') || q.includes('tier') || q.includes('placement') || q.includes('offer'))) {
-      text = `**Placement Strategy Assessment**:\n\n- **Current Milestone**: Day ${currentDay} of ${totalDays} (${remainingDays} days remaining).\n- **Pending Roadmap Tasks**: ${allPendingTotal} tasks scheduled.\n- **Priority Focus**: Finish today's scheduled preparation tasks and solve 2 medium problems daily to ensure Tier-1 readiness.\n\nKeep high consistency to maximize your shortlisting conversion!`;
-    } else if (q.includes('not working properly') || q.includes('not working') || q.includes('working properly')) {
-      text = "I apologize for the misunderstanding! I'm here to give you accurate information directly from your placement profile and roadmap.\n\nYou can ask me:\n1. 📅 \"What can I do today?\"\n2. ✅ \"What did I complete yesterday?\"\n3. 📋 \"What are my pending tasks?\"\n4. ⏳ \"How many days are remaining?\"\n5. 💡 \"Help me learn DSA\" or \"Practice a technical interview\"\n\nWhat would you like to check?";
-    } else if (q.includes('yesterday')) {
-      text = `According to your records, you did not complete any tasks yesterday.\n\nYou can dive into today's tasks (Day ${currentDay} of ${totalDays}) to keep your preparation on track!`;
-    } else if (/\bday\s*(\d+)\b/.test(q)) {
-      const match = q.match(/\bday\s*(\d+)\b/);
-      const targetDay = match ? match[1] : currentDay;
-      text = `Day ${targetDay} is part of your ${totalDays}-day placement roadmap${roleDesc}.\n\nYou are currently on Day ${currentDay} with ${remainingDays} days remaining. Focus on completing today's tasks to advance toward Day ${targetDay}!`;
-    } else if (q.includes('remaining') || q.includes('days left')) {
-      text = `You are currently on **Day ${currentDay}** of your **${totalDays}-day** roadmap${roleDesc}.\n\nThere are **${remainingDays} days remaining** in your placement schedule.\n\n*(Note: You have ${allPendingTotal} pending tasks remaining across the rest of the roadmap).*`;
-    } else if (q.includes('why') && (q.includes('pending') || q.includes('84') || q.includes('tasks'))) {
-      const numMatch = q.match(/\b(\d+)\b/);
-      const numStr = numMatch ? numMatch[1] : String(allPendingTotal);
-      text = `The **${numStr}** pending tasks represent all the incomplete tasks distributed across the remaining **${remainingDays}** days of your **${totalDays}-day** roadmap.\n\nFor today (Day ${currentDay}), you only have **${todayPending.length}** task(s) to focus on!`;
-    } else if (q.includes('do today') || q.includes('can i do') || q.includes('should i do') || q === 'today') {
+    while left <= right:
+        mid = left + (right - left) // 2  # Prevents integer overflow
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+            
+    return -1
+\`\`\`
+
+- ⏱️ **Time Complexity**: $O(\\log N)$
+- 💾 **Space Complexity**: $O(1)$`;
+    }
+    else if (q.includes('kahn') || q.includes('topological')) {
+      text = `### 🧭 Kahn's Algorithm (Topological Sort via BFS)
+
+Used for Directed Acyclic Graphs (DAGs) to find a linear ordering of vertices such that for every directed edge $u \\to v$, $u$ comes before $v$.
+
+1. **Calculate In-degrees**: Count incoming edges for every vertex.
+2. **Initialize Queue**: Enqueue all nodes with \`in_degree == 0\`.
+3. **BFS Traversal**: Pop vertex $u$, add to topological order, decrement in-degree of its neighbors $v$.
+4. If neighbor's in-degree drops to 0, enqueue it.
+5. **Cycle Detection**: If processed count < total vertices $V$, graph contains a cycle!
+
+- ⏱️ **Time**: $O(V + E)$ | 💾 **Space**: $O(V)$`;
+    }
+
+    // 3. OOP Concepts
+    else if (q.includes('oop') || q.includes('object oriented') || q.includes('encapsulation') || q.includes('polymorphism') || q.includes('inheritance') || q.includes('abstraction')) {
+      text = `### 🏛️ The 4 Pillars of Object-Oriented Programming (OOP)
+
+1. 🔒 **Encapsulation**:
+   - Bundling state and methods inside classes while keeping internal fields private (\`_private_var\`).
+   - Prevents external code from corrupting internal object state.
+
+2. 🎭 **Abstraction**:
+   - Hiding complex background details and exposing only clean, essential interfaces (e.g. \`abc.ABC\` in Python or Interfaces in Java/TypeScript).
+
+3. 🧬 **Inheritance**:
+   - Mechanism where a child class acquires the properties and behaviors of a parent class to promote code reusability.
+
+4. 🔄 **Polymorphism**:
+   - Ability of different classes to share the same method name but exhibit specialized runtime behaviors (Method Overriding vs Overloading).
+
+\`\`\`python
+from abc import ABC, abstractmethod
+
+class Animal(ABC):
+    @abstractmethod
+    def speak(self): pass
+
+class Dog(Animal):
+    def speak(self): return "Woof!"
+
+class Cat(Animal):
+    def speak(self): return "Meow!"
+\`\`\``;
+    }
+
+    // 4. Python Error Debugging
+    else if (q.includes('typeerror') || q.includes('nonetype') || q.includes('subscriptable')) {
+      text = `### 🛠️ Fixing \`TypeError: 'NoneType' object is not subscriptable\`
+
+**Root Cause**: You are attempting to index or access a key on an object (\`obj[key]\` or \`obj[0]\`) whose value is \`None\`.
+
+**Common Reasons**:
+1. Function missed a \`return\` statement (evaluates to \`None\`).
+2. Method modifies in-place and returns \`None\` (e.g. \`list.sort()\` or \`list.append()\`).
+3. An API or dictionary \`.get()\` call did not find the key and defaulted to \`None\`.
+
+**Corrected Pattern**:
+\`\`\`python
+data = fetch_record()
+
+# Guard check before subscripting:
+if data is not None and isinstance(data, dict):
+    print(data.get("name", "Unknown"))
+else:
+    print("Record not found or invalid format")
+\`\`\``;
+    }
+    else if (q.includes('error') && (q.includes('code') || q.includes('python') || q.includes('fix'))) {
+      text = `**I'm ready to help you debug!** 🛠️\n\nPlease paste:\n1. Your code snippet\n2. The exact error message and traceback\n\nI will analyze the root cause and provide the corrected code with time/space complexity notes!`;
+    }
+
+    // 5. System Design & Backend Architecture
+    else if (q.includes('system design') || q.includes('microservice') || q.includes('redis') || q.includes('kafka') || q.includes('cache') || q.includes('load balancer') || q.includes('rate limit')) {
+      text = `### 🏗️ System Design Interview Framework
+
+When designing scalable distributed systems in technical rounds:
+
+1. **Clarify Requirements**:
+   - Functional: Core API contracts, user interactions.
+   - Non-Functional: Throughput (e.g., 50K QPS), Latency (<50ms), High Availability (99.99%), Read vs Write ratio.
+
+2. **Core Architectural Flow**:
+   \`Client -> CDN -> Load Balancer (Nginx/ALB) -> API Gateway -> Microservices -> Redis Cache -> Primary/Replica DB\`
+
+3. **Key Components**:
+   - **Distributed Cache**: Redis for hot-key caching (Cache-Aside pattern).
+   - **Message Bus**: Apache Kafka / RabbitMQ for async event decoupling.
+   - **Database Scaling**: Read replicas, Connection pooling (PgBouncer), Horizontal sharding.
+   - **Rate Limiting**: Token Bucket or Sliding Window Counter to prevent DDoS.`;
+    }
+
+    // 6. Roadmap / Task Specific Queries
+    else if (q.includes('do today') || q.includes('can i do') || q.includes('should i do') || q === 'today') {
       if (todayPending.length > 0) {
         const listStr = todayPending.map((t, idx) => `${idx + 1}. 📌 **${t.title}** (${t.category}, ${t.duration})`).join('\n');
         text = `Here are your incomplete tasks scheduled for today (Day ${currentDay} of ${totalDays}${roleDesc}):\n\n${listStr}\n\nStart with task #1 to maintain your daily consistency streak!`;
       } else {
         text = `You have no pending tasks scheduled for today (Day ${currentDay} of ${totalDays}${roleDesc})! 🎉\n\nAll tasks for today are completed. You can practice DSA problems or review upcoming roadmap topics.`;
       }
-    } else if (q.includes('pending task') || q.includes('incomplete')) {
+    }
+    else if (q.includes('remaining') || q.includes('days left')) {
+      text = `You are currently on **Day ${currentDay}** of your **${totalDays}-day** roadmap${roleDesc}.\n\nThere are **${remainingDays} days remaining** in your placement schedule.\n\n*(Note: You have ${allPendingTotal} pending tasks remaining across the rest of the roadmap).*`;
+    }
+    else if (q.includes('pending task') || q.includes('incomplete')) {
       text = `You have **${allPendingTotal}** pending task(s) in total across your ${totalDays}-day roadmap (${todayPending.length} due today on Day ${currentDay}).\n\nFocus on today's tasks first to maintain steady daily progress!`;
-    } else if (['hi', 'hello', 'hey'].includes(q) || /^(hi|hello|hey)\b/.test(q)) {
-      text = targetRole ? `Hey there! How can I help with your ${targetRole} preparation today?` : `Hey there! How can I help with your placement preparation today?`;
-    } else if (q.includes('typeerror') || q.includes('nonetype') || q.includes('subscriptable')) {
-      text = "**Fixing `TypeError: 'NoneType' object is not subscriptable`**:\n\n**Root Cause**: Attempting to index or slice an object (`obj[key]` or `obj[index]`) that is `None`.\n\n**Fix**:\n```python\nif data is not None and isinstance(data, dict):\n    print(data.get('key'))\n```";
-    } else if (q.includes('error') && (q.includes('python') || q.includes('code') || q.fix)) {
-      text = "Could you please share your Python code snippet and the exact error message or traceback you are receiving?\n\nOnce you share them, I'll identify the root cause and provide the corrected code!";
-    } else if (q.includes('oop') || q.includes('encapsulation') || q.includes('polymorphism')) {
-      text = "**The 4 Pillars of Object-Oriented Programming (OOP)**:\n\n1. 🔒 **Encapsulation**: Bundling state and methods inside classes and hiding private attributes.\n2. 🎭 **Abstraction**: Exposing clean interfaces while hiding complex internal logic (`abc.ABC`).\n3. 🧬 **Inheritance**: Code reusability through child classes.\n4. 🔄 **Polymorphism**: Unified method signatures with subclass-specific behaviors.";
-    } else if (q.includes('two sum') || (q.includes('leetcode') && q.includes('1'))) {
-      text = "**LeetCode #1: Two Sum**\n\n**Approach**: Single-pass Hash Map storing `seen[target - num] = index`.\n⏱️ **Time**: $O(N)$ | 💾 **Space**: $O(N)\n\n```python\ndef twoSum(nums: list[int], target: int) -> list[int]:\n    seen = {}\n    for i, num in enumerate(nums):\n        if target - num in seen:\n            return [seen[target - num], i]\n        seen[num] = i\n    return []\n```";
-    } else if (q.includes('leetcode')) {
-      text = "Which LeetCode problem are you working on? Please share the problem number, title, or the problem statement, and I'll walk you through the optimal approach and complexity analysis!";
-    } else {
-      text = `Regarding **"${userMessage}"**${roleDesc}:\n\nTo excel in this area for placement interviews, focus on core definitions, hands-on implementations, and Time/Space complexity trade-offs.\n\nWould you like a code demonstration, architectural breakdown, or interview-style practice?`;
+    }
+    else if (q.includes('yesterday')) {
+      text = `According to your records, you did not complete any tasks yesterday.\n\nYou can dive into today's tasks (Day ${currentDay} of ${totalDays}) to keep your preparation on track!`;
+    }
+    else if (/\bday\s*(\d+)\b/.test(q)) {
+      const match = q.match(/\bday\s*(\d+)\b/);
+      const targetDay = match ? match[1] : currentDay;
+      text = `Day ${targetDay} is part of your ${totalDays}-day placement roadmap${roleDesc}.\n\nYou are currently on Day ${currentDay} with ${remainingDays} days remaining. Focus on completing today's tasks to advance toward Day ${targetDay}!`;
+    }
+    else if (q.includes('why') && (q.includes('pending') || q.includes('84') || q.includes('tasks'))) {
+      const numMatch = q.match(/\b(\d+)\b/);
+      const numStr = numMatch ? numMatch[1] : String(allPendingTotal);
+      text = `The **${numStr}** pending tasks represent all the incomplete tasks distributed across the remaining **${remainingDays}** days of your **${totalDays}-day** roadmap.\n\nFor today (Day ${currentDay}), you only have **${todayPending.length}** task(s) to focus on!`;
+    }
+
+    // 7. General Greetings
+    else if (['hi', 'hello', 'hey'].includes(q) || /^(hi|hello|hey)\b/.test(q)) {
+      text = targetRole 
+        ? `Hey there! How can I help with your **${targetRole}** placement preparation today?` 
+        : `Hey there! How can I help with your placement preparation today?`;
+    }
+
+    // 8. General High-Value Fallback (Never empty or generic brush-off)
+    else {
+      text = `### 💡 Placement Guidance: "${userMessage}"${roleDesc}
+
+To tackle this effectively in technical placement rounds:
+
+1. **Core Concept & Foundations**:
+   - Master the underlying theory, trade-offs, and key definitions.
+   - For coding/algorithms, identify time and space complexities upfront ($O(N)$, $O(\\log N)$, $O(1)$).
+
+2. **Interview Best Practices**:
+   - **Communicate your thought process** before jumping to code or conclusions.
+   - Verify edge cases (empty inputs, negative values, null pointers, boundary limits).
+
+3. **Recommended Next Actions**:
+   - Would you like a **step-by-step code example**, **architectural explanation**, or **interview questions** on this topic?`;
     }
 
     return {
       text,
       verified: false,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      actions: [
-        { label: 'What can I do today?', route: '/tasks' },
-        { label: 'How many days are remaining?', route: '/roadmap' }
-      ]
+      actions
     };
   },
 

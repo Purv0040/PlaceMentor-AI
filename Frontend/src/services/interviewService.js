@@ -40,4 +40,8 @@ export const interviewService = {
   getInterviewById: async (interviewId) => {
     return await apiRequest(`/interviews/${interviewId}`);
   },
+
+  getInterviewQuestions: async (interviewId) => {
+    return await apiRequest(`/interviews/${interviewId}/questions`);
+  },
 };

@@ -137,3 +137,21 @@ async def get_current_user(
     # 10. Return authenticated user
     # --------------------------------------------------------
     return user
+
+
+async def get_optional_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(
+        bearer_scheme
+    ),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+) -> Optional[Dict[str, Any]]:
+    """
+    Attempt to validate Bearer JWT token if provided; otherwise return None
+    without raising an unauthorized exception.
+    """
+    if not credentials or not credentials.credentials:
+        return None
+    try:
+        return await get_current_user(credentials=credentials, db=db)
+    except Exception:
+        return None
