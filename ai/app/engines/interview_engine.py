@@ -86,11 +86,18 @@ class AIInterviewEngine:
             hint = "State the brute force complexity first, then explain the optimal hash or 2-pointer strategy."
 
         elif itype == "system_design":
-            sys_questions = [
-                (f"Design a scalable RESTful API service for {canonical_role} handling 10,000 req/sec. How do you implement caching with Redis and database sharding?", "Scalability, Caching, DB Sharding"),
-                ("How do you handle API rate-limiting and token bucket algorithm in a distributed microservices environment?", "Distributed rate limiting, Redis atomic ops"),
-                ("Compare SQL relational transactional consistency (ACID) vs NoSQL document database eventual consistency for real-time applications.", "ACID vs BASE, CAP theorem trade-offs"),
-            ]
+            if canonical_role in ["DevOps Engineer", "Cloud Engineer"]:
+                sys_questions = [
+                    ("Design a multi-region, highly available AWS cloud architecture for an enterprise web platform with 99.99% SLA. Detail Route 53 latency routing, VPC Transit Gateway, Auto Scaling EKS clusters, and cross-region Aurora/DynamoDB replication.", "High Availability, Multi-Region Routing, EKS & DB Replication"),
+                    ("How do you architect a zero-downtime blue/green or canary CI/CD pipeline using Terraform, Docker, and ArgoCD on Kubernetes, including automated smoke tests and instant rollback triggers?", "CI/CD Pipeline Automation, Canary Deployments, Kubernetes Ingress"),
+                    ("Design an enterprise observability and disaster recovery architecture using Prometheus, Grafana, and CloudWatch. What are your RTO/RPO targets and how do you prevent alert fatigue for on-call rotations?", "Observability, Disaster Recovery (RTO/RPO), SLO/SLA & Alerting"),
+                ]
+            else:
+                sys_questions = [
+                    (f"Design a scalable RESTful API service for {canonical_role} handling 10,000 req/sec. How do you implement caching with Redis and database sharding?", "Scalability, Caching, DB Sharding"),
+                    ("How do you handle API rate-limiting and token bucket algorithm in a distributed microservices environment?", "Distributed rate limiting, Redis atomic ops"),
+                    ("Compare SQL relational transactional consistency (ACID) vs NoSQL document database eventual consistency for real-time applications.", "ACID vs BASE, CAP theorem trade-offs"),
+                ]
             q_tuple = sys_questions[(q_num - 1) % len(sys_questions)]
             question_text = q_tuple[0]
             category = "System Design & Architecture"
@@ -98,11 +105,18 @@ class AIInterviewEngine:
             hint = "Diagram key components: Load Balancer -> API Gateway -> Service Instances -> Cache -> Database."
 
         else:  # Technical / Role-specific
-            tech_questions = [
-                (f"Explain how {selected_skill} works under the hood in {canonical_role} applications, highlighting memory management and concurrency.", "Core language runtime & execution model"),
-                (f"What are the key security and performance considerations when building production REST APIs with {selected_skill}?", "Authentication, CORS, SQL injection, async I/O"),
-                (f"How do you profile, debug, and eliminate performance bottlenecks in a {canonical_role} microservice?", "Profiling, monitoring metrics, query optimization"),
-            ]
+            if canonical_role in ["DevOps Engineer", "Cloud Engineer"]:
+                tech_questions = [
+                    (f"Explain how Linux process memory management and CFS scheduling work. How would you diagnose an unexpected OOM-killer event or high CPU steal time in a containerized {selected_skill} workload?", "Linux internals, Kernel OOM, Cgroups & Container limits"),
+                    (f"How do you enforce least-privilege IAM policies and secure secrets management in production CI/CD pipelines using {selected_skill}?", "IAM Permissions, Secret Management, KMS, Pipeline Security"),
+                    (f"Compare Docker container networking (bridge vs host vs overlay) and explain how Kubernetes CNI manages pod-to-pod networking and DNS resolution with {selected_skill}.", "Container Networking, CNI, Service Discovery & Ingress"),
+                ]
+            else:
+                tech_questions = [
+                    (f"Explain how {selected_skill} works under the hood in {canonical_role} applications, highlighting memory management and concurrency.", "Core language runtime & execution model"),
+                    (f"What are the key security and performance considerations when building production REST APIs with {selected_skill}?", "Authentication, CORS, SQL injection, async I/O"),
+                    (f"How do you profile, debug, and eliminate performance bottlenecks in a {canonical_role} microservice?", "Profiling, monitoring metrics, query optimization"),
+                ]
             q_tuple = tech_questions[(q_num - 1) % len(tech_questions)]
             question_text = q_tuple[0]
             category = "Technical Core"

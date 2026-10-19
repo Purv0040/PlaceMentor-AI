@@ -135,3 +135,24 @@ def test_ai_failure_fallback_evaluation(client: TestClient, auth_headers: dict):
         assert ans_res.status_code == 200
         ans_data = ans_res.json()
         assert ans_data["evaluation"]["score"] >= 50
+
+
+def test_delete_interview(client: TestClient, auth_headers: dict):
+    """Test deleting an interview session."""
+    create_res = client.post(
+        "/api/v1/interviews",
+        json={"interview_type": "technical", "question_count": 2},
+        headers=auth_headers
+    )
+    assert create_res.status_code == 201
+    interview_id = create_res.json()["id"]
+
+    # Delete session
+    del_res = client.delete(f"/api/v1/interviews/{interview_id}", headers=auth_headers)
+    assert del_res.status_code == 200
+    assert del_res.json()["status"] == "success"
+
+    # Verify session is gone
+    get_res = client.get(f"/api/v1/interviews/{interview_id}", headers=auth_headers)
+    assert get_res.status_code == 404
+

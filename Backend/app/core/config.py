@@ -43,10 +43,12 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
 
     # ========================================================
-    # AI SERVICE
+    # AI SERVICE & GROQ LLM
     # ========================================================
 
     AI_SERVICE_URL: str = "http://localhost:8001"
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # ========================================================
     # GITHUB

@@ -117,3 +117,15 @@ class InterviewRepository:
             doc["_id"] = str(doc["_id"])
             doc["id"] = str(doc.get("id") or doc.get("question_id") or doc["_id"])
         return doc
+
+    async def delete_session(self, interview_id: str, user_id: str) -> bool:
+        """Delete an interview session and its corresponding questions."""
+        or_conds: List[Dict[str, Any]] = [{"interview_id": interview_id}, {"_id": interview_id}, {"id": interview_id}]
+        if ObjectId.is_valid(interview_id):
+            or_conds.append({"_id": ObjectId(interview_id)})
+
+        query = {"user_id": user_id, "$or": or_conds}
+        res = await self.sessions.delete_one(query)
+        await self.questions.delete_many({"interview_id": interview_id, "user_id": user_id})
+        return res.deleted_count > 0
+

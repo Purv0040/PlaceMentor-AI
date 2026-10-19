@@ -3,14 +3,22 @@ import logging
 import os
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, Optional, Type, TypeVar
 import httpx
+from dotenv import find_dotenv, load_dotenv
 
 from pydantic import BaseModel, ValidationError
+
+try:
+    from langchain_groq import ChatGroq
+    from langchain_core.messages import HumanMessage, SystemMessage
+except ImportError:
+    ChatGroq = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
 
 def _build_grounded_github_interpretation(prompt: str) -> Dict[str, Any]:
     """
@@ -360,8 +368,87 @@ def _build_grounded_mentor_response(prompt: str) -> Dict[str, Any]:
         actions = ["Explain another error", "What can I do today?", "Explain OOP concepts"]
         skills = ["Python Debugging", "Defensive Programming"]
 
+    # Intent: Python Decorators
+    elif "decorator" in query or "decorators" in query:
+        answer = (
+            "A **Python decorator** is a callable that takes another function as an argument, adds extra behavior, and returns a new function without modifying the original function's source code.\n\n"
+            "```python\n"
+            "import functools\n\n"
+            "def logger(func):\n"
+            "    @functools.wraps(func)\n"
+            "    def wrapper(*args, **kwargs):\n"
+            "        print(f\"Calling {func.__name__} with args={args}, kwargs={kwargs}\")\n"
+            "        result = func(*args, **kwargs)\n"
+            "        print(f\"{func.__name__} returned {result}\")\n"
+            "        return result\n"
+            "    return wrapper\n\n"
+            "@logger\n"
+            "def add(a: int, b: int) -> int:\n"
+            "    \"\"\"Return the sum of two numbers.\"\"\"\n"
+            "    return a + b\n\n"
+            "add(3, 4)\n"
+            "# Output:\n"
+            "# Calling add with args=(3, 4), kwargs={}\n"
+            "# add returned 7\n"
+            "```\n\n"
+            "**Three Important Facts**:\n"
+            "1. **Higher-Order Functions**: In Python, functions are first-class objects. Decorators work by accepting a function as input and returning a replacement wrapper function.\n"
+            "2. **Syntactic Sugar**: The `@decorator_name` syntax is syntactic sugar for `func = decorator_name(func)` executed at function definition time.\n"
+            "3. **Metadata Preservation with `functools.wraps`**: Decorating replaces the original function object. Using `@functools.wraps(func)` preserves original function attributes like `__name__`, `__doc__`, and parameter signatures."
+        )
+        evidence = ["Topic: Python Decorators", "Core: Higher-Order Functions, Syntactic Sugar, functools.wraps"]
+        actions = ["Explain list vs tuple", "Explain OOP concepts", "What can I do today?"]
+        skills = ["Python", "Decorators", "Functional Programming"]
+
+    # Intent: Python List vs Tuple
+    elif ("list" in query and "tuple" in query) or "list vs tuple" in query or "list and tuple" in query:
+        answer = (
+            "**Key Differences Between Python List and Tuple**:\n\n"
+            "| Feature | `list` | `tuple` |\n"
+            "| :--- | :--- | :--- |\n"
+            "| **Mutability** | **Mutable** (elements can be added, updated, or deleted) | **Immutable** (contents cannot change after creation) |\n"
+            "| **Syntax** | Square brackets: `[1, 2, 3]` | Parentheses: `(1, 2, 3)` |\n"
+            "| **Memory & Performance** | Over-allocates memory for dynamic resizing; slightly slower | Fixed memory block; faster allocation and iteration |\n"
+            "| **Dictionary Keys** | Cannot be used as dict keys (unhashable) | Can be used as dict keys (if elements are hashable) |\n"
+            "| **Typical Use** | Homogeneous collections modified during runtime | Heterogeneous fixed data (e.g. coordinates `(x, y)`, DB records) |\n\n"
+            "```python\n"
+            "# List: Mutable\n"
+            "my_list = [1, 2, 3]\n"
+            "my_list.append(4)  # Valid: [1, 2, 3, 4]\n\n"
+            "# Tuple: Immutable\n"
+            "my_tuple = (1, 2, 3)\n"
+            "# my_tuple.append(4)  # AttributeError: 'tuple' object has no attribute 'append'\n"
+            "# my_tuple[0] = 99    # TypeError: 'tuple' object does not support item assignment\n"
+            "```"
+        )
+        evidence = ["Topic: Python Data Structures", "Comparison: List (Mutable) vs Tuple (Immutable)"]
+        actions = ["Explain Python Decorators", "Explain Python Dictionaries", "What can I do today?"]
+        skills = ["Python", "Data Structures"]
+
+    # Intent: AWS Technical Interview Preparation
+    elif "aws" in query or "cloud interview" in query:
+        answer = (
+            "**Comprehensive AWS Interview Preparation Strategy**:\n\n"
+            "1. **Core Compute & Networking Services**:\n"
+            "   - **Compute**: EC2 (instance families, lifecycle, security groups), Lambda (serverless patterns, cold starts), ECS/EKS (containerized workloads).\n"
+            "   - **Networking**: VPC, Public vs Private Subnets, Route Tables, Internet & NAT Gateways, Security Groups vs NACLs, Route 53, and Load Balancers (ALB vs NLB).\n\n"
+            "2. **Storage & Databases**:\n"
+            "   - **Storage**: S3 (storage tiers, lifecycle rules, bucket policies, pre-signed URLs), EBS, and EFS.\n"
+            "   - **Databases**: DynamoDB (partition keys, sort keys, GSI/LSI, scaling) and RDS/Aurora (read replicas, multi-AZ failover, automated backups).\n\n"
+            "3. **Security, IAM & Governance**:\n"
+            "   - IAM policies (least privilege), roles vs users, instance profiles, KMS encryption, and Secrets Manager.\n\n"
+            "4. **AWS Well-Architected Framework**:\n"
+            "   - Master the 6 Pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.\n\n"
+            "5. **High-Frequency System Design Scenarios**:\n"
+            "   - *Design an asynchronous, decoupled event-driven architecture using API Gateway, SQS, SNS, and Lambda.*\n"
+            "   - *Design a resilient multi-tier web application spanning multiple Availability Zones with auto-scaling.*"
+        )
+        evidence = ["Domain: AWS Technical Interview Preparation", "Framework: AWS Well-Architected Framework"]
+        actions = ["Practice System Design Interview", "What can I do today?", "How many days are remaining?"]
+        skills = ["AWS", "Cloud Architecture", "System Design"]
+
     # C3: Follow-up requesting a Python code example for previous topic
-    elif any(phrase in query for phrase in ["code example", "show me code", "give code", "show code", "give me code", "example in python", "code snippet", "show an example"]):
+    elif any(phrase in query for phrase in ["code example", "show me code", "give code", "show code", "give me code", "example in python", "code snippet", "show an example"]) and not any(w in query for w in ["decorator", "tuple", "list", "aws", "oop", "encapsulation", "polymorphism", "inheritance", "abstraction"]):
         if last_assistant_turn and ("encapsulation" in last_assistant_turn.lower() or "oop" in last_assistant_turn.lower()):
             answer = (
                 "Here is a clean Python code example demonstrating **Encapsulation**:\n\n"
@@ -416,20 +503,27 @@ def _build_grounded_mentor_response(prompt: str) -> Dict[str, Any]:
             actions = ["Explain Inheritance", "Explain Abstraction", "What can I do today?"]
             skills = ["Object-Oriented Programming", "Polymorphism"]
         else:
+            clean_q = student_msg.strip() if student_msg else "Code Example"
             answer = (
-                "Here is an illustrative Python implementation:\n\n"
-                "```python\n"
-                "def solve_pattern(items: list) -> dict:\n"
-                "    result = {}\n"
-                "    for idx, item in enumerate(items):\n"
-                "        result[item] = idx\n"
-                "    return result\n"
-                "```\n\n"
-                "Would you like to tailor this to a specific algorithmic problem or placement topic?"
+                f"**Code Demonstration for {clean_q}**:\n\n"
+                f"```python\n"
+                f"# Practical implementation for: {clean_q}\n"
+                f"def demonstrate_concept(data: list) -> list:\n"
+                f"    # Process data and return filtered or transformed results\n"
+                f"    return [item for item in data if item is not None]\n"
+                f"\n"
+                f"# Example usage:\n"
+                f"sample = ['apple', None, 'banana', 'orange']\n"
+                f"print(demonstrate_concept(sample))  # ['apple', 'banana', 'orange']\n"
+                f"```\n\n"
+                f"**Key Takeaways**:\n"
+                f"1. **Readability**: Clear variable names and explicit return types enhance maintainability.\n"
+                f"2. **Edge Handling**: Defensive checks prevent runtime errors on null or boundary values.\n"
+                f"3. **Efficiency**: Leverages list comprehensions with $O(N)$ time complexity and $O(N)$ space complexity."
             )
-            evidence = ["Topic: Code Example Request"]
+            evidence = [f"Topic: {clean_q}", "Language: Python"]
             actions = ["What can I do today?", "Practice a technical interview"]
-            skills = ["Python"]
+            skills = ["Python", "Clean Code"]
 
     # C4: Follow-up asking about today's specific task (e.g. "Explain the first task")
     elif any(phrase in query for phrase in ["first task", "task 1", "task 2", "task #1", "explain the first task", "explain task 1", "how do i do task 1", "first daily task"]):
@@ -1500,19 +1594,183 @@ class MockLLMProvider(BaseLLMProvider):
         return '{"status": "success", "message": "mock LLM response"}'
 
 
+def _load_env_safely():
+    """Load .env from all expected project locations."""
+    curr_file = os.path.abspath(__file__)
+    ai_dir = os.path.abspath(os.path.join(os.path.dirname(curr_file), "..", ".."))
+    root_dir = os.path.abspath(os.path.join(ai_dir, ".."))
+    load_dotenv(os.path.join(ai_dir, ".env"))
+    load_dotenv(os.path.join(root_dir, ".env"))
+    load_dotenv(os.path.join(root_dir, "Backend", ".env"))
+    load_dotenv()
+
+
+_load_env_safely()
+
+
+class GroqLLMProvider(BaseLLMProvider):
+    """Groq API provider powered by langchain-groq ChatGroq."""
+
+    def __init__(self, api_key: str, model: Optional[str] = None, temperature: float = 0.2):
+        self.api_key = api_key
+        self.model = model or os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+        self.temperature = temperature
+        self.fallback = MockLLMProvider()
+        self._llm = None
+        self._json_llm = None
+
+        if ChatGroq is None:
+            logger.error("langchain-groq is not installed. Using MockLLMProvider.")
+            return
+
+        try:
+            self._llm = ChatGroq(
+                groq_api_key=self.api_key,
+                model_name=self.model,
+                temperature=self.temperature,
+                max_retries=2,
+                timeout=30.0,
+            )
+            self._json_llm = ChatGroq(
+                groq_api_key=self.api_key,
+                model_name=self.model,
+                temperature=self.temperature,
+                max_retries=2,
+                timeout=30.0,
+                model_kwargs={"response_format": {"type": "json_object"}},
+            )
+            # Secondary model fallback if primary model encounters daily token rate limits (429)
+            self._backup_llm = None
+            self._backup_json_llm = None
+            backup_model = "openai/gpt-oss-20b" if self.model != "openai/gpt-oss-20b" else None
+            if backup_model:
+                try:
+                    self._backup_llm = ChatGroq(
+                        groq_api_key=self.api_key,
+                        model_name=backup_model,
+                        temperature=self.temperature,
+                        max_retries=2,
+                        timeout=30.0,
+                    )
+                    self._backup_json_llm = ChatGroq(
+                        groq_api_key=self.api_key,
+                        model_name=backup_model,
+                        temperature=self.temperature,
+                        max_retries=2,
+                        timeout=30.0,
+                        model_kwargs={"response_format": {"type": "json_object"}},
+                    )
+                except Exception as b_err:
+                    logger.warning("Could not initialize secondary backup Groq model: %s", b_err)
+
+            logger.info("Initialized GroqLLMProvider with model: %s", self.model)
+        except Exception as e:
+            logger.error("Failed to initialize ChatGroq: %s. Using MockLLMProvider.", e)
+
+    def generate_text(self, prompt: str, **kwargs) -> str:
+        if not self.api_key or not self._llm:
+            return self.fallback.generate_text(prompt, **kwargs)
+        try:
+            resp = self._llm.invoke(prompt)
+            content = resp.content
+            if isinstance(content, list):
+                return "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in content)
+            return str(content)
+        except Exception as e:
+            if ("429" in str(e) or "rate_limit" in str(e).lower()) and getattr(self, "_backup_llm", None):
+                logger.warning("Primary Groq model rate-limited. Falling back to backup Groq model...")
+                try:
+                    b_resp = self._backup_llm.invoke(prompt)
+                    b_content = b_resp.content
+                    if isinstance(b_content, list):
+                        return "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in b_content)
+                    return str(b_content)
+                except Exception as b_err:
+                    logger.error("Backup Groq model also failed: %s", b_err)
+            logger.error("Groq text call failed: %s", e)
+            if self.api_key:
+                raise e
+            return self.fallback.generate_text(prompt, **kwargs)
+
+    def generate_json(self, prompt: str, **kwargs) -> str:
+        if not self.api_key:
+            return self.fallback.generate_json(prompt, **kwargs)
+
+        # 1. Primary: JSON object mode with ChatGroq
+        if self._json_llm:
+            try:
+                resp = self._json_llm.invoke(prompt)
+                content = resp.content
+                if isinstance(content, list):
+                    return "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in content)
+                return str(content)
+            except Exception as e:
+                logger.warning("Groq JSON-mode call failed (%s), attempting text-mode JSON fallback.", e)
+                if ("429" in str(e) or "rate_limit" in str(e).lower()) and getattr(self, "_backup_json_llm", None):
+                    logger.warning("Primary Groq model rate-limited in JSON mode. Trying backup Groq model...")
+                    try:
+                        b_resp = self._backup_json_llm.invoke(prompt)
+                        b_content = b_resp.content
+                        if isinstance(b_content, list):
+                            return "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in b_content)
+                        return str(b_content)
+                    except Exception as b_err:
+                        logger.warning("Backup JSON model failed: %s. Trying standard text fallback.", b_err)
+
+        # 2. Secondary: Standard text mode with JSON instruction
+        if self._llm:
+            try:
+                resp = self._llm.invoke(prompt)
+                content = resp.content
+                if isinstance(content, list):
+                    return "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in content)
+                return str(content)
+            except Exception as e:
+                if ("429" in str(e) or "rate_limit" in str(e).lower()) and getattr(self, "_backup_llm", None):
+                    logger.warning("Primary Groq model rate-limited in text JSON mode. Trying backup Groq model...")
+                    try:
+                        b_resp = self._backup_llm.invoke(prompt)
+                        b_content = b_resp.content
+                        if isinstance(b_content, list):
+                            return "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in b_content)
+                        return str(b_content)
+                    except Exception as b_err:
+                        logger.error("Backup Groq text model also failed: %s", b_err)
+                logger.error("Groq text-mode JSON call also failed: %s", e)
+                if self.api_key:
+                    raise e
+
+        if self.api_key:
+            raise RuntimeError("Groq LLM is not initialized with a valid ChatGroq client.")
+
+        return self.fallback.generate_json(prompt, **kwargs)
+
+
 class LLMService:
     """Core LLM Service that abstracts away the specific provider."""
     
-    def __init__(self):
-        provider_name = os.getenv("LLM_PROVIDER", "mock").lower()
-        api_key = os.getenv("LLM_API_KEY", "")
+    def __init__(self, provider: Optional[str] = None, api_key: Optional[str] = None, model: Optional[str] = None):
+        _load_env_safely()
         
-        if provider_name == "openai" and api_key:
-            self.provider = OpenAILLMProvider(api_key=api_key)
-        elif provider_name == "gemini" and api_key:
-            self.provider = GeminiLLMProvider(api_key=api_key)
+        provider_name = (provider or os.getenv("LLM_PROVIDER") or "").lower()
+        key = api_key or os.getenv("GROQ_API_KEY") or os.getenv("LLM_API_KEY") or ""
+        model_name = model or os.getenv("GROQ_MODEL") or "openai/gpt-oss-120b"
+        
+        # Auto-detect Groq provider if key starts with gsk_ or provider configured as groq
+        if provider_name == "groq" or (not provider_name and key.startswith("gsk_")) or (provider_name not in ["openai", "gemini", "mock"] and key.startswith("gsk_")):
+            provider_name = "groq"
+        elif not provider_name:
+            provider_name = "groq" if key else "mock"
+            
+        if provider_name == "groq" and key:
+            self.provider = GroqLLMProvider(api_key=key, model=model_name)
+        elif provider_name == "openai" and key:
+            self.provider = OpenAILLMProvider(api_key=key, model=model_name if model_name != "openai/gpt-oss-120b" else "gpt-4o-mini")
+        elif provider_name == "gemini" and key:
+            self.provider = GeminiLLMProvider(api_key=key, model=model_name if model_name != "openai/gpt-oss-120b" else "gemini-1.5-flash")
         else:
             self.provider = MockLLMProvider()
+
             
     def generate_text(self, prompt: str, **kwargs) -> str:
         """Generate unstructured text."""
@@ -1536,15 +1794,15 @@ class LLMService:
                 json_str = self.provider.generate_json(current_prompt, **kwargs)
                 last_raw_json = json_str
                 
-                # Strip markdown code blocks if present
+                # Strip markdown code blocks and extract JSON object if present
                 json_str = json_str.strip()
-                if json_str.startswith("```json"):
-                    json_str = json_str[7:]
-                elif json_str.startswith("```"):
-                    json_str = json_str[3:]
-                if json_str.endswith("```"):
-                    json_str = json_str[:-3]
-                json_str = json_str.strip()
+                fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", json_str, re.DOTALL)
+                if fence_match:
+                    json_str = fence_match.group(1).strip()
+                else:
+                    brace_match = re.search(r"(\{.*\})", json_str, re.DOTALL)
+                    if brace_match:
+                        json_str = brace_match.group(1).strip()
                 
                 # Parse JSON
                 parsed_data = json.loads(json_str)

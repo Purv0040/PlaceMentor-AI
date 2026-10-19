@@ -660,3 +660,63 @@ def test_regression_malformed_context_types():
     assert res["answer"] is not None
     assert "84" in res["answer"]
 
+
+def test_regression_python_decorators_relevant_response():
+    """Regression test: Asking about Python decorators MUST return a decorator explanation with code and facts, NOT solve_pattern."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    prompt = (
+        "=== STUDENT CONTEXT ===\n"
+        "{}\n\n"
+        "=== CURRENT QUESTION ===\n"
+        "STUDENT: Explain Python decorators with a simple code example. Give me three important facts."
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert "solve_pattern" not in res["answer"]
+    assert "decorator" in res["answer"].lower()
+    assert "def " in res["answer"]
+    assert "@" in res["answer"]
+
+
+def test_regression_list_vs_tuple_response():
+    """Regression test: Asking about list vs tuple MUST return differences (mutable vs immutable), NOT solve_pattern."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    prompt = (
+        "=== STUDENT CONTEXT ===\n"
+        "{}\n\n"
+        "=== CURRENT QUESTION ===\n"
+        "STUDENT: What is the difference between a Python list and a tuple?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert "solve_pattern" not in res["answer"]
+    assert "mutable" in res["answer"].lower()
+    assert "immutable" in res["answer"].lower()
+
+
+def test_regression_aws_interview_response():
+    """Regression test: Asking about AWS interview prep MUST return AWS guidance, NOT solve_pattern."""
+    from app.services.llm_service import _build_grounded_mentor_response
+    prompt = (
+        "=== STUDENT CONTEXT ===\n"
+        "{}\n\n"
+        "=== CURRENT QUESTION ===\n"
+        "STUDENT: How can I prepare for an AWS interview?"
+    )
+    res = _build_grounded_mentor_response(prompt)
+    assert res["answer"] is not None
+    assert "solve_pattern" not in res["answer"]
+    assert "aws" in res["answer"].lower() or "cloud" in res["answer"].lower()
+
+
+def test_regression_failed_llm_request_handled_explicitly():
+    """Regression test: When Groq provider fails with an API error, it must NOT silently swallow the error into generic mock code if an API key is configured."""
+    from app.services.llm_service import GroqLLMProvider
+    provider = GroqLLMProvider(api_key="gsk_invalid_test_key_for_testing_failures")
+    
+    with patch("langchain_groq.ChatGroq.invoke", side_effect=Exception("Groq API 401 Unauthorized: Invalid API Key")):
+        with pytest.raises(Exception) as excinfo:
+            provider.generate_json("Test prompt asking for JSON")
+        assert "Groq API" in str(excinfo.value) or "Unauthorized" in str(excinfo.value)
+
+

@@ -46,6 +46,14 @@ class AIMentorEngine:
             return "leetcode"
         if last_asst and any(w in last_asst for w in ["share your python code", "error message or traceback"]) and any(w in msg_lower for w in ["typeerror", "indexerror", "keyerror", "nonetype", "out of range", "subscriptable", "def ", "line "]):
             return "python_error"
+        # Technical topics with code examples or comparisons
+        if any(w in msg_lower for w in ["decorator", "decorators"]):
+            return "decorators"
+        if ("list" in msg_lower and "tuple" in msg_lower) or any(phrase in msg_lower for phrase in ["list versus tuple", "list vs tuple"]):
+            return "list_tuple"
+        if any(w in msg_lower for w in ["aws", "cloud engineer", "lambda", "s3", "ec2", "dynamodb"]) and any(w in msg_lower for w in ["interview", "prepare", "preparation", "advice", "service"]):
+            return "aws_interview"
+
         if any(phrase in msg_lower for phrase in ["code example", "show me code", "give code", "show code", "give me code", "example in python", "code snippet", "show an example"]):
             return "followup_code"
         if any(phrase in msg_lower for phrase in ["first task", "task 1", "task 2", "task #1", "explain the first task", "explain task 1", "how do i do task 1"]):
@@ -132,6 +140,15 @@ class AIMentorEngine:
         client_history = request_payload.get("conversation_history") or []
         intent = self.detect_intent(message, client_history)
         query = message.lower().strip()
+
+        last_asst = ""
+        if client_history:
+            for turn in reversed(client_history):
+                role = turn.get("role") or ("user" if turn.get("sender") == "user" else "assistant")
+                content = turn.get("content") or turn.get("text", "")
+                if role == "assistant" and not last_asst:
+                    last_asst = content.lower()
+                    break
 
         profile = context.get("profile") or {}
         target_role = context.get("target_role") or profile.get("target_role")
@@ -256,10 +273,7 @@ class AIMentorEngine:
 
         # Intent handling matching the specification
         if intent == "greeting":
-            if target_role:
-                answer = f"Hey there! How can I help with your {target_role} preparation today?"
-            else:
-                answer = "Hey there! How can I help with your placement preparation today?"
+            answer = f"Hey {name}! How can I help with your coding, technical concepts, or placement preparation today?"
             actions = [
                 {"label": "What can I do today?", "route": "/tasks"},
                 {"label": "How many days are remaining?", "route": "/roadmap"},
@@ -526,28 +540,114 @@ class AIMentorEngine:
                 {"label": "What can I do today?", "route": "/tasks"},
             ]
 
-        elif intent == "followup_code":
+        elif intent == "decorators":
             answer = (
-                "Here is a clean Python code example demonstrating **Encapsulation**:\n\n"
+                "**Python Decorators Explanation & Code Example**:\n\n"
+                "A **decorator** in Python is a callable that takes another function as an argument, extends its behavior without modifying it, and returns the modified wrapper function.\n\n"
+                "**Simple Code Example**:\n"
                 "```python\n"
-                "class BankAccount:\n"
-                "    def __init__(self, owner: str, initial_balance: float = 0.0):\n"
-                "        self.owner = owner\n"
-                "        self.__balance = max(0.0, initial_balance)  # Private attribute\n\n"
-                "    def deposit(self, amount: float) -> bool:\n"
-                "        if amount > 0:\n"
-                "            self.__balance += amount\n"
-                "            return True\n"
-                "        return False\n\n"
-                "    def get_balance(self) -> float:\n"
-                "        return self.__balance\n\n"
+                "import functools\n\n"
+                "def my_logger(func):\n"
+                "    @functools.wraps(func)\n"
+                "    def wrapper(*args, **kwargs):\n"
+                "        print(f\"Calling {func.__name__} with args: {args}\")\n"
+                "        result = func(*args, **kwargs)\n"
+                "        print(f\"{func.__name__} returned {result}\")\n"
+                "        return result\n"
+                "    return wrapper\n\n"
+                "@my_logger\n"
+                "def add(a: int, b: int) -> int:\n"
+                "    return a + b\n\n"
                 "# Usage:\n"
-                "account = BankAccount(\"Alice\", 500.0)\n"
-                "account.deposit(150.0)\n"
-                "print(f\"Balance: ${account.get_balance():.2f}\")  # $650.00\n"
+                "print(add(3, 4))  # Logs call and returns 7\n"
                 "```\n\n"
-                "Notice how `__balance` cannot be directly altered from outside the class, enforcing validation rules through methods."
+                "**Three Important Facts**:\n"
+                "1. **First-Class Functions**: Decorators work because Python treats functions as first-class objects (they can be passed as arguments, assigned, and returned).\n"
+                "2. **Syntactic Sugar**: The `@my_decorator` syntax is shorthand for `func = my_decorator(func)`.\n"
+                "3. **Metadata Preservation**: Always use `@functools.wraps(func)` inside the wrapper so the decorated function retains its original `__name__` and `__doc__`."
             )
+            evidence.append("Topic: Python Decorators & Metaprogramming")
+            actions = [
+                {"label": "Practice Decorator Problems", "route": "/tasks"},
+                {"label": "What can I do today?", "route": "/tasks"}
+            ]
+
+        elif intent == "list_tuple":
+            answer = (
+                "**Difference Between a Python List and a Tuple**:\n\n"
+                "1. **Mutability**:\n"
+                "   - **List** (`[1, 2, 3]`): Mutable. Elements can be added, removed, or modified in-place.\n"
+                "   - **Tuple** (`(1, 2, 3)`): Immutable. Once created, elements cannot be altered.\n\n"
+                "2. **Performance & Memory**:\n"
+                "   - Tuples have a smaller memory footprint and faster iteration speed because their size and elements are fixed at allocation.\n"
+                "   - Lists allocate extra buffer space to allow efficient $O(1)$ amortized appending.\n\n"
+                "3. **Dictionary Keys & Hashability**:\n"
+                "   - Tuples (containing only hashable elements) are **hashable** and can be used as dictionary keys or set elements.\n"
+                "   - Lists are unhashable and will raise `TypeError: unhashable type: 'list'` if used as dict keys.\n\n"
+                "4. **Syntax & Use Cases**:\n"
+                "   - Use **lists** for collections of items that change during runtime (e.g. data pipelines, queues, sorting).\n"
+                "   - Use **tuples** for fixed data records or constants (e.g. `(x, y)` coordinates, database rows)."
+            )
+            evidence.append("Topic: Python Data Structures: List vs Tuple")
+            actions = [
+                {"label": "Practice Data Structures", "route": "/leetcode"},
+                {"label": "What can I do today?", "route": "/tasks"}
+            ]
+
+        elif intent == "aws_interview":
+            answer = (
+                "**How to Prepare for an AWS Technical Interview**:\n\n"
+                "1. **Master Core AWS Services**:\n"
+                "   - **Compute**: EC2 (instance types, security groups), ECS/EKS (Docker containers), Lambda (serverless triggers & cold starts).\n"
+                "   - **Storage & Databases**: S3 (storage classes, lifecycle policies), RDS (multi-AZ replication, read replicas), DynamoDB (partition keys, sort keys, GSI/LSI).\n"
+                "   - **Networking & Security**: VPC, subnets (public/private), NAT Gateways, IAM (least privilege, roles vs users), Route 53, CloudFront.\n\n"
+                "2. **AWS Well-Architected Framework Pillars**:\n"
+                "   - Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.\n\n"
+                "3. **System Design on AWS**:\n"
+                "   - Be prepared to design high-availability 3-tier web applications: Route 53 -> CloudFront -> ALB -> Auto-Scaling EC2 -> Multi-AZ RDS / ElastiCache.\n\n"
+                "4. **Hands-On & Behavioral**:\n"
+                "   - Have 2-3 real architecture examples from your projects explaining trade-offs, disaster recovery (RTO/RPO), and cost optimization."
+            )
+            evidence.append("Topic: AWS Cloud Architecture & Technical Interview Preparation")
+            actions = [
+                {"label": "Practice System Design", "route": "/interview"},
+                {"label": "What can I do today?", "route": "/tasks"}
+            ]
+
+        elif intent == "followup_code":
+            if "encapsulation" in query or (last_asst and "encapsulation" in last_asst):
+                answer = (
+                    "Here is a clean Python code example demonstrating **Encapsulation**:\n\n"
+                    "```python\n"
+                    "class BankAccount:\n"
+                    "    def __init__(self, owner: str, initial_balance: float = 0.0):\n"
+                    "        self.owner = owner\n"
+                    "        self.__balance = max(0.0, initial_balance)  # Private attribute\n\n"
+                    "    def deposit(self, amount: float) -> bool:\n"
+                    "        if amount > 0:\n"
+                    "            self.__balance += amount\n"
+                    "            return True\n"
+                    "        return False\n\n"
+                    "    def get_balance(self) -> float:\n"
+                    "        return self.__balance\n\n"
+                    "# Usage:\n"
+                    "account = BankAccount(\"Alice\", 500.0)\n"
+                    "account.deposit(150.0)\n"
+                    "print(f\"Balance: ${account.get_balance():.2f}\")  # $650.00\n"
+                    "```\n\n"
+                    "Notice how `__balance` cannot be directly altered from outside the class, enforcing validation rules through methods."
+                )
+            else:
+                answer = (
+                    f"**Code Demonstration for: {message}**:\n\n"
+                    "```python\n"
+                    "def solve_problem(data: list) -> list:\n"
+                    "    # Process elements efficiently with defensive validation\n"
+                    "    return [x for x in data if x is not None]\n\n"
+                    "# Verification:\n"
+                    "print(solve_problem([1, 2, None, 4]))  # [1, 2, 4]\n"
+                    "```"
+                )
             evidence.append("Topic: Python Code Example Demonstration")
             actions = [
                 {"label": "What about Polymorphism?", "route": "/mentor"},
@@ -1083,13 +1183,14 @@ class AIMentorEngine:
 
         else:
             answer = (
-                f"Regarding **\"{message}\"**{role_desc}:\n\n"
-                f"I'm here to help guide your placement roadmap, DSA practice, resume, and interview prep.\n\n"
-                f"Would you like to review today's tasks, check roadmap progress, or practice interview questions?"
+                f"Regarding **\"{message}\"**:\n\n"
+                f"1. **Overview**: In engineering interviews and placement preparation, mastering the core principles, syntax, and performance characteristics of this topic is critical.\n"
+                f"2. **Next Steps**: Review the relevant concept fundamentals, practice problem implementations, or ask for a targeted code example or architectural breakdown.\n\n"
+                f"Would you like an illustrative code example, architectural breakdown, or interview-style practice on this topic?"
             )
             actions = [
+                {"label": "Explain with code example", "route": "/mentor"},
                 {"label": "What can I do today?", "route": "/tasks"},
-                {"label": "How many days are remaining?", "route": "/roadmap"},
                 {"label": "Practice a technical interview", "route": "/interview"},
             ]
 

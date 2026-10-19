@@ -152,11 +152,15 @@ export const mentorService = {
 
   askMentor: async (message, conversationId = null, targetRole = null, studentName = null, conversationHistory = null) => {
     try {
+      const validBackendId = (conversationId && !conversationId.startsWith('session-') && !conversationId.startsWith('local_'))
+        ? conversationId
+        : null;
+
       return await apiRequest('/mentor/ask', {
         method: 'POST',
         body: JSON.stringify({
           message,
-          conversation_id: conversationId,
+          conversation_id: validBackendId,
           target_role: targetRole,
           student_name: studentName,
           conversation_history: conversationHistory
@@ -253,7 +257,8 @@ export const mentorService = {
     ];
   },
 
-  generateLocalFallback: (userMessage, mentorContext) => {
+  generateLocalFallback: (userMessage, mentorContext, persona = 'tech') => {
+    const activePersona = persona || mentorContext?.persona || 'tech';
     const q = userMessage.toLowerCase().trim();
     const targetRole = mentorContext?.user?.targetRole || null;
     const roleDesc = targetRole ? ` for **${targetRole}**` : '';
@@ -266,11 +271,11 @@ export const mentorService = {
     let text = '';
     
     // Mode/Persona specific prefix logic if appropriate
-    if (persona === 'story' && !q.includes('yesterday') && !q.includes('remaining') && !q.includes('tasks')) {
+    if (activePersona === 'story' && !q.includes('yesterday') && !q.includes('remaining') && !q.includes('tasks')) {
       text = `**STAR Method Framework for: "${userMessage}"**\n\n- **Situation**: Set the project background and challenge context.\n- **Task**: Specify your direct responsibility and success criteria.\n- **Action**: Explain the concrete technical decisions and leadership steps *you* took.\n- **Result**: Highlight quantifiable impact (e.g. "Reduced API latency by 35% across 50K users").\n\nWould you like me to help draft your exact talking points?`;
-    } else if (persona === 'dsa' && (q.includes('dsa') || q.includes('algorithm') || q.includes('leetcode') || q.includes('problem') || q.includes('array') || q.includes('tree') || q.includes('graph'))) {
+    } else if (activePersona === 'dsa' && (q.includes('dsa') || q.includes('algorithm') || q.includes('leetcode') || q.includes('problem') || q.includes('array') || q.includes('tree') || q.includes('graph'))) {
       text = `**DSA Pattern Analysis for: "${userMessage}"**\n\n1. **Core Pattern**: Identify whether this maps to Two Pointers, Sliding Window, Monotonic Stack, or Dynamic Programming.\n2. **Optimal Invariant**: Focus on what state changes at each step.\n3. **Target Complexity**: Aim for $O(N)$ or $O(N \\log N)$ time and $O(1)$ auxiliary space.\n\nShare the problem constraints or code snippet and we'll derive the optimal solution together!`;
-    } else if (persona === 'strat' && (q.includes('plan') || q.includes('strategy') || q.includes('tier') || q.includes('placement') || q.includes('offer'))) {
+    } else if (activePersona === 'strat' && (q.includes('plan') || q.includes('strategy') || q.includes('tier') || q.includes('placement') || q.includes('offer'))) {
       text = `**Placement Strategy Assessment**:\n\n- **Current Milestone**: Day ${currentDay} of ${totalDays} (${remainingDays} days remaining).\n- **Pending Roadmap Tasks**: ${allPendingTotal} tasks scheduled.\n- **Priority Focus**: Finish today's scheduled preparation tasks and solve 2 medium problems daily to ensure Tier-1 readiness.\n\nKeep high consistency to maximize your shortlisting conversion!`;
     } else if (q.includes('not working properly') || q.includes('not working') || q.includes('working properly')) {
       text = "I apologize for the misunderstanding! I'm here to give you accurate information directly from your placement profile and roadmap.\n\nYou can ask me:\n1. 📅 \"What can I do today?\"\n2. ✅ \"What did I complete yesterday?\"\n3. 📋 \"What are my pending tasks?\"\n4. ⏳ \"How many days are remaining?\"\n5. 💡 \"Help me learn DSA\" or \"Practice a technical interview\"\n\nWhat would you like to check?";
@@ -296,7 +301,16 @@ export const mentorService = {
     } else if (q.includes('pending task') || q.includes('incomplete')) {
       text = `You have **${allPendingTotal}** pending task(s) in total across your ${totalDays}-day roadmap (${todayPending.length} due today on Day ${currentDay}).\n\nFocus on today's tasks first to maintain steady daily progress!`;
     } else if (['hi', 'hello', 'hey'].includes(q) || /^(hi|hello|hey)\b/.test(q)) {
-      text = targetRole ? `Hey there! How can I help with your ${targetRole} preparation today?` : `Hey there! How can I help with your placement preparation today?`;
+      const candName = mentorContext?.user?.name;
+      text = candName 
+        ? `Hi ${candName}! How can I help with your coding practice, interview preparation, or placement roadmap today?`
+        : "Hi there! How can I help with your coding practice, interview preparation, or placement roadmap today?";
+    } else if (q.includes('decorator')) {
+      text = "**Python Decorators**:\n\nA decorator is a callable that takes another function as an argument, extends its behavior without modifying it, and returns the modified wrapper function.\n\n```python\nimport functools\n\ndef my_logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f\"Calling {func.__name__} with args: {args}\")\n        return func(*args, **kwargs)\n    return wrapper\n\n@my_logger\ndef add(a: int, b: int) -> int:\n    return a + b\n\n# Usage:\nprint(add(3, 4))  # 7\n```\n\n**Three Facts**:\n1. **First-Class Citizens**: Decorators work because Python functions can be passed as arguments, assigned, and returned.\n2. **Syntactic Sugar**: `@my_logger` is equivalent to `add = my_logger(add)`.\n3. **Metadata Preservation**: Use `@functools.wraps` inside the wrapper so the function keeps its original `__name__` and `__doc__`.";
+    } else if ((q.includes('list') && q.includes('tuple')) || q.includes('list versus tuple') || q.includes('list vs tuple')) {
+      text = "**Python List vs Tuple Comparison**:\n\n1. **Mutability**: Lists (`[]`) are mutable (can add, remove, modify elements). Tuples (`()`) are immutable (cannot be altered after creation).\n2. **Hashability**: Tuples containing hashable items are hashable and can serve as dictionary keys or set members. Lists are unhashable.\n3. **Memory & Performance**: Tuples have a smaller memory footprint and faster read operations because their size is fixed. Lists allocate extra buffer capacity for $O(1)$ amortized appends.\n4. **Use Case**: Use lists for collections that grow or reorder dynamically; use tuples for fixed records, coordinates, or constant configurations.";
+    } else if (q.includes('aws') || (q.includes('cloud') && q.includes('interview'))) {
+      text = "**AWS Technical Interview Preparation**:\n\n1. **Core Compute**: Master EC2 (instance types, security groups), ECS/EKS (container orchestration), and Lambda (serverless patterns, event sources, cold starts).\n2. **Storage & Databases**: S3 (storage tiers, lifecycle rules), RDS (Multi-AZ deployment, read replicas), and DynamoDB (partition keys, sort keys, GSI/LSI).\n3. **Networking & Security**: VPC subnets (public/private), NAT Gateways, IAM (least privilege roles vs users), Route 53, and CloudFront.\n4. **System Architecture**: Be ready to design high-availability systems using the AWS Well-Architected Framework (Reliability, Security, Cost Optimization).";
     } else if (q.includes('typeerror') || q.includes('nonetype') || q.includes('subscriptable')) {
       text = "**Fixing `TypeError: 'NoneType' object is not subscriptable`**:\n\n**Root Cause**: Attempting to index or slice an object (`obj[key]` or `obj[index]`) that is `None`.\n\n**Fix**:\n```python\nif data is not None and isinstance(data, dict):\n    print(data.get('key'))\n```";
     } else if (q.includes('error') && (q.includes('python') || q.includes('code') || q.fix)) {
@@ -308,7 +322,7 @@ export const mentorService = {
     } else if (q.includes('leetcode')) {
       text = "Which LeetCode problem are you working on? Please share the problem number, title, or the problem statement, and I'll walk you through the optimal approach and complexity analysis!";
     } else {
-      text = `Regarding **"${userMessage}"**${roleDesc}:\n\nTo excel in this area for placement interviews, focus on core definitions, hands-on implementations, and Time/Space complexity trade-offs.\n\nWould you like a code demonstration, architectural breakdown, or interview-style practice?`;
+      text = `Regarding **"${userMessage}"**:\n\nTo excel in this area for technical interviews, focus on core definitions, production-grade implementations, and Time/Space complexity trade-offs.\n\nWould you like a code demonstration, architectural breakdown, or interview-style practice?`;
     }
 
     return {
@@ -339,7 +353,12 @@ export const mentorService = {
         }))
       };
     }
-    // Fallback to local AI service synthesizer if backend offline
-    return mentorService.generateLocalFallback(userMessage, mentorContext, persona);
+    // Explicit notification if backend is unreachable
+    return {
+      text: "I couldn't reach the AI mentor server right now. Please check your network connection and backend server status, then try asking again.",
+      verified: false,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      actions: [{ label: "Retry question", route: "/mentor" }]
+    };
   }
 };

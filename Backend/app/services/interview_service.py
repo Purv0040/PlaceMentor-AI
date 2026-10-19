@@ -334,3 +334,7 @@ class InterviewService:
 
     async def get_interview_history(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
         return await self.interview_repo.get_history_by_user_id(user_id, limit=limit)
+
+    async def delete_interview(self, interview_id: str, user_id: str) -> bool:
+        return await self.interview_repo.delete_session(interview_id, user_id=user_id)
+

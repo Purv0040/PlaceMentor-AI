@@ -604,3 +604,18 @@ def test_mentor_engine_regression_explain_binary_search_step_by_step():
     assert "def binary_search" in ans
 
 
+def test_ask_mentor_with_client_session_id(client: TestClient, auth_headers: dict):
+    """Client sessions starting with session- or local_ are auto-created gracefully without 404."""
+    client_sess_id = "session-1729341234567"
+    res = client.post(
+        "/api/v1/mentor/ask",
+        json={"message": "What should I focus on today?", "conversation_id": client_sess_id},
+        headers=auth_headers,
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert "answer" in data
+    assert data["conversation_id"] == client_sess_id
+
+
+

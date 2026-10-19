@@ -210,10 +210,12 @@ export const AIMentorPage = () => {
         content: m.text || m.content || ''
       }));
 
+      const activeBackendConvId = currentSession?.backendConversationId || (activeSessionId?.startsWith('session-') ? null : activeSessionId);
+
       const response = await mentorService.generateMentorResponse(
         queryText,
         mentorContext,
-        activeSessionId,
+        activeBackendConvId,
         historyPayload,
         activePersona
       );
@@ -234,6 +236,7 @@ export const AIMentorPage = () => {
           s.id === activeSessionId
             ? {
                 ...s,
+                backendConversationId: response.conversation_id || s.backendConversationId,
                 messages: [...s.messages, assistantMessage],
                 updatedAt: new Date().toISOString()
               }

@@ -43,6 +43,14 @@ from app.schemas.mentor import MentorChatResponse
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def mock_pipeline_llm(monkeypatch):
+    """Ensure end-to-end unit integration test runs with deterministic mock LLM provider without consuming live tokens."""
+    monkeypatch.setenv("LLM_PROVIDER", "mock")
+    monkeypatch.setenv("GROQ_API_KEY", "")
+    monkeypatch.setenv("LLM_API_KEY", "")
+
+
 def test_end_to_end_pipeline_execution():
     """Test full 11-step pipeline execution and verify schema compliance of every step."""
     orchestrator = EndToEndPipelineOrchestrator()
@@ -200,19 +208,23 @@ def test_missing_data_handled_correctly():
 
 def test_pipeline_api_endpoints():
     """Integration test for POST /api/ai/pipeline/run and GET /api/ai/pipeline/demo endpoints."""
-    # Test demo endpoint
-    demo_resp = client.get("/api/ai/pipeline/demo")
-    assert demo_resp.status_code == 200
-    demo_data = demo_resp.json()
-    assert demo_data["target_role"] == "AI/ML Engineer"
-    assert "step_1_resume_analysis" in demo_data
-    assert "step_11_mentor_response" in demo_data
+    from unittest.mock import patch
+    from app.services.llm_service import LLMService
+    mock_pipeline = EndToEndPipelineOrchestrator(llm_service=LLMService(provider="mock"))
+    with patch("app.main.pipeline_orchestrator.run_pipeline", side_effect=mock_pipeline.run_pipeline):
+        # Test demo endpoint
+        demo_resp = client.get("/api/ai/pipeline/demo")
+        assert demo_resp.status_code == 200
+        demo_data = demo_resp.json()
+        assert demo_data["target_role"] == "AI/ML Engineer"
+        assert "step_1_resume_analysis" in demo_data
+        assert "step_11_mentor_response" in demo_data
 
-    # Test run endpoint with payload
-    run_resp = client.post("/api/ai/pipeline/run", json={
-        "target_role": "AI/ML Engineer",
-        "available_time": 120
-    })
-    assert run_resp.status_code == 200
-    run_data = run_resp.json()
-    assert run_data["available_time"] == 120
+        # Test run endpoint with payload
+        run_resp = client.post("/api/ai/pipeline/run", json={
+            "target_role": "AI/ML Engineer",
+            "available_time": 120
+        })
+        assert run_resp.status_code == 200
+        run_data = run_resp.json()
+        assert run_data["available_time"] == 120

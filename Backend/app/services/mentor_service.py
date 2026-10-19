@@ -18,9 +18,14 @@ class MentorService:
         self.context_service = MentorContextService(db)
         self.ai_client = ai_client or AIClient()
 
-    async def create_conversation(self, user_id: str, title: Optional[str] = None) -> Dict[str, Any]:
+    async def create_conversation(
+        self,
+        user_id: str,
+        title: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Create a new mentor conversation session."""
-        conv_id = f"conv_{user_id}_{int(datetime.now(timezone.utc).timestamp())}_{uuid.uuid4().hex[:4]}"
+        conv_id = conversation_id or f"conv_{user_id}_{int(datetime.now(timezone.utc).timestamp())}_{uuid.uuid4().hex[:4]}"
         session_data = {
             "conversation_id": conv_id,
             "user_id": user_id,
@@ -71,12 +76,18 @@ class MentorService:
         # 1. Validate conversation ownership and status
         conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
         if not conv:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Mentor conversation not found.",
-            )
-
-        if conv.get("status") == "archived":
+            if conversation_id.startswith("session-") or conversation_id.startswith("local_"):
+                conv = await self.create_conversation(
+                    user_id=user_id,
+                    title=clean_message[:30] + ("..." if len(clean_message) > 30 else ""),
+                    conversation_id=conversation_id,
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Mentor conversation not found.",
+                )
+        elif conv.get("status") == "archived":
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Cannot send message to an archived conversation.",
@@ -131,9 +142,20 @@ class MentorService:
         try:
             ai_res = await self.ai_client.chat_mentor(ai_payload)
         except AIClientError as e:
-            logger.warning("AI Service unavailable for Mentor Chat (%s), using local fallback engine.", e)
-            from app.engines.mentor_engine import AIMentorEngine
-            ai_res = AIMentorEngine().chat(ai_payload)
+            err_str = str(e)
+            logger.error("AI Service communication error during Mentor Chat: %s", err_str)
+            if "429" in err_str or "rate limit" in err_str.lower():
+                ai_res = {
+                    "answer": "The AI Mentor is currently experiencing high demand (Rate limit reached). Please wait a moment and try asking again.",
+                    "intent": "rate_limited",
+                    "context_sources": [],
+                    "evidence": ["Groq API Rate Limit Reached"],
+                    "suggested_actions": ["Retry question in 30 seconds", "What can I do today?"],
+                    "confidence": 0.0,
+                }
+            else:
+                from app.engines.mentor_engine import AIMentorEngine
+                ai_res = AIMentorEngine().chat(ai_payload)
         except Exception as e:
             logger.error("Unexpected error during AI Mentor generation: %s", e)
             from app.engines.mentor_engine import AIMentorEngine
@@ -143,7 +165,13 @@ class MentorService:
         intent = ai_res.get("intent", "general_placement")
         sources = ai_res.get("context_sources", ["profile", "readiness"])
         evidence = ai_res.get("evidence", [])
-        actions = ai_res.get("suggested_actions", [])
+        raw_actions = ai_res.get("suggested_actions") or ai_res.get("recommended_actions") or []
+        actions = []
+        for a in raw_actions:
+            if isinstance(a, str):
+                actions.append({"label": a, "route": "/tasks"})
+            elif isinstance(a, dict):
+                actions.append({"label": a.get("label") or a.get("title") or "Action", "route": a.get("route") or "/tasks"})
         confidence = float(ai_res.get("confidence", 0.85))
 
         # 6. Save assistant message
@@ -190,11 +218,18 @@ class MentorService:
         if conversation_id:
             conv = await self.mentor_repo.get_conversation_by_id(conversation_id, user_id=user_id)
             if not conv:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Mentor conversation not found.",
-                )
-            if conv.get("status") == "archived":
+                if conversation_id.startswith("session-") or conversation_id.startswith("local_"):
+                    conv = await self.create_conversation(
+                        user_id=user_id,
+                        title=clean_message[:30] + ("..." if len(clean_message) > 30 else ""),
+                        conversation_id=conversation_id,
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Mentor conversation not found.",
+                    )
+            elif conv.get("status") == "archived":
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Cannot send message to an archived conversation.",
