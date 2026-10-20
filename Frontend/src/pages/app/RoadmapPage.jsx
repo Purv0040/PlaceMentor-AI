@@ -169,7 +169,7 @@ export const RoadmapPage = () => {
   const phaseTasks = useMemo(() => {
     if (!activePhase || !Array.isArray(tasks)) return [];
     return tasks
-      .filter((task) => task.taskId && task.dayNumber >= activePhase.startDay && task.dayNumber <= activePhase.endDay)
+      .filter((task) => (task.id || task.taskId) && task.dayNumber >= activePhase.startDay && task.dayNumber <= activePhase.endDay)
       .sort((a, b) => a.dayNumber - b.dayNumber || a.title.localeCompare(b.title));
   }, [activePhase, tasks]);
 

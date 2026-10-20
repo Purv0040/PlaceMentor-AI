@@ -1,6 +1,6 @@
 // Centralized dynamic data generator for Today's Tasks (13.html, 20.html)
 
-export const getDynamicTasks = (explicitRole = null, explicitSkills = null, explicitDay = 1) => {
+const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, explicitDay = 1) => {
   let role = explicitRole || 'Cybersecurity Analyst & Engineer';
   let skills = explicitSkills || ['Python', 'Java', 'Data Structures', 'SQL'];
 
@@ -231,6 +231,16 @@ export const getDynamicTasks = (explicitRole = null, explicitSkills = null, expl
   }
 };
 
+export const getDynamicTasks = (explicitRole = null, explicitSkills = null, explicitDay = 1) => {
+  const list = _generateDynamicTasks(explicitRole, explicitSkills, explicitDay) || [];
+  return list.map((t) => ({
+    ...t,
+    taskId: t.taskId || t.id,
+    status: t.completed ? 'completed' : (t.status || 'pending'),
+  }));
+};
+
 export const initialTaskData = getDynamicTasks();
 export const taskData = initialTaskData;
+
 

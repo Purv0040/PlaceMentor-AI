@@ -63,25 +63,73 @@ class AIInterviewEngine:
             ]
         }
 
+        # Specialized modality pools
+        behavioral_pool = [
+            ("Tell me about a time when a production service or machine learning model performed poorly or failed in production. Walk me through your Situation, Task, Action to diagnose and resolve it, and the measurable Result.", "Incident Response & STAR"),
+            ("Describe a challenging technical disagreement you had with an engineering peer or architect regarding design or tool selection. How did you navigate the conflict to reach alignment?", "Conflict Resolution & Communication"),
+            ("Describe a project where you had to balance short-term delivery pressure against long-term engineering health (technical debt, test coverage, or scalability). How did you prioritize tasks?", "Engineering Prioritization & Task Management"),
+            ("Tell me about an unassigned problem or optimization (such as reducing cloud latency or infrastructure costs) that you noticed and spearheaded proactively. What was the impact?", "Proactivity & Engineering Ownership"),
+            ("Describe a scenario where you had to explain a complex technical failure or architectural trade-off to non-technical executive stakeholders. How did you structure your communication?", "Technical Translation & Leadership"),
+        ]
+
+        dsa_pool = {
+            "AI/ML Engineer": [
+                ("Explain the mathematical formulation and complexity of Transformer Self-Attention: Softmax((Q*K^T)/sqrt(d_k))*V. Why is naive attention O(N^2) in sequence length, and how does FlashAttention optimize memory bandwidth?", "Attention Math & FlashAttention"),
+                ("Given 1,000,000 high-dimensional feature vectors (d=768), how do you find the K nearest neighbors efficiently? Compare brute-force search with Approximate Nearest Neighbors (ANN) using HNSW graphs.", "Vector Search & HNSW Graphs"),
+                ("In deep learning frameworks, how is the computational DAG built and traversed during forward/backward passes? Walk through the Topological Sort algorithm (Kahn's or DFS) used to schedule gradient backprop.", "DAG Traversal & Autograd"),
+                ("Explain how Byte-Pair Encoding (BPE) works algorithmically and how Dynamic Programming is applied to find the optimal subword segmentation or sequence edit distance.", "DP & String Tokenization"),
+            ],
+            "General": [
+                ("Design and implement an LRU (Least Recently Used) Cache with O(1) get and put time complexity. Which data structures do you combine and why?", "LRU Cache & Linked Hash Map"),
+                ("Given a large stream of items, find the Top K most frequent elements within limited memory. Walk through the algorithm using Min-Heap and Hash Map.", "Top K Elements & Min-Heap"),
+                ("Given a directed dependency graph of microservice tasks, write an algorithm to detect circular dependencies and output an executable order.", "Topological Sort & Cycle Detection"),
+                ("Solve the Sliding Window Maximum problem in linear O(N) time using a Monotonic Deque. Explain boundary index validation.", "Sliding Window & Deque"),
+            ]
+        }
+
         # Resolve role
         target_role_lower = target_role.lower()
         matched_pool = role_pools["Backend Developer"]
         if "full stack" in target_role_lower or "mern" in target_role_lower or "react" in target_role_lower or "frontend" in target_role_lower:
             matched_pool = role_pools["Full Stack Engineer"]
+            role_key = "Full Stack Engineer"
         elif "ai" in target_role_lower or "ml" in target_role_lower or "machine learning" in target_role_lower:
             matched_pool = role_pools["AI/ML Engineer"]
+            role_key = "AI/ML Engineer"
         elif "cloud" in target_role_lower or "devops" in target_role_lower or "aws" in target_role_lower:
             matched_pool = role_pools["AWS / DevOps & Cloud Engineer"]
+            role_key = "AWS / DevOps & Cloud Engineer"
         elif "cyber" in target_role_lower or "security" in target_role_lower or "analyst" in target_role_lower:
             matched_pool = role_pools["Cybersecurity Analyst & Engineer"]
+            role_key = "Cybersecurity Analyst & Engineer"
+        else:
+            role_key = "Backend Developer"
+
+        # Resolve modality
+        itype = interview_type.lower()
+        if "star" in itype or "behavioral" in itype or "hr" in itype:
+            candidate_pool = behavioral_pool
+        elif "dsa" in itype or "drill" in itype or "coding" in itype or "algo" in itype:
+            candidate_pool = dsa_pool.get(role_key, dsa_pool["General"])
+        elif "combined" in itype or "tier" in itype or "full" in itype:
+            # Multi-stage round rotation
+            stage = (q_num - 1) % 3
+            if stage == 0:
+                candidate_pool = dsa_pool.get(role_key, dsa_pool["General"])
+            elif stage == 1:
+                candidate_pool = matched_pool
+            else:
+                candidate_pool = behavioral_pool
+        else:
+            candidate_pool = matched_pool
 
         # Extract previous questions to avoid repeating the exact same question in a session
         prev_qa = self._get_val(request, "previous_qa", [])
         asked_texts = {p.get("question") if isinstance(p, dict) else getattr(p, "question", "") for p in prev_qa}
 
         # Filter out questions already asked
-        unasked = [item for item in matched_pool if item[0] not in asked_texts]
-        candidates = unasked if unasked else matched_pool
+        unasked = [item for item in candidate_pool if item[0] not in asked_texts]
+        candidates = unasked if unasked else candidate_pool
 
         # Randomize selection for true variance instead of static index 0
         selected_q, category = random.choice(candidates)
@@ -96,6 +144,46 @@ class AIInterviewEngine:
             "expected_focus": "Factual correctness, concrete architecture details, trade-offs, and metrics.",
             "hint": "Structure your answer: 1. Core concept & definition, 2. Architecture/Algorithm, 3. Trade-offs and quantitative impact.",
         }
+
+    def _is_non_answer(self, ans: str) -> bool:
+        if not ans:
+            return True
+        import re
+        cleaned = re.sub(r"[^\w\s]", " ", ans.strip().lower())
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        compact = cleaned.replace(" ", "")
+
+        non_answer_exact = {
+            "na", "none", "nil", "null", "nothing", "idk", "dunno", "pass",
+            "skip", "next", "no", "nope", "dont know", "dontknow", "donot know",
+            "donotknow", "do not know", "no idea", "noidea", "no clue", "noclue",
+            "not sure", "notsure", "not known", "notknown", "unknown", "cant answer",
+            "cannot answer", "unable to answer", "no answer", "no response",
+            "idont know", "i dont know", "i donot know", "i do not know",
+            "i have no idea", "i have no clue", "not aware", "dont remember"
+        }
+        if cleaned in non_answer_exact or compact in non_answer_exact or ans.strip().lower() in non_answer_exact:
+            return True
+
+        if len(compact) <= 3:
+            return True
+
+        tokens = cleaned.split()
+        if len(tokens) <= 12:
+            raw_no_quote = ans.lower().replace("'", "").replace("’", "")
+            phrases = [
+                "dont know", "donot know", "do not know", "no idea", "no clue",
+                "not sure", "not familiar", "havent learned", "havent studied",
+                "cant answer", "cannot answer", "skip this", "pass this",
+                "no knowledge", "zero knowledge", "forgot this", "dont remember"
+            ]
+            if any(p in raw_no_quote for p in phrases):
+                return True
+
+        if bool(re.match(r"^(.)\1{3,}$", compact)) or bool(re.match(r"^(asdf|qwer|zxcv|1234|abcd)+$", compact, re.IGNORECASE)):
+            return True
+
+        return False
 
     def evaluate_answer(self, request: Any) -> Dict[str, Any]:
         """
@@ -113,26 +201,50 @@ class AIInterviewEngine:
         words = ans.split()
         word_count = len(words)
 
-        # Baseline: If answer is empty or too short (< 8 words)
-        if word_count < 8:
+        # 1. Non-answer check: "NA", "i donot know", "idk", "no idea", "pass", "skip", etc.
+        if self._is_non_answer(ans):
             return {
-                "score": 30,
-                "correctness": 30,
-                "relevance": 35,
-                "clarity": 30,
-                "depth": 20,
-                "technical_accuracy": 30,
-                "communication_quality": 35,
-                "strengths": ["Submitted an initial response."],
+                "score": 0,
+                "correctness": 0,
+                "relevance": 0,
+                "clarity": 0,
+                "depth": 0,
+                "technical_accuracy": 0,
+                "communication_quality": 0,
+                "strengths": [
+                    "Acknowledged knowledge gap honestly instead of fabricating incorrect information."
+                ],
                 "weaknesses": [
-                    "Answer is too brief and lacks technical depth.",
-                    "No concrete implementation details or architectural reasoning provided."
+                    "Did not attempt the technical prompt or demonstrate foundational engineering knowledge.",
+                    "Lacks familiarity with the required domain concept."
                 ],
                 "improvement_suggestions": [
-                    "Elaborate thoroughly: explain the core mechanism, specific technologies, and trade-offs.",
+                    "Review core concepts, architecture patterns, and industry use-cases for this topic.",
+                    "In technical interviews, try to reason from first principles or discuss related concepts rather than passing completely."
+                ],
+                "ai_feedback": f"No answer provided (0/100). The candidate answered '{ans[:40]}' and did not attempt the technical prompt.",
+                "is_passable": False,
+            }
+
+        # 2. Trivial response check (< 6 words with 0 technical terms)
+        if word_count < 6:
+            return {
+                "score": 5,
+                "correctness": 5,
+                "relevance": 5,
+                "clarity": 5,
+                "depth": 5,
+                "technical_accuracy": 5,
+                "communication_quality": 5,
+                "strengths": ["Submitted a brief response."],
+                "weaknesses": [
+                    "Answer is too brief and contains no technical substance, mechanisms, or explanations."
+                ],
+                "improvement_suggestions": [
+                    "Provide a thorough technical explanation covering mechanisms, tools, and trade-offs.",
                     "Aim for at least 40-80 words to thoroughly answer multi-part questions."
                 ],
-                "ai_feedback": "The response was too brief to demonstrate technical competence. Please explain your approach in detail with specific concepts and trade-offs.",
+                "ai_feedback": "Insufficient response (5/100). The response contains no relevant technical explanation.",
                 "is_passable": False,
             }
 

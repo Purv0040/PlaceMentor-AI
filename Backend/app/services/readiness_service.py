@@ -153,9 +153,22 @@ class ReadinessService:
                         for g in ai_interpretation["key_gaps"]:
                             if g not in computed_result["key_gaps"]:
                                 computed_result["key_gaps"].append(g)
-                        computed_result["key_gaps"] = computed_result["key_gaps"][:4]
         except Exception as e:
             logger.warning("AI microservice readiness calculation fallback engaged: %s", e)
+
+        # Remove any CS Fundamentals references from strengths, key_gaps, and recommendations
+        computed_result["strengths"] = [
+            s for s in computed_result.get("strengths", [])
+            if "cs fundamental" not in str(s).lower()
+        ]
+        computed_result["key_gaps"] = [
+            g for g in computed_result.get("key_gaps", [])
+            if "cs fundamental" not in str(g).lower()
+        ]
+        computed_result["recommendations"] = [
+            r for r in computed_result.get("recommendations", [])
+            if "cs fundamental" not in str(r).lower()
+        ]
 
         # 10. Persist result in MongoDB Atlas
         created = await self.repo.create_analysis(user_id, computed_result)
@@ -167,6 +180,19 @@ class ReadinessService:
         latest = await self.repo.get_latest_by_user(user_id)
         if not latest:
             return await self.analyze_readiness(user_id)
+        # Sanitize any legacy CS Fundamentals gaps stored in previous database snapshots
+        if isinstance(latest, dict):
+            if "categories" in latest and isinstance(latest["categories"], dict):
+                latest["categories"] = {
+                    k: v for k, v in latest["categories"].items()
+                    if "cs fundamental" not in str(k).lower()
+                }
+            if "key_gaps" in latest and isinstance(latest["key_gaps"], list):
+                latest["key_gaps"] = [g for g in latest["key_gaps"] if "cs fundamental" not in str(g).lower()]
+            if "strengths" in latest and isinstance(latest["strengths"], list):
+                latest["strengths"] = [s for s in latest["strengths"] if "cs fundamental" not in str(s).lower()]
+            if "recommendations" in latest and isinstance(latest["recommendations"], list):
+                latest["recommendations"] = [r for r in latest["recommendations"] if "cs fundamental" not in str(r).lower()]
         return latest
 
     async def get_readiness_summary(self, user_id: str) -> Dict[str, Any]:
@@ -211,8 +237,21 @@ class ReadinessService:
             "categories": {
                 name: {"score": cat.get("score"), "status": cat.get("status")}
                 for name, cat in latest.get("categories", {}).items()
-                if isinstance(cat, dict)
+                if isinstance(cat, dict) and "cs fundamental" not in name.lower()
             },
+            "vector_scores": [
+                {
+                    "name": name,
+                    "vector": name,
+                    "score": cat.get("score", 0),
+                    "status": cat.get("status", "assessed"),
+                    "target": 85,
+                    "weight": cat.get("weight", 0.15),
+                    "reason": cat.get("reason", "")
+                }
+                for name, cat in latest.get("categories", {}).items()
+                if isinstance(cat, dict) and "cs fundamental" not in name.lower()
+            ],
             "updated_at": updated_at_val
         }
 

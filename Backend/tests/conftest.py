@@ -66,7 +66,7 @@ class AsyncMockCollection:
                     return False
         return True
 
-    async def find_one(self, filter_dict: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def find_one(self, filter_dict: Dict[str, Any], *args: Any, **kwargs: Any) -> Optional[Dict[str, Any]]:
         for doc in self.docs.values():
             if self._matches_filter(doc, filter_dict):
                 return dict(doc)

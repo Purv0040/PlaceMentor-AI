@@ -150,11 +150,20 @@ export const mentorService = {
     }
   },
 
+  archiveConversation: async (conversationId) => {
+    try {
+      return await apiRequest(`/mentor/conversations/${conversationId}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      return null;
+    }
+  },
+
   askMentor: async (message, conversationId = null, targetRole = null, studentName = null, conversationHistory = null) => {
     try {
       return await apiRequest('/mentor/ask', {
         method: 'POST',
-        isPublic: true,
         body: JSON.stringify({
           message,
           conversation_id: conversationId,
@@ -169,13 +178,36 @@ export const mentorService = {
     }
   },
 
-  // Retrieve all stored chat sessions
-  getStoredSessions: () => {
+  // Helper to generate consistent user-scoped storage keys
+  getStorageKey: (userId, keyName) => {
+    let cleanId = 'guest';
+    if (userId) {
+      cleanId = String(userId).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    }
+    return `${keyName}_${cleanId}`;
+  },
+
+  // Retrieve stored chat sessions scoped to the specific user
+  getStoredSessions: (userId = null) => {
     try {
-      const saved = localStorage.getItem('placementMentorSessions');
+      const key = mentorService.getStorageKey(userId, 'placementMentorSessions');
+      const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+
+      // If no user-scoped sessions exist yet, migrate legacy global sessions for the primary user
+      const legacy = localStorage.getItem('placementMentorSessions');
+      if (legacy) {
+        try {
+          const legacyParsed = JSON.parse(legacy);
+          if (Array.isArray(legacyParsed) && legacyParsed.length > 0) {
+            localStorage.setItem(key, legacy);
+            localStorage.removeItem('placementMentorSessions');
+            return legacyParsed;
+          }
+        } catch (e) {}
       }
     } catch (e) {
       console.error('Failed to parse mentor sessions from localStorage', e);
@@ -183,18 +215,20 @@ export const mentorService = {
     return [];
   },
 
-  saveStoredSessions: (sessions) => {
+  saveStoredSessions: (sessions, userId = null) => {
     try {
-      localStorage.setItem('placementMentorSessions', JSON.stringify(sessions));
+      const key = mentorService.getStorageKey(userId, 'placementMentorSessions');
+      localStorage.setItem(key, JSON.stringify(sessions));
     } catch (e) {
       console.error('Failed to save mentor sessions to localStorage', e);
     }
   },
 
-  // Retrieve stored conversation from localStorage
-  getStoredChat: () => {
+  // Retrieve stored conversation from localStorage scoped to user
+  getStoredChat: (userId = null) => {
     try {
-      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      const key = mentorService.getStorageKey(userId, CHAT_STORAGE_KEY);
+      const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -217,28 +251,35 @@ export const mentorService = {
     return null;
   },
 
-  saveChat: (messages) => {
+  saveChat: (messages, userId = null) => {
     try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+      const key = mentorService.getStorageKey(userId, CHAT_STORAGE_KEY);
+      localStorage.setItem(key, JSON.stringify(messages));
     } catch (e) {
       console.error('Failed to save mentor chat to localStorage', e);
     }
   },
 
-  clearChat: () => {
+  clearChat: (userId = null) => {
     try {
-      localStorage.removeItem(CHAT_STORAGE_KEY);
+      const key = mentorService.getStorageKey(userId, CHAT_STORAGE_KEY);
+      localStorage.removeItem(key);
     } catch (e) {
       console.error('Failed to clear mentor chat localStorage', e);
     }
   },
 
   getInitialGreeting: (context, persona = 'tech') => {
+    const studentName = context?.user?.name ? `${context.user.name}` : null;
+    const namePrefix = studentName ? `Hi ${studentName}! ` : 'Hi! ';
+    const targetRole = context?.user?.targetRole || null;
+    const roleSuffix = targetRole ? ` for your **${targetRole}** goals` : '';
+
     const greetingsByPersona = {
-      tech: "Hi! I'm your Technical Interviewer & DSA Copilot 🚀\n\nAsk me about algorithms, coding problems, system design, or code review.",
-      dsa: "Welcome to DSA Mode! 🧠\n\nLet's master patterns like Two Pointers, Sliding Window, Trees, and Dynamic Programming.",
-      story: "Hello! I'm your STAR Behavioral Coach 🎯\n\nLet's refine your behavioral answers using Situation, Task, Action, and Result with quantifiable impact.",
-      strat: "Welcome! I'm your Placement Strategist 📈\n\nI can analyze your 90-day roadmap, skill gaps, company tier targets, and interview milestones."
+      tech: `${namePrefix}I'm your Technical Interviewer & DSA Copilot 🚀\n\nAsk me about algorithms, coding problems, system design, or code review${roleSuffix}.`,
+      dsa: `Welcome to DSA Mode${studentName ? `, ${studentName}` : ''}! 🧠\n\nLet's master patterns like Two Pointers, Sliding Window, Trees, and Dynamic Programming${roleSuffix}.`,
+      story: `Hello${studentName ? ` ${studentName}` : ''}! I'm your STAR Behavioral Coach 🎯\n\nLet's refine your behavioral answers using Situation, Task, Action, and Result with quantifiable impact${roleSuffix}.`,
+      strat: `Welcome${studentName ? `, ${studentName}` : ''}! I'm your Placement Strategist 📈\n\nI can analyze your 90-day roadmap, skill gaps, company tier targets, and interview milestones${roleSuffix}.`
     };
 
     return [
@@ -248,7 +289,7 @@ export const mentorService = {
         role: 'assistant',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         verified: false,
-        text: greetingsByPersona[persona] || "Hi! Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready.",
+        text: greetingsByPersona[persona] || `${namePrefix}Ready to grow? 🚀\n\nLet's build your skills and get you placement-ready${roleSuffix}.`,
         codeSnippet: null
       }
     ];

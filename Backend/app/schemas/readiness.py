@@ -287,6 +287,7 @@ class ReadinessSummaryDataSchema(BaseModel):
         default_factory=dict,
         json_schema_extra={"example": EXAMPLE_SUMMARY_CATEGORIES}
     )
+    vector_scores: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
     updated_at: Optional[Any] = Field(None, example="2026-10-07T12:00:00Z")
 
 

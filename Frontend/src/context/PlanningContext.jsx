@@ -15,15 +15,23 @@ const mergeTaskProgress = (current, apiProgress) => apiProgress ? {
 } : current;
 
 export const PlanningProvider = ({ children }) => {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [planningState, setPlanningState] = useState(() => planningService.getInitialState());
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const currentUserId = user?.id || user?._id || null;
+  const [planningState, setPlanningState] = useState(() => planningService.getInitialState(currentUserId));
   const [toastNotification, setToastNotification] = useState(null);
   const [planningLoading, setPlanningLoading] = useState(false);
   const [planningError, setPlanningError] = useState(null);
 
+  // Sync state if user changes
   useEffect(() => {
-    planningService.saveState(planningState);
-  }, [planningState]);
+    if (currentUserId) {
+      setPlanningState(planningService.getInitialState(currentUserId));
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    planningService.saveState(planningState, currentUserId);
+  }, [planningState, currentUserId]);
 
   const showToast = (message) => {
     setToastNotification(message);
@@ -45,46 +53,78 @@ export const PlanningProvider = ({ children }) => {
         planningService.getTaskProgressFromApi(),
     ]);
 
+    const currentRoadmapId = apiRoadmap?.roadmapId || apiRoadmap?.id;
     const activeTasks = Array.isArray(apiTasks)
-      ? apiTasks.filter((task) => !apiRoadmap?.roadmapId || task.roadmapId === apiRoadmap.roadmapId)
+      ? apiTasks.filter((task) => !currentRoadmapId || task.roadmapId === currentRoadmapId || !task.roadmapId)
       : null;
     const phases = apiRoadmap?.phases || [];
     const currentDay = Number(roadmapSummary?.current_day) || null;
     const currentPhase = phases.find((phase) => currentDay && currentDay >= phase.startDay && currentDay <= phase.endDay);
 
     if (apiTasks && apiRoadmap && roadmapSummary) {
-      const taskTotal = activeTasks ? activeTasks.length : 0;
-      const taskCompleted = activeTasks ? activeTasks.filter((t) => t.completed || t.status === 'completed').length : 0;
-      const computedTaskPercent = taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0;
-      const apiPercent = Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage);
-      const finalPercent = (!isNaN(apiPercent) && apiPercent > 0) ? apiPercent : computedTaskPercent;
+      setPlanningState((prev) => {
+        // Reconcile with local session so recently completed tasks never revert on refresh
+        const prevCompletedMap = new Map();
+        if (Array.isArray(prev.tasks)) {
+          for (const t of prev.tasks) {
+            if (t.completed || t.status === 'completed') {
+              if (t.id) prevCompletedMap.set(String(t.id), t);
+              if (t.taskId) prevCompletedMap.set(String(t.taskId), t);
+            }
+          }
+        }
 
-      setPlanningState((prev) => ({
-        ...prev,
-        tasks: activeTasks,
-        roadmap: {
-          ...apiRoadmap,
-          currentDay,
-          currentPhaseId: currentPhase?.id || null,
-          currentPhaseName: roadmapSummary.current_phase_name || currentPhase?.title || null,
-          overallProgressPercent: finalPercent,
-        },
-        progress: mergeTaskProgress(
-          {
-            ...prev.progress,
-            totalTasksCount: taskTotal,
-            completedTasksCount: taskCompleted,
+        const reconciledTasks = Array.isArray(activeTasks)
+          ? activeTasks.map((task) => {
+              const matchedPrev = prevCompletedMap.get(String(task.id)) || (task.taskId ? prevCompletedMap.get(String(task.taskId)) : null);
+              if (matchedPrev && !task.completed && task.status !== 'completed') {
+                return {
+                  ...task,
+                  completed: true,
+                  status: 'completed',
+                  completedAt: matchedPrev.completedAt || task.completedAt || new Date().toISOString(),
+                };
+              }
+              return task;
+            })
+          : activeTasks;
+
+        const taskTotal = reconciledTasks ? reconciledTasks.length : 0;
+        const taskCompleted = reconciledTasks ? reconciledTasks.filter((t) => t.completed || t.status === 'completed').length : 0;
+        const computedTaskPercent = taskTotal > 0 ? Math.round((taskCompleted / taskTotal) * 100) : 0;
+        const apiPercent = Number(roadmapSummary.roadmap_completion_percentage ?? roadmapSummary.progress_percentage);
+        const finalPercent = (!isNaN(apiPercent) && apiPercent > 0) ? apiPercent : computedTaskPercent;
+
+        const nextState = {
+          ...prev,
+          tasks: reconciledTasks,
+          roadmap: {
+            ...apiRoadmap,
+            currentDay,
+            currentPhaseId: currentPhase?.id || null,
+            currentPhaseName: roadmapSummary.current_phase_name || currentPhase?.title || null,
             overallProgressPercent: finalPercent,
           },
-          taskProgress
-        ),
-      }));
+          progress: mergeTaskProgress(
+            {
+              ...prev.progress,
+              totalTasksCount: taskTotal,
+              completedTasksCount: taskCompleted,
+              overallProgressPercent: finalPercent,
+            },
+            taskProgress
+          ),
+        };
+
+        planningService.saveState(nextState, currentUserId);
+        return nextState;
+      });
       setPlanningError(null);
     } else {
       setPlanningError('Your roadmap could not be loaded. Check your connection and try again.');
     }
     setPlanningLoading(false);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentUserId]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -104,7 +144,7 @@ export const PlanningProvider = ({ children }) => {
     // 1. Optimistic update of tasks AND overall progress metrics immediately
     setPlanningState((prevState) => {
       const nextTasks = prevState.tasks.map((task) =>
-        (task.id === targetTask.id || (targetTask.taskId && task.taskId === targetTask.taskId))
+        (task.id === targetTask.id || (targetTask.taskId && task.taskId && task.taskId === targetTask.taskId))
           ? {
               ...task,
               status: nextStatus,
@@ -118,7 +158,7 @@ export const PlanningProvider = ({ children }) => {
       const completedCount = nextTasks.filter((t) => t.completed || t.status === 'completed').length;
       const computedPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-      return {
+      const nextState = {
         ...prevState,
         tasks: nextTasks,
         roadmap: {
@@ -132,11 +172,15 @@ export const PlanningProvider = ({ children }) => {
           overallProgressPercent: computedPercent,
         },
       };
+
+      planningService.saveState(nextState, currentUserId);
+      return nextState;
     });
 
     showToast(isCompleted ? 'Task completed.' : 'Task reopened.');
 
-    const backendId = targetTask.taskId || targetTask.id;
+    // PREFER unique MongoDB document _id (targetTask.id) so it never targets duplicate taskIds from older roadmaps
+    const backendId = targetTask.id || targetTask.taskId;
     const isLocalTask = !backendId || String(backendId).startsWith('task-skill-');
     if (!isLocalTask) {
       try {
@@ -156,7 +200,7 @@ export const PlanningProvider = ({ children }) => {
               : null;
             const finalPercent = (apiPercent != null && !isNaN(apiPercent)) ? apiPercent : fallbackPercent;
 
-            return {
+            const nextState = {
               ...prev,
               roadmap: roadmapSummary ? {
                 ...prev.roadmap,
@@ -169,6 +213,9 @@ export const PlanningProvider = ({ children }) => {
               },
               progress: mergeTaskProgress(prev.progress, taskProgress),
             };
+
+            planningService.saveState(nextState, currentUserId);
+            return nextState;
           });
         }
       } catch (err) {

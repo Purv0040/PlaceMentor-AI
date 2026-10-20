@@ -42,12 +42,23 @@ export const MockInterviewPage = () => {
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [sessionConfig, setSessionConfig] = useState(null);
   const [activeSession, setActiveSession] = useState(null);
+  const [questionsList, setQuestionsList] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
-  const [totalQuestions, setTotalQuestions] = useState(5);
-  const [answerText, setAnswerText] = useState('');
+  const [totalQuestions, setTotalQuestions] = useState(3);
+  const [answersMap, setAnswersMap] = useState({});
   const [showHint, setShowHint] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+
+  // Synchronize answerText for the currently active question
+  const answerText = answersMap[questionNumber] || '';
+  const setAnswerText = (valOrUpdater) => {
+    setAnswersMap((prev) => {
+      const prevVal = prev[questionNumber] || '';
+      const nextVal = typeof valOrUpdater === 'function' ? valOrUpdater(prevVal) : valOrUpdater;
+      return { ...prev, [questionNumber]: nextVal };
+    });
+  };
 
   // Per-question feedback and completed session records
   const [currentQuestionEval, setCurrentQuestionEval] = useState(null);
@@ -113,47 +124,82 @@ export const MockInterviewPage = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Ensure questionsList is populated if session becomes active without it
+  useEffect(() => {
+    if (sessionState === 'active' && questionsList.length === 0) {
+      const targetDomain = sessionConfig?.role || user?.targetRole || 'Full Stack Engineer';
+      const modality = sessionConfig?.modality || 'System Architecture & Design';
+      const difficulty = sessionConfig?.difficulty || 'Medium';
+      const initialList = [];
+      for (let i = 1; i <= totalQuestions; i++) {
+        initialList.push(getDynamicQuestion(targetDomain, i, initialList, modality, difficulty));
+      }
+      setQuestionsList(initialList);
+      if (!currentQuestion) {
+        setCurrentQuestion(initialList[0]);
+      }
+    }
+  }, [sessionState, questionsList.length, totalQuestions, sessionConfig]);
+
   // Start interview session
   const handleStartInterview = async (config) => {
     setSessionConfig(config);
-    setAnswerText('');
+    setAnswersMap({});
     setSecondsElapsed(0);
     setShowHint(false);
     setCurrentQuestionEval(null);
     setNextQuestionPending(null);
     setCompletedQuestionsList([]);
     setFinalSessionSummary(null);
+
+    const qCount = config.questionCount || 3;
+    setTotalQuestions(qCount);
+    setQuestionNumber(1);
+
+    const targetDomain = config?.role || user?.targetRole || 'Full Stack Engineer';
+    const modality = config?.modality || 'System Architecture & Design';
+    const difficulty = config?.difficulty || 'Medium';
+
+    // Pre-generate all questions for this session so candidate can click Q1, Q2, Q3 immediately
+    const generatedList = [];
+    for (let i = 1; i <= qCount; i++) {
+      const q = getDynamicQuestion(targetDomain, i, generatedList, modality, difficulty);
+      generatedList.push(q);
+    }
+    setQuestionsList(generatedList);
+    setCurrentQuestion(generatedList[0]);
+
     try {
-      const targetDomain = config?.role || user?.targetRole || 'Full Stack Engineer';
       const res = await interviewService.startInterview({
         ...config,
         role: targetDomain,
+        question_count: qCount,
       });
       if (res && res.interview_id) {
         setActiveSession(res);
-        setTotalQuestions(res.total_questions || config.questionCount || 3);
-        setQuestionNumber(res.current_question || 1);
         if (res.current_question_data) {
-          setCurrentQuestion(res.current_question_data);
-        } else {
-          const dynamicQ = getDynamicQuestion(targetDomain, 1, []);
-          setCurrentQuestion(dynamicQ);
+          generatedList[0] = {
+            ...generatedList[0],
+            ...res.current_question_data,
+            question: res.current_question_data.question || generatedList[0].question,
+          };
+          setQuestionsList([...generatedList]);
+          setCurrentQuestion(generatedList[0]);
         }
-        setSessionState('active');
-      } else {
-        const dynamicQ = getDynamicQuestion(targetDomain, 1, []);
-        setCurrentQuestion(dynamicQ);
-        setQuestionNumber(1);
-        setTotalQuestions(config.questionCount || 3);
-        setSessionState('active');
       }
     } catch (e) {
-      const targetDomain = config?.role || user?.targetRole || 'Full Stack Engineer';
-      const dynamicQ = getDynamicQuestion(targetDomain, 1, []);
-      setCurrentQuestion(dynamicQ);
-      setQuestionNumber(1);
-      setTotalQuestions(config.questionCount || 3);
-      setSessionState('active');
+      console.warn("Backend startInterview error, using dynamic generated questions:", e);
+    }
+    setSessionState('active');
+  };
+
+  // Select question from stepper pill or navigation button
+  const handleSelectQuestion = (stepNum) => {
+    if (stepNum < 1 || stepNum > totalQuestions) return;
+    setQuestionNumber(stepNum);
+    setShowHint(false);
+    if (questionsList[stepNum - 1]) {
+      setCurrentQuestion(questionsList[stepNum - 1]);
     }
   };
 
@@ -168,141 +214,288 @@ export const MockInterviewPage = () => {
     }
   };
 
-  // Submit answer for evaluation
-  const handleSubmitAnswer = async () => {
-    if (!answerText.trim()) return;
-    const submittedAnswer = answerText.trim();
+  // Strict non-answer detection (e.g. "NA", "i donot know", "idk", "pass", "skip", etc.)
+  const isNonAnswer = (text) => {
+    if (!text) return true;
+    const trimmed = text.trim();
+    const cleaned = trimmed.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    const compact = cleaned.replace(/\s+/g, '');
+
+    const nonAnswerExact = new Set([
+      'na', 'n a', 'none', 'nil', 'null', 'nothing', 'no', 'nope', 'idk', 'dunno',
+      'pass', 'skip', 'next', 'dont know', 'dontknow', 'donot know', 'donotknow',
+      'do not know', 'no idea', 'noidea', 'no clue', 'noclue', 'not sure', 'notsure',
+      'not known', 'notknown', 'unknown', 'cant answer', 'cannot answer', 'unable to answer',
+      'no answer', 'no response', 'idont know', 'i dont know', 'i donot know', 'i do not know',
+      'i have no idea', 'i have no clue', 'not aware', 'dont remember', 'do not remember'
+    ]);
+
+    if (nonAnswerExact.has(cleaned) || nonAnswerExact.has(compact) || nonAnswerExact.has(trimmed.toLowerCase())) {
+      return true;
+    }
+
+    if (compact.length <= 3) {
+      return true;
+    }
+
+    const words = cleaned.split(' ').filter(Boolean);
+    if (words.length <= 12) {
+      const phrases = [
+        'dont know', 'donot know', 'do not know', 'no idea', 'no clue',
+        'not sure', 'not familiar', 'havent learned', 'havent studied',
+        'cant answer', 'cannot answer', 'skip this', 'pass this',
+        'no knowledge', 'zero knowledge', 'forgot this', 'dont remember'
+      ];
+      if (phrases.some((p) => cleaned.includes(p))) {
+        return true;
+      }
+    }
+
+    if (/^(.)\1{3,}$/.test(compact) || /^(asdf|qwer|zxcv|1234|abcd)+$/i.test(compact)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Evaluation rubric helper for evaluating question responses
+  const evaluateAnswerRubric = (questionObj, submittedAnswer) => {
+    const rawTrimmed = (submittedAnswer || '').trim();
+
+    // 1. Non-answer check: Award strictly 0 points
+    if (isNonAnswer(rawTrimmed)) {
+      return {
+        score: 0,
+        technicalAccuracy: 0,
+        communicationClarity: 0,
+        answerStructure: 0,
+        aiFeedback: `No answer provided (0/100). The candidate answered "${rawTrimmed.slice(0, 40)}" and did not attempt the technical prompt.`,
+        strengths: [
+          "Acknowledged knowledge gap honestly instead of fabricating incorrect information."
+        ],
+        weaknesses: [
+          "Did not attempt the technical question or demonstrate foundational knowledge.",
+          "Lacks familiarity with the required domain concept."
+        ],
+        improvementSuggestions: [
+          "Review core technical concepts, architecture mechanisms, and industry use-cases for this topic.",
+          "In technical interviews, try to reason from first principles or discuss related technologies rather than passing completely."
+        ],
+        modelAnswer: questionObj?.hint || questionObj?.expected_focus || "Optimal response explains core principles, architecture mechanisms, and concrete system trade-offs.",
+      };
+    }
+
+    const words = rawTrimmed.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    const lowerAns = rawTrimmed.toLowerCase();
+
+    const isBehavioral = String(questionObj?.modality || questionObj?.category || '').toLowerCase().includes('behavioral') ||
+      String(questionObj?.modality || questionObj?.category || '').toLowerCase().includes('star');
+
+    const isDsa = String(questionObj?.modality || questionObj?.category || '').toLowerCase().includes('dsa') ||
+      String(questionObj?.modality || questionObj?.category || '').toLowerCase().includes('algo');
+
+    const techKeywords = isBehavioral
+      ? [
+          "situation", "task", "action", "result", "metric", "stakeholder", "resolved", "conflict",
+          "priority", "impact", "negotiated", "deadline", "team", "outage", "diagnose", "leadership",
+          "trade-off", "responsibility", "communication", "collaborate", "deliverable", "accountability"
+        ]
+      : isDsa
+      ? [
+          "complexity", "o(n)", "o(1)", "o(log n)", "hash", "tree", "graph", "queue", "stack",
+          "dynamic programming", "sliding window", "pointer", "binary search", "traversal", "recursion",
+          "array", "dag", "matrix", "attention", "vector", "time complexity", "space complexity"
+        ]
+      : [
+          "redis", "cache", "caching", "sql", "nosql", "postgres", "mongodb", "api", "database",
+          "latency", "throughput", "index", "indexing", "sharding", "async", "await", "event loop",
+          "star", "trade-off", "performance", "quantization", "kv cache", "flashattention",
+          "attention", "transformer", "gpu", "memory", "vllm", "kubernetes", "docker",
+          "microservices", "load balancer", "acid", "security", "jwt", "concurrency", "http",
+          "rest", "graphql", "grpc", "ci/cd", "observability", "batching", "fp4", "int8", "rag"
+        ];
+    const matchedKeywords = techKeywords.filter((k) => lowerAns.includes(k));
+    const hasNumbers = /\b\d+(\.\d+)?(ms|s|%|k|req|rps|gb|mb)?\b/.test(lowerAns);
+    const hasStructure = /first|second|specifically|because|however|for example|trade-off|situation|task|action|result/.test(lowerAns);
+
+    // 2. Trivial response check (< 6 words with 0 keywords)
+    if (wordCount < 6 && matchedKeywords.length === 0) {
+      return {
+        score: 5,
+        technicalAccuracy: 5,
+        communicationClarity: 10,
+        answerStructure: 5,
+        aiFeedback: `Insufficient response (5/100). The submission contains no relevant technical explanation or domain terminology for this question.`,
+        strengths: ["Submitted a brief response."],
+        weaknesses: ["Answer lacks technical depth, reasoning, and domain terminology."],
+        improvementSuggestions: [
+          "Provide a thorough technical answer covering definitions, architecture, and trade-offs."
+        ],
+        modelAnswer: questionObj?.hint || questionObj?.expected_focus || "Optimal answer explains core principles, architecture mechanisms, and concrete system trade-offs.",
+      };
+    }
+
+    // 3. Genuine response scoring
+    let techAccuracy = Math.min(95, 25 + matchedKeywords.length * 12);
+    if (wordCount < 15) techAccuracy = Math.min(40, techAccuracy);
+
+    let depthScore = 25;
+    if (wordCount >= 90) depthScore = 92;
+    else if (wordCount >= 50) depthScore = 78;
+    else if (wordCount >= 25) depthScore = 65;
+    else if (wordCount >= 15) depthScore = 45;
+
+    let clarityScore = 35 + (hasStructure ? 30 : 0) + (hasNumbers ? 20 : 0);
+    clarityScore = Math.min(95, clarityScore);
+
+    const calculatedScore = Math.min(
+      96,
+      Math.max(10, Math.round((techAccuracy * 0.40) + (depthScore * 0.30) + (clarityScore * 0.30)))
+    );
+
+    return {
+      score: calculatedScore,
+      technicalAccuracy: Math.min(96, techAccuracy),
+      communicationClarity: clarityScore,
+      answerStructure: clarityScore,
+      aiFeedback: calculatedScore >= 80
+        ? `Solid technical explanation (${calculatedScore}/100) demonstrating clear engineering comprehension and vocabulary.`
+        : calculatedScore >= 60
+        ? `Good foundational response (${calculatedScore}/100). Adding concrete numerical metrics and edge cases will improve your score.`
+        : `Needs expansion (${calculatedScore}/100). Elaborate on architectural mechanisms, concrete technologies, and trade-offs.`,
+      strengths: matchedKeywords.length > 0
+        ? [`Used relevant domain concepts: ${matchedKeywords.slice(0, 3).join(', ')}`, "Answered prompt with technical reasoning"]
+        : ["Submitted an initial explanation", "Sentence structure is readable"],
+      weaknesses: !hasNumbers
+        ? ["Lacks quantitative benchmarks or system scale estimates (latency, req/s, cache hit %)", "Can cover failover edge cases"]
+        : ["Elaborate on edge cases and failure recovery"],
+      modelAnswer: questionObj?.hint || questionObj?.expected_focus || "Focus on clear cause-and-effect reasoning with measurable outcomes and trade-offs.",
+    };
+  };
+
+  // Submit all answers for comprehensive evaluation
+  const handleSubmitAllAnswers = async () => {
+    // Safety check: ensure all questions have answers
+    const unanswered = [];
+    for (let i = 1; i <= totalQuestions; i++) {
+      if (!(answersMap[i] || '').trim()) {
+        unanswered.push(i);
+      }
+    }
+    if (unanswered.length > 0) return;
+
     setSessionState('evaluating');
 
     try {
-      if (activeSession && activeSession.interview_id) {
-        const res = await interviewService.submitAnswer(activeSession.interview_id, submittedAnswer);
-        if (res) {
-          const rawEval = res.evaluation || {};
-          const formattedEval = {
-            score: rawEval.score || 75,
-            technicalAccuracy: rawEval.technical_accuracy || rawEval.correctness || 75,
-            communicationClarity: rawEval.communication_quality || rawEval.clarity || 75,
-            answerStructure: rawEval.clarity || rawEval.answer_structure || 75,
-            aiFeedback: rawEval.ai_feedback || rawEval.feedback || "Good response addressing key points.",
-            strengths: rawEval.strengths || ["Clearly articulated approach", "Used relevant terminology"],
-            weaknesses: rawEval.weaknesses || ["Could elaborate on edge cases or metrics"],
-            modelAnswer: rawEval.model_answer || rawEval.ideal_response || "Optimal answer highlights systematic problem decomposition and explicit architectural trade-offs.",
-          };
+      const completedList = [];
 
-          const completedQ = {
-            questionNumber: questionNumber,
-            question: currentQuestion.question,
-            category: currentQuestion.category || currentQuestion.skill || 'Technical',
-            answer: submittedAnswer,
-            evaluation: formattedEval,
-          };
-          setCompletedQuestionsList((prev) => [...prev, completedQ]);
-          setCurrentQuestionEval(formattedEval);
+      for (let i = 1; i <= totalQuestions; i++) {
+        const qObj = questionsList[i - 1] || currentQuestion || defaultQuestions[0];
+        const submittedAnswer = (answersMap[i] || '').trim();
 
-          if (res.status === 'in_progress' && res.next_question) {
-            setNextQuestionPending(res.next_question);
-            setSessionState('question_feedback');
-            return;
-          } else {
-            // Completed final question
-            setFinalSessionSummary(res.session_result || {
-              overall_score: formattedEval.score,
-              strengths: formattedEval.strengths,
-              weaknesses: formattedEval.weaknesses,
-            });
-            setSessionState('results');
-            fetchHistory();
-            return;
+        let formattedEval = null;
+
+        // If explicitly non-answer (NA, i donot know, etc.), enforce 0 evaluation
+        if (isNonAnswer(submittedAnswer)) {
+          formattedEval = evaluateAnswerRubric(qObj, submittedAnswer);
+        } else if (activeSession && activeSession.interview_id) {
+          try {
+            const res = await interviewService.submitAnswer(activeSession.interview_id, submittedAnswer);
+            if (res && res.evaluation) {
+              const rawEval = res.evaluation;
+              formattedEval = {
+                score: typeof rawEval.score === 'number' ? rawEval.score : 75,
+                technicalAccuracy: typeof (rawEval.technical_accuracy ?? rawEval.correctness) === 'number'
+                  ? (rawEval.technical_accuracy ?? rawEval.correctness)
+                  : 75,
+                communicationClarity: typeof (rawEval.communication_quality ?? rawEval.clarity) === 'number'
+                  ? (rawEval.communication_quality ?? rawEval.clarity)
+                  : 75,
+                answerStructure: typeof (rawEval.clarity ?? rawEval.answer_structure) === 'number'
+                  ? (rawEval.clarity ?? rawEval.answer_structure)
+                  : 75,
+                aiFeedback: rawEval.ai_feedback || rawEval.feedback || "Good response addressing key points.",
+                strengths: rawEval.strengths || ["Clearly articulated approach", "Used relevant terminology"],
+                weaknesses: rawEval.weaknesses || ["Could elaborate on edge cases or metrics"],
+                modelAnswer: rawEval.model_answer || rawEval.ideal_response || "Optimal answer highlights systematic problem decomposition and explicit architectural trade-offs.",
+              };
+            }
+          } catch (e) {
+            console.warn(`Backend submit for question ${i} failed, using local rubric fallback:`, e);
           }
         }
-      }
 
-      // Local fallback evaluation with accurate multi-factor rubric
-      const words = submittedAnswer.split(/\s+/).filter(Boolean);
-      const wordCount = words.length;
-      const lowerAns = submittedAnswer.toLowerCase();
+        if (!formattedEval) {
+          formattedEval = evaluateAnswerRubric(qObj, submittedAnswer);
+        }
 
-      const techKeywords = ["redis", "cache", "sql", "api", "database", "latency", "throughput", "index", "sharding", "async", "event loop", "star", "trade-off", "performance"];
-      const matchedKeywords = techKeywords.filter(k => lowerAns.includes(k));
-      const hasNumbers = /\b\d+(\.\d+)?(ms|s|%|k|req|rps|gb|mb)?\b/.test(lowerAns);
-      const hasStructure = /first|second|specifically|because|however|for example|trade-off|situation|task|action|result/.test(lowerAns);
-
-      let techAccuracy = 50 + Math.min(40, matchedKeywords.length * 8);
-      if (wordCount < 15) techAccuracy = Math.min(50, techAccuracy);
-
-      let depthScore = 45;
-      if (wordCount >= 90) depthScore = 90;
-      else if (wordCount >= 50) depthScore = 78;
-      else if (wordCount >= 25) depthScore = 65;
-
-      let clarityScore = 55 + (hasStructure ? 20 : 0) + (hasNumbers ? 15 : 0);
-      clarityScore = Math.min(95, clarityScore);
-
-      const calculatedScore = wordCount < 8
-        ? 30
-        : Math.min(95, Math.max(35, Math.round((techAccuracy * 0.35) + (depthScore * 0.30) + (clarityScore * 0.35))));
-
-      const fallbackEval = {
-        score: calculatedScore,
-        technicalAccuracy: Math.min(95, techAccuracy),
-        communicationClarity: clarityScore,
-        answerStructure: clarityScore,
-        aiFeedback: calculatedScore >= 80
-          ? `Solid technical explanation (${calculatedScore}/100) demonstrating clear engineering comprehension and vocabulary.`
-          : calculatedScore >= 65
-          ? `Good foundational response (${calculatedScore}/100). Adding concrete numerical metrics and edge cases will improve your score.`
-          : `Needs expansion (${calculatedScore}/100). Elaborate on architectural mechanisms, concrete technologies, and trade-offs.`,
-        strengths: matchedKeywords.length > 0
-          ? [`Used relevant domain concepts: ${matchedKeywords.slice(0, 3).join(', ')}`, "Answered the core prompt directly"]
-          : ["Submitted a direct initial response", "Clear sentence structure"],
-        weaknesses: !hasNumbers
-          ? ["Lacks quantitative benchmarks or system scale estimates (latency, req/s, cache hit %)", "Can cover failover edge cases"]
-          : ["Elaborate on edge cases and failure recovery"],
-        modelAnswer: "Focus on clear cause-and-effect reasoning with measurable outcomes and trade-offs.",
-      };
-
-      const fallbackCompletedQ = {
-        questionNumber: questionNumber,
-        question: currentQuestion.question,
-        category: currentQuestion.category || 'Technical',
-        answer: submittedAnswer,
-        evaluation: fallbackEval,
-      };
-      setCompletedQuestionsList((prev) => [...prev, fallbackCompletedQ]);
-      setCurrentQuestionEval(fallbackEval);
-
-      if (questionNumber < totalQuestions) {
-        const targetDomain = sessionConfig?.role || user?.targetRole || 'Full Stack Engineer';
-        const nextQ = getDynamicQuestion(
-          targetDomain,
-          questionNumber + 1,
-          [...completedQuestionsList, fallbackCompletedQ]
-        );
-        setNextQuestionPending(nextQ);
-        setSessionState('question_feedback');
-      } else {
-        const allCompleted = [...completedQuestionsList, fallbackCompletedQ];
-        const overallScore = Math.round(allCompleted.reduce((acc, q) => acc + (q.evaluation?.score || 70), 0) / allCompleted.length);
-        setFinalSessionSummary({
-          overall_score: overallScore,
-          strengths: fallbackEval.strengths,
-          weaknesses: fallbackEval.weaknesses,
+        completedList.push({
+          questionNumber: i,
+          question: qObj.question,
+          category: qObj.category || qObj.skill || 'Technical',
+          answer: submittedAnswer,
+          evaluation: formattedEval,
         });
-        setSessionState('results');
       }
+
+      setCompletedQuestionsList(completedList);
+
+      const overallScore = Math.round(
+        completedList.reduce((acc, q) => acc + (typeof q.evaluation?.score === 'number' ? q.evaluation.score : 0), 0) / completedList.length
+      );
+
+      const allStrengths = Array.from(new Set(completedList.flatMap(q => q.evaluation?.strengths || []))).slice(0, 4);
+      const allWeaknesses = Array.from(new Set(completedList.flatMap(q => q.evaluation?.weaknesses || []))).slice(0, 4);
+
+      setFinalSessionSummary({
+        overall_score: overallScore,
+        strengths: allStrengths.length > 0 ? allStrengths : ["Demonstrated technical attempt", "Systematic reasoning"],
+        weaknesses: allWeaknesses.length > 0 ? allWeaknesses : ["Elaborate on production metrics and failure modes"],
+      });
+
+      const targetDomain = sessionConfig?.role || user?.targetRole || 'Full Stack Engineer';
+      const historyItem = {
+        id: activeSession?.interview_id || `session-${Date.now()}`,
+        date: new Date().toLocaleDateString(),
+        role: targetDomain,
+        type: (sessionConfig?.modality || 'Technical Drill').toUpperCase(),
+        difficulty: sessionConfig?.difficulty || 'Medium',
+        questionCount: totalQuestions,
+        durationText: formatTimer(secondsElapsed),
+        score: overallScore,
+        status: overallScore >= 60 ? 'Completed' : 'Needs Practice',
+        strengths: allStrengths,
+        weaknesses: allWeaknesses,
+        questions: completedList,
+      };
+
+      const updatedHistory = [historyItem, ...getStoredInterviewHistory()];
+      saveInterviewHistory(updatedHistory);
+      setHistory(updatedHistory);
+
+      if (toggleTaskCompletion) {
+        toggleTaskCompletion('mock_interview');
+      }
+      if (toastNotification) {
+        toastNotification('Mock interview submitted and evaluated successfully!');
+      }
+
+      setSessionState('results');
     } catch (e) {
-      // In case of error, transition gracefully
+      console.error("Submission failed:", e);
       setSessionState('results');
     }
   };
+
+  // Legacy single answer submit alias
+  const handleSubmitAnswer = handleSubmitAllAnswers;
 
   // Move to next question after reviewing per-question feedback
   const handleProceedToNextQuestion = () => {
     if (nextQuestionPending) {
       setCurrentQuestion(nextQuestionPending);
       setQuestionNumber((prev) => prev + 1);
-      setAnswerText('');
       setShowHint(false);
       setCurrentQuestionEval(null);
       setNextQuestionPending(null);
@@ -327,15 +520,29 @@ export const MockInterviewPage = () => {
     }
   };
 
-  const currentQ = currentQuestion || defaultQuestions[0];
+  const currentQ = questionsList[questionNumber - 1] || currentQuestion || defaultQuestions[0];
   const wordCount = answerText.trim() ? answerText.trim().split(/\s+/).length : 0;
 
+  // Calculate answer progress across all session questions
+  const answeredCount = Array.from({ length: totalQuestions }).filter((_, idx) => {
+    const stepNum = idx + 1;
+    return (answersMap[stepNum] || '').trim().length > 0;
+  }).length;
+
+  const allAnswered = totalQuestions > 0 && answeredCount === totalQuestions;
+
+  const unAnsweredQuestions = Array.from({ length: totalQuestions })
+    .map((_, idx) => idx + 1)
+    .filter((stepNum) => !(answersMap[stepNum] || '').trim().length);
+
   // Calculate aggregated scores for final review
-  const calculatedOverallScore = finalSessionSummary?.overall_score || (
-    completedQuestionsList.length > 0
-      ? Math.round(completedQuestionsList.reduce((acc, q) => acc + (q.evaluation?.score || 70), 0) / completedQuestionsList.length)
-      : 78
-  );
+  const calculatedOverallScore = typeof finalSessionSummary?.overall_score === 'number'
+    ? finalSessionSummary.overall_score
+    : (
+      completedQuestionsList.length > 0
+        ? Math.round(completedQuestionsList.reduce((acc, q) => acc + (typeof q.evaluation?.score === 'number' ? q.evaluation.score : 0), 0) / completedQuestionsList.length)
+        : 0
+    );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -520,9 +727,12 @@ export const MockInterviewPage = () => {
           {/* Question Stepper & Progress Tracker */}
           <div className="bg-[#121624] p-4 rounded-xl border border-[#232b3e] shadow-lg space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-bold text-indigo-400">SESSION PROGRESS:</span>
                 <span className="text-white">Question {questionNumber} of {totalQuestions}</span>
+                <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[11px] font-sans font-medium">
+                  {sessionConfig?.modality || 'System Architecture & Design'}
+                </span>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 text-amber-400 font-bold">
@@ -538,29 +748,34 @@ export const MockInterviewPage = () => {
               </div>
             </div>
 
-            {/* Step Indicators */}
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pt-1">
+            {/* Step Indicators - Clickable Q1, Q2, Q3 pills with real-time answer status */}
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5 pt-1">
               {Array.from({ length: totalQuestions }).map((_, idx) => {
                 const stepNum = idx + 1;
-                const isCompleted = stepNum < questionNumber;
                 const isCurrent = stepNum === questionNumber;
+                const hasAnswer = (answersMap[stepNum] || '').trim().length > 0;
 
                 return (
-                  <div
+                  <button
                     key={idx}
-                    className={`p-2 rounded-lg border text-center transition-all ${
+                    type="button"
+                    onClick={() => handleSelectQuestion(stepNum)}
+                    className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer select-none flex items-center justify-center gap-1.5 ${
                       isCurrent
-                        ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold'
-                        : isCompleted
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                        : 'bg-[#0b0e17] border-[#1e2638] text-slate-500'
+                        ? 'bg-indigo-600/30 border-indigo-500 text-white font-bold ring-2 ring-indigo-500/50 shadow-md'
+                        : hasAnswer
+                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20'
+                        : 'bg-[#0b0e17] border-[#1e2638] text-slate-400 hover:border-slate-500 hover:text-slate-200'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-1 text-[11px] font-mono">
-                      {isCompleted ? <Check className="w-3.5 h-3.5" /> : null}
-                      <span>Q{stepNum}</span>
-                    </div>
-                  </div>
+                    {hasAnswer && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                    <span className="text-xs font-mono font-semibold">Q{stepNum}</span>
+                    {hasAnswer ? (
+                      <span className="text-[10px] text-emerald-400 font-sans hidden sm:inline">(Answered)</span>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 font-sans hidden sm:inline">(Empty)</span>
+                    )}
+                  </button>
                 );
               })}
             </div>
@@ -569,9 +784,14 @@ export const MockInterviewPage = () => {
           {/* Question Prompt Card */}
           <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
-              <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
-                Focus / Skill: {currentQ.skill || currentQ.category || currentQ.topic || 'Core Technical'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] font-mono uppercase tracking-wider">
+                  {currentQ.modality || sessionConfig?.modality || 'System Architecture'}
+                </span>
+                <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
+                  Focus: {currentQ.skill || currentQ.category || currentQ.topic || 'Core Technical'}
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-slate-400">Difficulty: {currentQ.difficulty || 'Medium'}</span>
                 {currentQ.hint && (
@@ -642,18 +862,59 @@ export const MockInterviewPage = () => {
               ></textarea>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#232b3e]">
-              <span className="text-xs text-slate-500 font-mono">
-                Pressing submit triggers real-time telemetry scoring & instant feedback
-              </span>
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={!answerText.trim()}
-                className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 flex items-center gap-2"
-              >
-                <Send className="w-4 h-4" />
-                <span>Submit Answer for Evaluation</span>
-              </button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#232b3e]">
+              <div className="flex items-center gap-2 text-xs font-mono">
+                {allAnswered ? (
+                  <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>All {totalQuestions} questions answered. Submit is now enabled!</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-amber-400">
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      Write answers for all questions to enable submit ({answeredCount}/{totalQuestions} written — missing: {unAnsweredQuestions.map(n => `Q${n}`).join(', ')})
+                    </span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {questionNumber > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectQuestion(questionNumber - 1)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono text-slate-300 hover:text-white bg-[#1a2133] hover:bg-[#232b3e] border border-[#232b3e] transition-colors"
+                  >
+                    ← Q{questionNumber - 1}
+                  </button>
+                )}
+
+                {questionNumber < totalQuestions && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectQuestion(questionNumber + 1)}
+                    className="px-3.5 py-2 rounded-xl text-xs font-mono text-indigo-300 hover:text-white bg-[#1a2133] hover:bg-[#232b3e] border border-indigo-500/30 transition-colors"
+                  >
+                    Q{questionNumber + 1} →
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSubmitAllAnswers}
+                  disabled={!allAnswered}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-md ${
+                    allAnswered
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-600/30 cursor-pointer animate-pulse'
+                      : 'bg-[#1a2133] border border-[#232b3e] text-slate-500 cursor-not-allowed opacity-50'
+                  }`}
+                  title={!allAnswered ? `Please write answers for ${unAnsweredQuestions.map(n => `Q${n}`).join(', ')} before submitting` : 'Submit all answers for evaluation'}
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Submit Answer for Evaluation</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -682,8 +943,14 @@ export const MockInterviewPage = () => {
                 <h3 className="text-xl font-bold text-white">Question Scorecard & Feedback</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="px-3.5 py-1 rounded-full text-base font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Question Score: {currentQuestionEval.score}/100
+                <span className={`px-3.5 py-1 rounded-full text-base font-mono font-bold border ${
+                  (currentQuestionEval.score ?? 0) >= 70
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : (currentQuestionEval.score ?? 0) >= 40
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                }`}>
+                  Question Score: {currentQuestionEval.score ?? 0}/100
                 </span>
               </div>
             </div>
@@ -773,7 +1040,13 @@ export const MockInterviewPage = () => {
                 <h3 className="text-2xl font-bold text-white">Full Performance Diagnostic Report</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="px-4 py-1.5 rounded-full text-lg font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className={`px-4 py-1.5 rounded-full text-lg font-mono font-bold border ${
+                  calculatedOverallScore >= 70
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    : calculatedOverallScore >= 40
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                }`}>
                   Final Score: {calculatedOverallScore}/100
                 </span>
               </div>
@@ -806,7 +1079,8 @@ export const MockInterviewPage = () => {
 
               {completedQuestionsList.map((item, idx) => {
                 const isExpanded = expandedQuestionIdx === idx;
-                const score = item.evaluation?.score || 75;
+                const score = typeof item.evaluation?.score === 'number' ? item.evaluation.score : 0;
+                const scoreColor = score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-rose-400';
 
                 return (
                   <div key={idx} className="rounded-xl border border-[#232b3e] bg-[#0b0e17] overflow-hidden">
@@ -821,7 +1095,7 @@ export const MockInterviewPage = () => {
                         <span className="font-semibold text-white text-sm line-clamp-1">{item.question}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs font-mono font-bold text-emerald-400">{score}%</span>
+                        <span className={`text-xs font-mono font-bold ${scoreColor}`}>{score}%</span>
                         {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                       </div>
                     </button>

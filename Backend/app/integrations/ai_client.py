@@ -1,6 +1,7 @@
 import logging
 import httpx
 from typing import Dict, Any, Optional
+from fastapi.encoders import jsonable_encoder
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -135,7 +136,7 @@ class AIClient:
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                res = await client.post(url, json=readiness_payload)
+                res = await client.post(url, json=jsonable_encoder(readiness_payload))
                 if res.status_code != 200:
                     raise AIClientError(f"AI Service error HTTP {res.status_code}: {res.text[:200]}")
                 return res.json()
@@ -150,7 +151,7 @@ class AIClient:
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
-                res = await client.post(url, json=skill_gap_payload)
+                res = await client.post(url, json=jsonable_encoder(skill_gap_payload))
                 if res.status_code != 200:
                     raise AIClientError(f"AI Service error HTTP {res.status_code}: {res.text[:200]}")
                 return res.json()
@@ -163,8 +164,8 @@ class AIClient:
         url = f"{self.base_url}/api/ai/roadmap/generate"
         logger.info("Calling AI Service Roadmap Generation endpoint: %s", url)
         try:
-            async with httpx.AsyncClient(timeout=90.0) as client:
-                res = await client.post(url, json=payload)
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                res = await client.post(url, json=jsonable_encoder(payload))
                 if res.status_code != 200:
                     raise AIClientError(f"AI Service error HTTP {res.status_code}: {res.text[:200]}")
                 return res.json()

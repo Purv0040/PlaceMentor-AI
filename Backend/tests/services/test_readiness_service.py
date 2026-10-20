@@ -31,19 +31,15 @@ async def test_deterministic_scoring_formula():
     assert res["readiness_status"] in ["assessed", "provisional"]
     assert res["coverage_percentage"] >= 65.0
 
-    # All 7 categories present
+    # All 4 active categories present
     cats = res["categories"]
     assert "Resume" in cats
     assert "DSA" in cats
-    assert "Projects" in cats
     assert "GitHub" in cats
-    assert "CS Fundamentals" in cats
-    assert "Communication" in cats
     assert "Interview" in cats
 
     assert cats["Resume"]["status"] == "assessed"
     assert cats["DSA"]["status"] == "assessed"
-    assert cats["Projects"]["status"] == "assessed"
     assert cats["GitHub"]["status"] == "assessed"
     assert cats["Interview"]["status"] == "not_assessed"
 
@@ -56,13 +52,10 @@ async def test_deterministic_scoring_formula():
 async def test_weight_validation_and_custom_weights():
     # Valid custom weights summing to 1.0
     custom = {
-        "Resume": 0.20,
+        "Resume": 0.25,
         "DSA": 0.30,
-        "Projects": 0.20,
-        "GitHub": 0.10,
-        "CS Fundamentals": 0.10,
-        "Communication": 0.05,
-        "Interview": 0.05
+        "GitHub": 0.25,
+        "Interview": 0.20
     }
     engine = DeterministicReadinessEngine(custom_weights=custom)
     assert abs(sum(engine.weights.values()) - 1.0) < 0.001
@@ -135,16 +128,14 @@ async def test_role_alignment_dynamic_comparison_and_aiml_gaps():
 
 
 @pytest.mark.asyncio
-async def test_missing_interview_and_communication_behavior():
+async def test_missing_interview_behavior():
     engine = DeterministicReadinessEngine()
-    res = engine.compute(target_role="Backend Developer", interview_data=None, communication_data=None)
+    res = engine.compute(target_role="Backend Developer", interview_data=None)
 
     cats = res["categories"]
     assert cats["Interview"]["status"] == "not_assessed"
     assert cats["Interview"]["score"] is None
     assert cats["Interview"]["confidence"] == 0.0
-
-    assert cats["Communication"]["confidence"] <= 0.55  # Limited proxy or not assessed
 
 
 @pytest.mark.asyncio

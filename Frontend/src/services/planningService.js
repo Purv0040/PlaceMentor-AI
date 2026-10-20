@@ -7,7 +7,21 @@ import { initialProgressData } from "../data/progressData";
 
 const STORAGE_KEY = "placementor_planning_state";
 
+const getStorageKey = (userId = null) => {
+  if (userId) return `placementor_planning_state_${userId}`;
+  try {
+    const rawUser = localStorage.getItem('placementor_user_data');
+    if (rawUser) {
+      const parsed = JSON.parse(rawUser);
+      if (parsed?.id || parsed?._id) return `placementor_planning_state_${parsed.id || parsed._id}`;
+    }
+  } catch (e) {}
+  return STORAGE_KEY;
+};
+
 export const planningService = {
+  getStorageKey,
+
   getTasksFromApi: async () => {
     try {
       const res = await apiRequest("/tasks");
@@ -25,7 +39,7 @@ export const planningService = {
           skill: t.skill || "",
           estimatedMinutes: t.estimated_minutes != null ? t.estimated_minutes : 60,
           status: t.status || "pending",
-          completed: t.status === "completed",
+          completed: t.status === "completed" || Boolean(t.completed),
           completedAt: t.completed_at || null,
           dayNumber: t.day_number ?? null,
           phaseNumber: t.phase_number ?? null,
@@ -65,8 +79,8 @@ export const planningService = {
           : [];
 
         return {
-          id: res.id,
-          roadmapId: res.roadmap_id,
+          id: res.id || res.roadmap_id,
+          roadmapId: res.roadmap_id || res.id,
           title: res.title,
           targetRole: res.target_role,
           description: res.description,
@@ -144,9 +158,28 @@ export const planningService = {
     }
   },
 
-  getInitialState: () => {
+  getFullProgressFromApi: async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      return await apiRequest("/progress");
+    } catch (e) {
+      console.warn("Failed to fetch full progress from API", e);
+      return null;
+    }
+  },
+
+  getProgressSummaryFromApi: async () => {
+    try {
+      return await apiRequest("/progress/summary");
+    } catch (e) {
+      console.warn("Failed to fetch progress summary from API", e);
+      return null;
+    }
+  },
+
+  getInitialState: (userId = null) => {
+    try {
+      const key = getStorageKey(userId);
+      const stored = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY);
       if (stored) {
         return JSON.parse(stored);
       }
@@ -179,8 +212,11 @@ export const planningService = {
     return newState;
   },
 
-  saveState: (state) => {
+  saveState: (state, userId = null) => {
     try {
+      const key = getStorageKey(userId);
+      localStorage.setItem(key, JSON.stringify(state));
+      // Keep legacy storage key updated as fallback
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error("Failed to persist planning state", e);

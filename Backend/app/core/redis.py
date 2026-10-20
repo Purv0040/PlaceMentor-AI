@@ -16,15 +16,18 @@ class RedisManager:
         """Initialize Redis connection and attempt health ping."""
         try:
             logger.info("Connecting to Redis at: %s", settings.REDIS_URL.split("@")[-1])
-            self.redis_client = redis.from_url(
+            client = redis.from_url(
                 settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
-                socket_connect_timeout=3.0,
+                socket_connect_timeout=1.5,
+                socket_timeout=1.0,
             )
-            await self.redis_client.ping()
+            await client.ping()
+            self.redis_client = client
             logger.info("Successfully connected and pinged Redis.")
         except Exception as e:
+            self.redis_client = None
             logger.warning(
                 "Redis connection initialization failed or Redis unavailable: %s",
                 type(e).__name__,
@@ -47,7 +50,8 @@ class RedisManager:
         if not self.redis_client:
             return False
         try:
-            return await self.redis_client.ping()
+            import asyncio
+            return await asyncio.wait_for(self.redis_client.ping(), timeout=1.0)
         except Exception as e:
             logger.warning("Redis ping check failed: %s", type(e).__name__)
             return False

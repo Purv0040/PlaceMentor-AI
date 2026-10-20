@@ -1,13 +1,36 @@
 import React, { useState } from 'react';
-import { X, Play, Sliders, Target, ShieldCheck } from 'lucide-react';
+import { X, Play, Sliders, Target, ShieldCheck, Sparkles, BookOpen } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+
+const MODALITY_DETAILS = {
+  'System Architecture & Design': {
+    title: 'High-Level Architecture & Scalability',
+    desc: 'Generates distributed systems, microservices, data pipeline architectures, caching, and trade-off design questions tailored to your target role.',
+    badge: 'Architecture & Scale',
+  },
+  'Technical / DSA Drill': {
+    title: 'Data Structures, Algorithms & Technical Math',
+    desc: 'Generates algorithmic problem solving, time/space complexity analysis, tensor/matrix operations, and core engineering coding questions.',
+    badge: 'DSA & Coding',
+  },
+  'Behavioral & HR STAR Drill': {
+    title: 'Behavioral & Leadership STAR Scenarios',
+    desc: 'Generates questions on production incident triage, conflict resolution, technical debt advocacy, and cross-functional leadership using the STAR framework.',
+    badge: 'Behavioral / STAR',
+  },
+  'Full Tier-1 SDE Mock': {
+    title: 'Full Multi-Round Tier-1 SDE Simulation',
+    desc: 'Simulates a comprehensive FAANG/Tier-1 interview loop combining Technical/DSA Drill, System Architecture & Design, and Behavioral STAR questions.',
+    badge: 'Combined Loop',
+  },
+};
 
 export const InterviewSetupModal = ({ isOpen, onClose, onStartInterview }) => {
   const { user } = useUser();
-  const defaultRole = user?.targetRole || user?.career?.targetRole || 'Backend SDE-1';
+  const userRole = user?.targetRole || user?.career?.targetRole || 'Full Stack Engineer';
 
   const [config, setConfig] = useState({
-    role: defaultRole,
+    role: userRole,
     modality: 'System Architecture & Design',
     difficulty: 'Medium',
     questionCount: 3,
@@ -18,7 +41,7 @@ export const InterviewSetupModal = ({ isOpen, onClose, onStartInterview }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onStartInterview(config);
+    onStartInterview({ ...config, role: userRole });
     onClose();
   };
 
@@ -47,22 +70,16 @@ export const InterviewSetupModal = ({ isOpen, onClose, onStartInterview }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Target Candidate Role
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+              Candidate Target Role
             </label>
-            <select
-              value={config.role}
-              onChange={(e) => setConfig({ ...config, role: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0b0e17] border border-[#232b3e] text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-            >
-              <option value="Full Stack Engineer">Full Stack Engineer</option>
-              <option value="AI/ML Engineer">AI/ML Engineer</option>
-              <option value="AWS / DevOps & Cloud Engineer">AWS / DevOps & Cloud Engineer</option>
-              <option value="Cybersecurity Analyst & Engineer">Cybersecurity Analyst & Engineer</option>
-              <option value="Backend Developer">Backend Developer</option>
-              <option value="Software Engineer">Software Engineer</option>
-              <option value="Data Scientist">Data Scientist</option>
-            </select>
+            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[#0b0e17] border border-indigo-500/30 text-white text-sm">
+              <Target className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span className="text-indigo-300 font-semibold">{userRole}</span>
+              <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                Active Role
+              </span>
+            </div>
           </div>
 
           <div>
@@ -79,6 +96,24 @@ export const InterviewSetupModal = ({ isOpen, onClose, onStartInterview }) => {
               <option value="Behavioral & HR STAR Drill">Behavioral & HR STAR Drill</option>
               <option value="Full Tier-1 SDE Mock">Full Tier-1 SDE Mock (Combined)</option>
             </select>
+
+            {/* Dynamic Modality Guidance Banner */}
+            <div className="mt-2.5 p-3 rounded-xl bg-[#0b0e17] border border-indigo-500/30 flex items-start gap-2.5">
+              <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-white">
+                    {MODALITY_DETAILS[config.modality]?.title || config.modality}
+                  </span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    {MODALITY_DETAILS[config.modality]?.badge || 'Role Grounded'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  {MODALITY_DETAILS[config.modality]?.desc}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -6,13 +6,10 @@ from app.core.roles import get_role_competencies
 logger = logging.getLogger(__name__)
 
 DEFAULT_WEIGHTS: Dict[str, float] = {
-    "Resume": 0.15,
-    "DSA": 0.20,
-    "Projects": 0.20,
-    "GitHub": 0.10,
-    "CS Fundamentals": 0.15,
-    "Communication": 0.10,
-    "Interview": 0.10
+    "Resume": 0.25,
+    "DSA": 0.30,
+    "GitHub": 0.25,
+    "Interview": 0.20
 }
 
 ROLE_DOMAIN_GAPS: Dict[str, List[Dict[str, str]]] = {
@@ -900,10 +897,7 @@ class DeterministicReadinessEngine:
         categories_dict = {
             "Resume": c_resume,
             "DSA": c_dsa,
-            "Projects": c_projects,
             "GitHub": c_github,
-            "CS Fundamentals": c_cs,
-            "Communication": c_comm,
             "Interview": c_interview
         }
 
@@ -979,92 +973,25 @@ class DeterministicReadinessEngine:
                 readiness_label = "Developing"
             else:
                 readiness_label = "Needs Work"
-
-        categories_dict = {
-            "Resume": c_resume,
-            "DSA": c_dsa,
-            "Projects": c_projects,
-            "GitHub": c_github,
-            "CS Fundamentals": c_cs,
-            "Communication": c_comm,
-            "Interview": c_interview
-        }
-
-        # 3. Dynamic Weight Normalization Over Assessed & Provisional Categories
-        scored_cats = [
-            c for c in categories_dict.values()
-            if c["status"] in ["assessed", "provisional", "stale", "scored"] and c["score"] is not None
-        ]
-        insufficient_cats = [
-            c for c in categories_dict.values()
-            if c["status"] in ["not_assessed", "insufficient_data"] or c["score"] is None
-        ]
-
-        # Calculate evidence coverage percentage
-        assessed_weights_sum = sum(self.weights.get(c["category"], 0.10) for c in scored_cats)
-        coverage_percentage = round(assessed_weights_sum * 100, 1)
-
-        weights_used: Dict[str, float] = {name: 0.0 for name in categories_dict.keys()}
-
-        if not scored_cats:
-            overall_score = None
-            overall_confidence = 0.0
-            readiness_label = "Insufficient Evidence"
-            readiness_status = "insufficient_evidence"
-        else:
-            sum_scored_weights = assessed_weights_sum if assessed_weights_sum > 0 else 1.0
-
-            weighted_sum = 0.0
-            weighted_conf_sum = 0.0
-
-            for cat in scored_cats:
-                cat_name = cat["category"]
-                base_weight = self.weights.get(cat_name, 0.10)
-                norm_w = round(base_weight / sum_scored_weights, 4)
-                weights_used[cat_name] = norm_w
-
-                cat["weighted_score"] = round(cat["score"] * norm_w, 2)
-                weighted_sum += cat["score"] * norm_w
-                weighted_conf_sum += cat["confidence"] * norm_w
-
-            overall_score = int(round(weighted_sum))
-            overall_confidence = round(weighted_conf_sum, 2)
-
-            # Determine readiness status & label
-            has_stale = any(c.get("status") == "stale" or not c.get("is_fresh", True) for c in scored_cats)
-            has_provisional = any(c.get("status") == "provisional" for c in scored_cats)
-
-            if has_stale:
-                readiness_status = "stale"
-            elif coverage_percentage < 50.0 or has_provisional:
-                readiness_status = "provisional"
-            else:
-                readiness_status = "assessed"
-
-            if overall_score >= 80 and overall_confidence >= 0.75:
-                readiness_label = "Placement Ready"
-            elif overall_score >= 68:
-                readiness_label = "Advanced"
-            elif overall_score >= 50:
-                readiness_label = "Developing"
-            else:
-                readiness_label = "Needs Work"
-
         # 4. Dynamic Strengths & Key Gaps Selection
         strengths: List[str] = []
         gaps: List[str] = []
         recs: List[str] = []
 
         for c in scored_cats:
+            if c.get("category") == "CS Fundamentals":
+                continue
             if c["score"] and c["score"] >= 80:
                 strengths.append(f"{c['category']} is a strength ({c['score']}/100) with verified evidence.")
             elif c["score"] and c["score"] < 70:
                 gaps.append(f"{c['category']} score is currently below target threshold ({c['score']}/100).")
-            recs.extend(c.get("recommendations", []))
+            recs.extend([r for r in c.get("recommendations", []) if "cs fundamental" not in str(r).lower()])
 
         for c in insufficient_cats:
+            if c.get("category") == "CS Fundamentals":
+                continue
             gaps.append(f"Missing evidence for {c['category']}.")
-            recs.extend(c.get("recommendations", []))
+            recs.extend([r for r in c.get("recommendations", []) if "cs fundamental" not in str(r).lower()])
 
         if missing_skills:
             gaps.append(f"Target role missing critical skills: {', '.join(missing_skills[:3])}.")

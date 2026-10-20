@@ -35,7 +35,20 @@ class AIInterviewEngine:
 
         # Determine topic and question based on interview type & previous answers
         q_num = request.question_number
-        itype = request.interview_type.lower()
+        # Normalize interview modality/category
+        raw_itype = str(request.interview_type or "").lower()
+        if "star" in raw_itype or "behavioral" in raw_itype or "hr" in raw_itype:
+            itype = "behavioral"
+        elif "dsa" in raw_itype or "drill" in raw_itype or "algo" in raw_itype or "coding" in raw_itype:
+            itype = "dsa"
+        elif "combined" in raw_itype or "tier" in raw_itype or "full" in raw_itype:
+            stage_types = ["dsa", "system_design", "behavioral"]
+            itype = stage_types[(q_num - 1) % 3]
+        elif "design" in raw_itype or "architecture" in raw_itype or "system" in raw_itype:
+            itype = "system_design"
+        else:
+            itype = raw_itype
+
         diff = request.difficulty.capitalize()
 
         # Check last Q&A performance for adaptive difficulty/topic selection
@@ -63,9 +76,11 @@ class AIInterviewEngine:
 
         elif itype == "hr" or itype == "behavioral":
             behavioral_questions = [
-                (f"Tell me about a time when you faced a difficult technical challenge working with {selected_skill}. How did you resolve it?", "STAR Framework (Situation, Task, Action, Result)"),
-                ("Describe a scenario where you had a conflict or disagreement over technical architecture in a team project.", "Conflict resolution & communication"),
-                ("Give an example of a project deadline that was at risk. How did you prioritize tasks and deliver?", "Task management & accountability"),
+                ("Tell me about a time when a production service or machine learning model performed poorly or failed in production. Walk me through your Situation, Task, Action to diagnose and resolve it, and the measurable Result.", "Incident Response & STAR"),
+                ("Describe a scenario where you had a conflict or disagreement over technical architecture in a team project. How did you navigate the trade-offs to reach consensus?", "Conflict resolution & communication"),
+                ("Give an example of a project deadline that was at risk. How did you prioritize tasks, manage technical debt, and deliver?", "Task management & accountability"),
+                ("Tell me about an unassigned problem or optimization (such as reducing cloud latency or training costs) that you spearheaded proactively.", "Proactivity & Engineering Ownership"),
+                ("Describe a scenario where you had to explain a complex algorithmic decision or failure mode to non-technical stakeholders.", "Technical Translation & Leadership"),
             ]
             q_tuple = behavioral_questions[(q_num - 1) % len(behavioral_questions)]
             question_text = q_tuple[0]
@@ -74,16 +89,26 @@ class AIInterviewEngine:
             hint = "Use the STAR method: Situation, Task, Action, and Quantified Result."
 
         elif itype == "dsa":
-            dsa_questions = [
-                ("How would you optimize the search for pair sums in an unsorted array from O(N^2) to O(N) time complexity? Walk through your approach and edge cases.", "Time & Space complexity, Hash Table lookup"),
-                ("Explain how to detect a cycle in a Directed Acyclic Graph (DAG) or linked list, comparing BFS/DFS topological sort approach with Floyd's Algorithm.", "Cycle detection, BFS/DFS traversal"),
-                ("Describe how Dynamic Programming memoization converts an exponential recursive tree into polynomial time for 2D grid pathfinding.", "Memoization, Tabulation, Subproblem overlap"),
-            ]
+            if "AI" in canonical_role or "Machine Learning" in canonical_role:
+                dsa_questions = [
+                    ("Explain the mathematical formulation and complexity of Transformer Self-Attention: Softmax((Q*K^T)/sqrt(d_k))*V. Why is naive attention O(N^2) in sequence length, and how does FlashAttention optimize GPU SRAM memory bandwidth?", "Attention Math & FlashAttention"),
+                    ("Given 1,000,000 high-dimensional feature vectors (d=768), how do you find the K nearest neighbors efficiently? Compare brute-force search with Approximate Nearest Neighbors (ANN) using HNSW graphs.", "Vector Search & HNSW Graphs"),
+                    ("In deep learning frameworks, how is the computational DAG built and traversed during forward/backward passes? Walk through the Topological Sort algorithm (Kahn's or DFS) used to schedule gradient backprop.", "DAG Traversal & Autograd"),
+                    ("Explain how Byte-Pair Encoding (BPE) works algorithmically and how Dynamic Programming is applied to find the optimal subword segmentation or sequence edit distance.", "DP & String Tokenization"),
+                    ("How does a 2D Convolution operation work algorithmically over an input image tensor? Walk through sliding window strides, padding calculations, and explain how Im2Col transforms convolution into GEMM matrix multiplication.", "Tensor Operations & Convolution Algorithms"),
+                ]
+            else:
+                dsa_questions = [
+                    ("How would you optimize the search for pair sums in an unsorted array from O(N^2) to O(N) time complexity? Walk through your approach and edge cases.", "Time & Space complexity, Hash Table lookup"),
+                    ("Explain how to detect a cycle in a Directed Acyclic Graph (DAG) or linked list, comparing BFS/DFS topological sort approach with Floyd's Algorithm.", "Cycle detection, BFS/DFS traversal"),
+                    ("Describe how Dynamic Programming memoization converts an exponential recursive tree into polynomial time for 2D grid pathfinding.", "Memoization, Tabulation, Subproblem overlap"),
+                    ("Design and implement an LRU (Least Recently Used) Cache with O(1) get and put time complexity. Which data structures do you combine and why?", "LRU Cache & Linked Hash Map"),
+                ]
             q_tuple = dsa_questions[(q_num - 1) % len(dsa_questions)]
             question_text = q_tuple[0]
             category = "Data Structures & Algorithms"
             expected_focus = q_tuple[1]
-            hint = "State the brute force complexity first, then explain the optimal hash or 2-pointer strategy."
+            hint = "State the brute force complexity first, then explain the optimal hash, heap, or dynamic programming strategy."
 
         elif itype == "system_design":
             if canonical_role in ["DevOps Engineer", "Cloud Engineer"]:
@@ -91,6 +116,14 @@ class AIInterviewEngine:
                     ("Design a multi-region, highly available AWS cloud architecture for an enterprise web platform with 99.99% SLA. Detail Route 53 latency routing, VPC Transit Gateway, Auto Scaling EKS clusters, and cross-region Aurora/DynamoDB replication.", "High Availability, Multi-Region Routing, EKS & DB Replication"),
                     ("How do you architect a zero-downtime blue/green or canary CI/CD pipeline using Terraform, Docker, and ArgoCD on Kubernetes, including automated smoke tests and instant rollback triggers?", "CI/CD Pipeline Automation, Canary Deployments, Kubernetes Ingress"),
                     ("Design an enterprise observability and disaster recovery architecture using Prometheus, Grafana, and CloudWatch. What are your RTO/RPO targets and how do you prevent alert fatigue for on-call rotations?", "Observability, Disaster Recovery (RTO/RPO), SLO/SLA & Alerting"),
+                ]
+            elif "AI" in canonical_role or "Machine Learning" in canonical_role:
+                sys_questions = [
+                    ("Design an enterprise-scale Retrieval-Augmented Generation (RAG) system serving 10M documents with sub-150ms latency. How do you design chunking, embedding generation pipelines, hybrid BM25 + dense vector search (HNSW), cross-encoder re-ranking, and cache frequently asked semantic queries?", "RAG Architecture & Vector Retrieval"),
+                    ("Design a high-throughput, low-latency Real-Time Feature Store and Inference Engine for a fraud detection or recommendation system handling 50,000 req/sec. Walk through streaming ingestion (Kafka/Flink), low-latency key-value store (Redis/Feast), and model fallback strategies.", "Feature Store & Real-Time Serving"),
+                    ("Architect a distributed training cluster for a 70B parameter Large Language Model. How do you configure Data Parallelism (DDP), Tensor Parallelism (Megatron-LM), and Pipeline Parallelism? Discuss gradient checkpointing, ZeRO stage memory partitioning (DeepSpeed), and InfiniBand network topology.", "Distributed Training & GPU Clustering"),
+                    ("Design an end-to-end MLOps deployment pipeline with automated continuous training (CT) and zero-downtime canary deployment. How do you detect Data Drift vs Concept Drift (using KS-Test, Population Stability Index), trigger model shadow testing, and handle automated rollback?", "Model Monitoring & CI/CD Deployment"),
+                    ("When deploying a Large Language Model (LLM) to production, what techniques reduce inference latency and GPU memory footprint? Compare Quantization (INT8/FP4), KV Caching, and FlashAttention.", "Model Optimization & Inference Acceleration"),
                 ]
             else:
                 sys_questions = [
@@ -134,24 +167,89 @@ class AIInterviewEngine:
             hint=hint,
         )
 
+    def _is_non_answer(self, ans: str) -> bool:
+        if not ans:
+            return True
+        import re
+        cleaned = re.sub(r"[^\w\s]", " ", ans.strip().lower())
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        compact = cleaned.replace(" ", "")
+
+        non_answer_exact = {
+            "na", "none", "nil", "null", "nothing", "idk", "dunno", "pass",
+            "skip", "next", "no", "nope", "dont know", "dontknow", "donot know",
+            "donotknow", "do not know", "no idea", "noidea", "no clue", "noclue",
+            "not sure", "notsure", "not known", "notknown", "unknown", "cant answer",
+            "cannot answer", "unable to answer", "no answer", "no response",
+            "idont know", "i dont know", "i donot know", "i do not know",
+            "i have no idea", "i have no clue", "not aware", "dont remember"
+        }
+        if cleaned in non_answer_exact or compact in non_answer_exact or ans.strip().lower() in non_answer_exact:
+            return True
+
+        if len(compact) <= 3:
+            return True
+
+        tokens = cleaned.split()
+        if len(tokens) <= 12:
+            raw_no_quote = ans.lower().replace("'", "").replace("’", "")
+            phrases = [
+                "dont know", "donot know", "do not know", "no idea", "no clue",
+                "not sure", "not familiar", "havent learned", "havent studied",
+                "cant answer", "cannot answer", "skip this", "pass this",
+                "no knowledge", "zero knowledge", "forgot this", "dont remember"
+            ]
+            if any(p in raw_no_quote for p in phrases):
+                return True
+
+        if bool(re.match(r"^(.)\1{3,}$", compact)) or bool(re.match(r"^(asdf|qwer|zxcv|1234|abcd)+$", compact, re.IGNORECASE)):
+            return True
+
+        return False
+
     def evaluate_answer(self, request: AIInterviewAnswerEvaluateRequest) -> AIInterviewAnswerEvaluation:
         """Evaluate student submitted answer using rule-based metrics & structured analysis."""
         ans = request.answer.strip()
         word_count = len(ans.split()) if ans else 0
 
-        if word_count < 10:
+        # 1. Non-answer check: "NA", "i donot know", "idk", "pass", "skip", etc.
+        if self._is_non_answer(ans):
             return AIInterviewAnswerEvaluation(
-                score=35,
-                correctness=40,
-                relevance=40,
-                clarity=35,
-                depth=20,
-                technical_accuracy=30,
-                communication_quality=40,
-                strengths=["Submitted a response."],
-                weaknesses=["Answer is extremely brief and lacks technical depth.", "No concrete code examples or architectural explanations provided."],
+                score=0,
+                correctness=0,
+                relevance=0,
+                clarity=0,
+                depth=0,
+                technical_accuracy=0,
+                communication_quality=0,
+                strengths=["Acknowledged knowledge gap honestly instead of fabricating incorrect information."],
+                weaknesses=[
+                    "Did not attempt the technical prompt or demonstrate foundational knowledge.",
+                    "Lacks familiarity with the required technical concept."
+                ],
+                improvement_suggestions=[
+                    "Review the fundamental concepts, architecture patterns, and trade-offs for this topic.",
+                    "When answering technical questions, attempt to reason from first principles rather than passing completely."
+                ],
+                ai_feedback=f"No answer provided (0/100). The candidate answered '{ans[:40]}' and did not attempt the technical prompt.",
+                follow_up_needed=True,
+                suggested_next_topic=request.skill,
+            )
+
+        # 2. Trivial short response check (< 6 words with no technical substance)
+        if word_count < 6:
+            return AIInterviewAnswerEvaluation(
+                score=5,
+                correctness=5,
+                relevance=5,
+                clarity=5,
+                depth=5,
+                technical_accuracy=5,
+                communication_quality=5,
+                strengths=["Submitted a brief response."],
+                weaknesses=["Answer is too brief and contains no technical substance, mechanisms, or explanations."],
                 improvement_suggestions=["Expand answer by covering: 1. Core concept, 2. Implementation details, 3. Trade-offs/metrics."],
-                ai_feedback="Response is too concise for a technical interview. Elaborate on the underlying mechanics and trade-offs.",
+                ai_feedback="Insufficient response (5/100). The submission contains no relevant technical explanation.",
                 follow_up_needed=True,
                 suggested_next_topic=request.skill,
             )

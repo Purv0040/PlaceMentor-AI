@@ -64,7 +64,7 @@ export const TasksPage = () => {
   // 1. All valid tasks belonging to active roadmap
   const allTasks = useMemo(() => {
     if (!Array.isArray(tasks)) return [];
-    return tasks.filter((t) => t.taskId && t.dayNumber != null);
+    return tasks.filter((t) => (t.id || t.taskId) && t.dayNumber != null);
   }, [tasks]);
 
   // 2. Today's Tasks: Strictly matching currentDay

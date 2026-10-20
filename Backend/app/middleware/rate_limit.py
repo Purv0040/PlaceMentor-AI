@@ -1,3 +1,4 @@
+import asyncio
 import time
 import logging
 from typing import Optional
@@ -26,7 +27,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # Bypass rate limiting for static/docs/health checks
-        if path.startswith(("/docs", "/redoc", "/openapi.json", "/health")) or request.method == "OPTIONS":
+        if path.startswith(("/docs", "/redoc", "/openapi.json", "/health", "/api/v1/health")) or request.method == "OPTIONS":
             return await call_next(request)
 
         # Determine rate limit key & threshold
@@ -41,9 +42,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         try:
             client = redis_manager.get_client()
             if client:
-                current_count = await client.incr(rate_key)
+                current_count = await asyncio.wait_for(client.incr(rate_key), timeout=0.4)
                 if current_count == 1:
-                    await client.expire(rate_key, 60)
+                    await asyncio.wait_for(client.expire(rate_key, 60), timeout=0.4)
 
                 if current_count > limit:
                     logger.warning("Rate limit exceeded for %s on %s (%d/%d)", caller_id, path, current_count, limit)
@@ -60,8 +61,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         headers={"Retry-After": "60"},
                     )
         except Exception as exc:
-            # Graceful failure: log warning and continue serving request if Redis fails
-            logger.warning("Redis rate limit check failed, allowing request: %s", str(exc))
+            # Graceful failure: log debug and continue serving request if Redis fails
+            logger.debug("Redis rate limit check skipped: %s", str(exc))
 
         return await call_next(request)
 

@@ -8,7 +8,8 @@ export const MentorHistorySidebar = ({
   onSelectSession,
   onNewChat,
   onDeleteSession,
-  onRenameSession
+  onRenameSession,
+  candidateName = ''
 }) => {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -58,15 +59,15 @@ export const MentorHistorySidebar = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-purple-400 text-lg">history</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Chat History
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 truncate max-w-[180px]">
+                {candidateName ? `${candidateName}'s Chats` : 'Chat History'}
               </span>
             </div>
-            {/* Close button on mobile/desktop toggle */}
+            {/* Close button on mobile and desktop toggle */}
             <button
               type="button"
               onClick={onClose}
-              className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a1f2e] transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a1f2e] transition-colors cursor-pointer"
               title="Close history panel"
             >
               <span className="material-symbols-outlined text-sm">close</span>
@@ -219,11 +220,11 @@ export const MentorHistorySidebar = ({
 
         {/* Sidebar Footer info */}
         <div className="p-3 border-t border-[#1f2433] bg-[#0b0e17] flex items-center justify-between text-[11px] text-slate-500 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>AI Memory Active</span>
+          <div className="flex items-center gap-1.5 truncate max-w-[170px]" title={candidateName || 'AI Memory'}>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+            <span className="truncate">{candidateName ? `${candidateName}` : 'AI Memory Active'}</span>
           </div>
-          <span className="font-mono text-[10px]">{sessions.length} chats</span>
+          <span className="font-mono text-[10px] shrink-0">{sessions.length} chats</span>
         </div>
       </aside>
     </>

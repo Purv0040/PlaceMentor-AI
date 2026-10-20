@@ -272,6 +272,17 @@ class TaskRepository:
 
         return inserted_tasks
 
+    async def _find_latest_one(self, query: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Find the most recent matching document, gracefully handling mocks and Motor."""
+        try:
+            cursor = self.collection.find(query).sort("created_at", -1)
+            docs = await cursor.to_list(length=1)
+            if docs:
+                return docs[0]
+        except Exception:
+            pass
+        return await self.collection.find_one(query)
+
     # ============================================================
     # GET BY ID
     # ============================================================
@@ -294,7 +305,7 @@ class TaskRepository:
             user_id
         )
 
-        document = await self.collection.find_one(query)
+        document = await self._find_latest_one(query)
 
         return self._serialize_document(document)
 
@@ -468,8 +479,12 @@ class TaskRepository:
             user_id
         )
 
+        target = await self._find_latest_one(query)
+        if not target:
+            return None
+
         result = await self.collection.update_one(
-            query,
+            {"_id": target["_id"]},
             {
                 "$set": update_data
             }
@@ -479,7 +494,7 @@ class TaskRepository:
             return None
 
         return await self.get_by_id(
-            task_id,
+            str(target["_id"]),
             user_id
         )
 
@@ -558,8 +573,12 @@ class TaskRepository:
             user_id
         )
 
+        target = await self._find_latest_one(query)
+        if not target:
+            return None
+
         result = await self.collection.update_one(
-            query,
+            {"_id": target["_id"]},
             {
                 "$set": update_data
             }
@@ -569,7 +588,7 @@ class TaskRepository:
             return None
 
         return await self.get_by_id(
-            task_id,
+            str(target["_id"]),
             user_id
         )
 

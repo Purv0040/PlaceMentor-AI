@@ -47,56 +47,48 @@ export const MentorInputDock = ({
         className="w-full bg-transparent text-white placeholder:text-slate-500 text-xs md:text-sm focus:outline-none resize-none px-1 leading-relaxed"
       />
 
-      {/* Input Action Controls */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#1e2333]">
-        <div className="flex items-center gap-2">
-          {/* Attach Code */}
-          <button
-            type="button"
-            onClick={onAttachCode}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191e2e] hover:bg-purple-600/15 hover:text-purple-300 hover:border-purple-500/30 text-slate-300 text-xs font-medium transition-all border border-[#252b3d] disabled:opacity-50"
-            title="Insert code snippet template"
-          >
-            <span className="material-symbols-outlined text-sm text-purple-400">code</span>
-            <span>Attach Code</span>
-          </button>
+      {/* Input Action Controls - All buttons neatly aligned to the right side */}
+      <div className="flex items-center justify-end pt-2 border-t border-[#1e2333] gap-2 flex-wrap">
+        {/* Attach Code */}
+        <button
+          type="button"
+          onClick={onAttachCode}
+          disabled={isLoading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#191e2e] hover:bg-purple-600/15 hover:text-purple-300 hover:border-purple-500/30 text-slate-300 text-xs font-medium transition-all border border-[#252b3d] disabled:opacity-50 cursor-pointer"
+          title="Insert code snippet template"
+        >
+          <span className="material-symbols-outlined text-sm text-purple-400">code</span>
+          <span>Attach Code</span>
+        </button>
 
-          {/* Voice Input */}
-          <button
-            type="button"
-            onClick={onToggleVoice}
-            disabled={isLoading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-              isVoiceActive
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
-                : 'bg-[#191e2e] hover:bg-purple-600/15 hover:text-purple-300 hover:border-purple-500/30 text-slate-300 border-[#252b3d]'
-            }`}
-            title="Dictate query via voice"
-          >
-            <span className={`material-symbols-outlined text-sm ${isVoiceActive ? 'text-rose-400' : 'text-emerald-400'}`}>
-              mic
-            </span>
-            <span>{isVoiceActive ? 'Listening...' : 'Voice Input'}</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
-            <kbd className="px-1.5 py-0.5 rounded bg-[#191e2e] border border-[#252b3d] text-slate-400 text-[10px]">Enter</kbd> to send
+        {/* Voice Input */}
+        <button
+          type="button"
+          onClick={onToggleVoice}
+          disabled={isLoading}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border cursor-pointer ${
+            isVoiceActive
+              ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+              : 'bg-[#191e2e] hover:bg-purple-600/15 hover:text-purple-300 hover:border-purple-500/30 text-slate-300 border-[#252b3d]'
+          }`}
+          title="Dictate query via voice"
+        >
+          <span className={`material-symbols-outlined text-sm ${isVoiceActive ? 'text-rose-400' : 'text-emerald-400'}`}>
+            mic
           </span>
+          <span>{isVoiceActive ? 'Listening...' : 'Voice Input'}</span>
+        </button>
 
-          {/* Send Button */}
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={isLoading || !input.trim()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg hover:shadow-purple-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed"
-          >
-            <span>Ask Mentor</span>
-            <span className="material-symbols-outlined text-sm">send</span>
-          </button>
-        </div>
+        {/* Send Button */}
+        <button
+          type="button"
+          onClick={onSend}
+          disabled={isLoading || !input.trim()}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg hover:shadow-purple-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <span>Ask Mentor</span>
+          <span className="material-symbols-outlined text-sm">send</span>
+        </button>
       </div>
     </div>
   );
