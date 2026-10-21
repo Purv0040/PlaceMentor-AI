@@ -45,6 +45,7 @@ async def start_interview(
             difficulty=payload.difficulty,
             question_count=payload.question_count,
             target_role_override=payload.target_role,
+            modality=payload.modality or payload.category,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start mock interview: {str(e)}")
@@ -174,4 +175,47 @@ async def delete_interview(
     if not success:
         raise HTTPException(status_code=404, detail="Interview session not found or already deleted.")
     return {"status": "success", "message": "Interview session deleted successfully"}
+
+
+@router.post("/generate-dynamic-question")
+async def generate_dynamic_question(
+    payload: Dict[str, Any],
+    current_user: dict = Depends(get_current_user),
+    service: InterviewService = Depends(get_interview_service),
+):
+    """Generate dynamic AI interview question on-demand for any role and category/modality."""
+    try:
+        user_id = _extract_user_id(current_user)
+        return await service.generate_dynamic_question(
+            user_id=user_id,
+            target_role=payload.get("target_role") or payload.get("role"),
+            modality=payload.get("modality") or payload.get("category"),
+            difficulty=payload.get("difficulty", "medium"),
+            question_number=int(payload.get("question_number", 1)),
+            previous_qa=payload.get("previous_qa", []),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate dynamic question: {str(e)}")
+
+
+@router.post("/{interview_id}/regenerate")
+async def regenerate_interview_question(
+    interview_id: str,
+    payload: Optional[Dict[str, Any]] = None,
+    current_user: dict = Depends(get_current_user),
+    service: InterviewService = Depends(get_interview_service),
+):
+    """Regenerate the current active question of an existing session dynamically."""
+    try:
+        user_id = _extract_user_id(current_user)
+        modality_override = (payload or {}).get("modality") or (payload or {}).get("category")
+        return await service.regenerate_question(
+            interview_id=interview_id,
+            user_id=user_id,
+            modality_override=modality_override,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate question: {str(e)}")
 

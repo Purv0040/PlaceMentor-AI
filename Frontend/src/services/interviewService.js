@@ -57,4 +57,18 @@ export const interviewService = {
   getInterviewQuestions: async (interviewId) => {
     return await apiRequest(`/interviews/${interviewId}/questions`);
   },
+
+  generateDynamicQuestion: async (params = {}) => {
+    return await apiRequest('/interviews/generate-dynamic-question', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  },
+
+  regenerateQuestion: async (interviewId, modalityOverride = null) => {
+    return await apiRequest(`/interviews/${interviewId}/regenerate`, {
+      method: 'POST',
+      body: JSON.stringify({ modality: modalityOverride }),
+    });
+  },
 };

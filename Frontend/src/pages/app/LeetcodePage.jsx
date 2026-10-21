@@ -47,17 +47,26 @@ export const LeetcodePage = () => {
   const navigate = useNavigate();
   const { user, updateUserProfile } = useUser();
 
-  // Primary State
-  const [profile, setProfile] = useState(null);
-  const [dailyPlan, setDailyPlan] = useState(null);
-  const [activityHistory, setActivityHistory] = useState(null);
-  const [focusAreas, setFocusAreas] = useState([]);
-  const [readinessBreakdown, setReadinessBreakdown] = useState(null);
+  // Primary State - Instant Local Cache (0ms load time)
+  const [cachedLC] = useState(() => {
+    try {
+      const stored = localStorage.getItem('placementor_cached_leetcode_dashboard');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
 
-  // UI / Interaction State
-  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState(() => cachedLC?.profile || null);
+  const [dailyPlan, setDailyPlan] = useState(() => cachedLC?.dailyPlan || null);
+  const [activityHistory, setActivityHistory] = useState(() => cachedLC?.activityHistory || null);
+  const [focusAreas, setFocusAreas] = useState(() => cachedLC?.focusAreas || []);
+  const [readinessBreakdown, setReadinessBreakdown] = useState(() => cachedLC?.readinessBreakdown || null);
+
+  // UI / Interaction State - If cached, do NOT block with loading spinner!
+  const [isLoading, setIsLoading] = useState(() => !cachedLC?.profile);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => Boolean(cachedLC?.profile));
   const [selectedDays, setSelectedDays] = useState(30);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [togglingTaskId, setTogglingTaskId] = useState(null);
@@ -73,7 +82,10 @@ export const LeetcodePage = () => {
 
   // 1. Fetch initial profile data & all dynamic subsections
   const loadDashboardData = async () => {
-    setIsLoading(true);
+    // Only show full-screen blocking loader if we have NO cached profile at all
+    if (!profile) {
+      setIsLoading(true);
+    }
     try {
       let res = await leetcodeService.getProfile();
 
@@ -112,18 +124,35 @@ export const LeetcodePage = () => {
         if (p.readiness_breakdown) setReadinessBreakdown(p.readiness_breakdown);
         if (p.activity_history) setActivityHistory(p.activity_history);
 
-        // Fetch dedicated sub-endpoints if any is missing from root response
+        // Save fresh snapshot to cache for instant rendering next time
+        try {
+          localStorage.setItem('placementor_cached_leetcode_dashboard', JSON.stringify({
+            profile: p,
+            dailyPlan: p.daily_plan,
+            focusAreas: p.focus_areas || [],
+            readinessBreakdown: p.readiness_breakdown,
+            activityHistory: p.activity_history
+          }));
+        } catch (e) {
+          console.warn('Failed to cache leetcode dashboard:', e);
+        }
+
+        // Fetch dedicated sub-endpoints in parallel if any was missing
+        const subFetches = [];
         if (!p.daily_plan) {
-          leetcodeService.getDailyPlan().then((r) => r?.data && setDailyPlan(r.data)).catch(() => {});
+          subFetches.push(leetcodeService.getDailyPlan().then((r) => r?.data && setDailyPlan(r.data)).catch(() => {}));
         }
         if (!p.focus_areas || p.focus_areas.length === 0) {
-          leetcodeService.getFocusAreas().then((r) => r?.data && setFocusAreas(r.data)).catch(() => {});
+          subFetches.push(leetcodeService.getFocusAreas().then((r) => r?.data && setFocusAreas(r.data)).catch(() => {}));
         }
         if (!p.readiness_breakdown) {
-          leetcodeService.getReadinessBreakdown().then((r) => r?.data && setReadinessBreakdown(r.data)).catch(() => {});
+          subFetches.push(leetcodeService.getReadinessBreakdown().then((r) => r?.data && setReadinessBreakdown(r.data)).catch(() => {}));
         }
         if (!p.activity_history) {
-          leetcodeService.getActivityHistory(selectedDays).then((r) => r?.data && setActivityHistory(r.data)).catch(() => {});
+          subFetches.push(leetcodeService.getActivityHistory(selectedDays).then((r) => r?.data && setActivityHistory(r.data)).catch(() => {}));
+        }
+        if (subFetches.length > 0) {
+          Promise.allSettled(subFetches);
         }
       } else {
         setIsConnected(false);
@@ -132,10 +161,11 @@ export const LeetcodePage = () => {
         setFocusAreas([]);
         setActivityHistory(null);
         setReadinessBreakdown(null);
+        localStorage.removeItem('placementor_cached_leetcode_dashboard');
       }
     } catch (err) {
       console.warn('Error loading LeetCode profile:', err);
-      setIsConnected(false);
+      if (!profile) setIsConnected(false);
     } finally {
       setIsLoading(false);
     }

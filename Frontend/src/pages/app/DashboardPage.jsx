@@ -25,6 +25,7 @@ import { githubService } from '../../services/githubService';
 import { resumeService } from '../../services/resumeService';
 import { planningService } from '../../services/planningService';
 import { TelemetryChart, ActionPlanList } from '../../components/dashboard';
+import { getRoleSkillGapData } from '../../data/skillGapData';
 
 const Panel = ({ children, className = '' }) => (
   <section className={`p-5 sm:p-6 rounded-2xl bg-[#121624] border border-[#232b3e] shadow-xl ${className}`}>
@@ -44,7 +45,7 @@ const PanelTitle = ({ icon, children, action }) => (
 
 export const DashboardPage = () => {
   const { user } = useUser();
-  const { tasks, toggleTaskCompletion } = usePlanning();
+  const { roadmap, tasks, toggleTaskCompletion } = usePlanning();
 
   const displayName = user?.name || user?.full_name || 'Candidate';
   const targetRole = user?.targetRole || user?.career?.targetRole || user?.target_role || 'AI/ML Engineer';
@@ -75,8 +76,13 @@ export const DashboardPage = () => {
   });
 
   // Real Skill Gaps & AI Mentor recommendations
-  const [topGaps, setTopGaps] = useState([]);
-  const [skillsLoading, setSkillsLoading] = useState(true);
+  const [topGaps, setTopGaps] = useState(() => {
+    const calibrated = getRoleSkillGapData(targetRole, user);
+    return Array.isArray(calibrated?.gaps) && calibrated.gaps.length > 0
+      ? calibrated.gaps.slice(0, 3)
+      : [];
+  });
+  const [skillsLoading, setSkillsLoading] = useState(false);
 
   // Load progress metrics dynamically from /api/v1/progress
   const loadProgress = useCallback(async () => {
@@ -96,11 +102,11 @@ export const DashboardPage = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Fetch Readiness Summary & History
-    readinessService.getSummary().then((summary) => {
-      if (!isMounted || !summary) return;
-      if (typeof summary.overall_score === 'number' && summary.overall_score > 0) {
-        setReadinessScore(Math.round(summary.overall_score));
+    // 1. Fetch Readiness dynamically calibrated for profile telemetry & History
+    readinessService.getLatestReadiness(user).then((readiness) => {
+      if (!isMounted || !readiness) return;
+      if (typeof readiness.overallScore === 'number' && readiness.overallScore > 0) {
+        setReadinessScore(Math.round(readiness.overallScore));
       }
     }).catch((err) => console.warn('Readiness summary load failed:', err));
 
@@ -153,22 +159,33 @@ export const DashboardPage = () => {
       }
     }).catch((err) => console.warn('Resumes load failed:', err));
 
-    // 6. Fetch Skill Gap Summary
-    skillGapService.getSummary().then((summary) => {
-      if (!isMounted || !summary) return;
-      if (Array.isArray(summary.top_priority_gaps) && summary.top_priority_gaps.length > 0) {
-        setTopGaps(summary.top_priority_gaps.slice(0, 3));
+    // 6. Fetch Skill Gap Summary calibrated for role
+    skillGapService.getLatestSkillGaps(targetRole, user).then((analysis) => {
+      if (!isMounted) return;
+      if (analysis && Array.isArray(analysis.gaps) && analysis.gaps.length > 0) {
+        setTopGaps(analysis.gaps.slice(0, 3));
+      } else {
+        const fallback = getRoleSkillGapData(targetRole, user);
+        if (Array.isArray(fallback?.gaps) && fallback.gaps.length > 0) {
+          setTopGaps(fallback.gaps.slice(0, 3));
+        }
       }
       setSkillsLoading(false);
     }).catch((err) => {
-      console.warn('Skill gaps load failed:', err);
-      if (isMounted) setSkillsLoading(false);
+      console.warn('Skill gaps load failed, falling back to role benchmarks:', err);
+      if (isMounted) {
+        const fallback = getRoleSkillGapData(targetRole, user);
+        if (Array.isArray(fallback?.gaps) && fallback.gaps.length > 0) {
+          setTopGaps(fallback.gaps.slice(0, 3));
+        }
+        setSkillsLoading(false);
+      }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [loadProgress]);
+  }, [loadProgress, targetRole, user]);
 
   // GitHub one-click sync handler
   const handleGithubSync = async (e) => {
@@ -250,24 +267,29 @@ export const DashboardPage = () => {
   // Helper to map skill gap progress level to percentage
   const calculateGapLevelPercentage = (currentLevel) => {
     if (!currentLevel || currentLevel === 'Untested' || currentLevel === 'None') return 15;
-    if (currentLevel === 'Beginner' || currentLevel === 1) return 30;
-    if (currentLevel === 'Intermediate' || currentLevel === 2) return 55;
-    if (currentLevel === 'Advanced' || currentLevel === 3) return 80;
-    if (currentLevel === 'Expert' || currentLevel === 4) return 100;
-    return 40;
+    if (typeof currentLevel === 'number') {
+      if (currentLevel <= 1) return 25;
+      if (currentLevel === 2) return 50;
+      if (currentLevel === 3) return 75;
+      if (currentLevel >= 4) return 100;
+    }
+    const str = String(currentLevel).toLowerCase();
+    if (str.includes('1/4') || str.includes('beginner')) return 30;
+    if (str.includes('2/4') || str.includes('intermediate')) return 55;
+    if (str.includes('3/4') || str.includes('advanced')) return 80;
+    if (str.includes('4/4') || str.includes('expert')) return 100;
+    return 45;
   };
 
   return (
     <div className="dashboard-page w-full max-w-5xl mx-auto space-y-5 sm:space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center gap-2.5 text-lg sm:text-xl font-bold text-white">
-        <Code2 size={20} className="text-indigo-400" />
-        <span>Dashboard</span>
-      </div>
-
       {/* 1. Personalized Welcome Header */}
-      <Panel className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 bg-gradient-to-r from-[#121624] via-[#151b2e] to-[#121624]">
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-[#151a2d] via-[#121624] to-[#101422] border border-[#232b3e] shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
+            <Sparkles size={13} />
+            <span>AI Placement Dashboard</span>
+          </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
             {greeting}
           </h1>
@@ -277,107 +299,139 @@ export const DashboardPage = () => {
             <span className="block sm:inline text-slate-400 text-xs mt-1 sm:mt-0">{contextSubtext}</span>
           </p>
         </div>
-        <NavLink
-          to={startPlanRoute}
-          className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shrink-0 shadow-lg ${
-            allTasksCompleted
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white hover:shadow-indigo-500/20'
-          }`}
-        >
-          <span>{startPlanLabel}</span>
-          <ArrowUpRight size={14} />
-        </NavLink>
-      </Panel>
 
-      {/* 2. Four Compact Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 self-start md:self-center shrink-0">
+          <NavLink
+            to={startPlanRoute}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-md shadow-indigo-600/25 cursor-pointer"
+          >
+            <span>{startPlanLabel}</span>
+            <ArrowRight size={14} />
+          </NavLink>
+        </div>
+      </div>
+
+      {/* 2. Sleek Metrics Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Readiness Card */}
         <NavLink
           to="/placement-readiness"
-          className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-indigo-500/50 hover:bg-[#151b2e] transition-all group shadow-sm flex flex-col justify-between"
+          className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-b from-[#151a2c] to-[#101422] border border-[#232b3e] hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-200 group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Readiness</span>
-            <Target size={14} className="text-indigo-400 opacity-70 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-0 right-0 w-28 h-28 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors pointer-events-none" />
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Readiness Score
+              </span>
+              <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 group-hover:scale-105 transition-transform">
+                <Target size={16} />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {readinessScore}%
+              </span>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                readinessScore >= 75
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : readinessScore >= 50
+                  ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                  : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+              }`}>
+                {readinessScore >= 75 ? 'Ready' : readinessScore >= 50 ? 'Moderate' : 'Developing'}
+              </span>
+            </div>
+
+            {/* Mini Progress Bar */}
+            <div className="w-full bg-[#1e2538] rounded-full h-1.5 mt-3.5 overflow-hidden border border-[#2a344d]/40">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
+              />
+            </div>
           </div>
-          <strong className="block my-2 text-center text-2xl font-bold text-indigo-400 font-mono">
-            {readinessScore}%
-          </strong>
-          <span className="block text-center text-[11px] text-slate-500 group-hover:text-slate-400 truncate">
-            Placement Readiness →
-          </span>
+
+          <div className="mt-4 pt-3 border-t border-[#232b3e]/60 flex items-center justify-between text-xs text-slate-400 group-hover:text-indigo-300 transition-colors">
+            <span>Diagnostic Breakdown</span>
+            <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </div>
         </NavLink>
 
         {/* Sprint Cadence Card */}
         <NavLink
           to="/roadmap"
-          className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-indigo-500/50 hover:bg-[#151b2e] transition-all group shadow-sm flex flex-col justify-between"
+          className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-b from-[#151a2c] to-[#101422] border border-[#232b3e] hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-200 group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Sprint Cadence</span>
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-medium ${
-                activeStreak > 0
-                  ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
-                  : 'text-slate-400 bg-slate-800'
-              }`}
-            >
-              {activeStreak > 0 ? `${activeStreak}D Streak 🔥` : 'Target'}
-            </span>
-          </div>
-          <strong className="block my-2 text-center text-xl font-bold text-white font-mono">
-            {user?.dailyGoalMinutes || 90} <span className="text-xs font-normal text-slate-400">Min/Day</span>
-          </strong>
-          <span className="block text-center text-[11px] text-slate-500 group-hover:text-slate-400 truncate">
-            Roadmap Activity →
-          </span>
-        </NavLink>
+          <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-colors pointer-events-none" />
 
-        {/* LeetCode Card */}
-        <NavLink
-          to="/leetcode"
-          className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-purple-500/50 hover:bg-[#151b2e] transition-all group shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">LeetCode</span>
-            <span
-              className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                realLcHandle
-                  ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                  : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${realLcHandle ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              {realLcHandle ? 'Linked' : 'Unlinked'}
-            </span>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Sprint Cadence
+              </span>
+              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:scale-105 transition-transform">
+                <Flame size={16} />
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
+                {user?.dailyGoalMinutes || 90}
+              </span>
+              <span className="text-xs font-medium text-slate-400 font-mono">min / day</span>
+              {activeStreak > 0 && (
+                <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  {activeStreak}d Streak 🔥
+                </span>
+              )}
+            </div>
+
+            <p className="mt-3.5 text-xs text-slate-400 truncate">
+              {user?.studyCadence || 'Daily Evening Sprints'} · Roadmap pace
+            </p>
           </div>
-          <strong
-            className="block my-2 text-center text-base font-bold text-white truncate"
-            title={realLcHandle ? `@${realLcHandle}` : 'Click to link profile'}
-          >
-            {realLcHandle ? `@${realLcHandle}` : 'Connect Profile'}
-          </strong>
-          <span className="block text-center text-[11px] text-slate-500 group-hover:text-slate-400 truncate">
-            {realLcHandle ? `${realLcSolved} Problems Solved` : 'Track Code Solves →'}
-          </span>
+
+          <div className="mt-4 pt-3 border-t border-[#232b3e]/60 flex items-center justify-between text-xs text-slate-400 group-hover:text-amber-300 transition-colors">
+            <span>View Roadmap Schedule</span>
+            <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </div>
         </NavLink>
 
         {/* Target Role Card */}
         <NavLink
           to="/profile"
-          className="p-4 rounded-2xl bg-[#121624] border border-[#232b3e] hover:border-emerald-500/50 hover:bg-[#151b2e] transition-all group shadow-sm flex flex-col justify-between"
+          className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-b from-[#151a2c] to-[#101422] border border-[#232b3e] hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-200 group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Target Role</span>
-            <Code2 size={14} className="text-emerald-400 opacity-70 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors pointer-events-none" />
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Target Role
+              </span>
+              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform">
+                <Code2 size={16} />
+              </div>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate" title={targetRole}>
+              {targetRole}
+            </h3>
+
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 truncate">
+                {companyTier ? companyTier.split('(')[0].trim() : 'Tier-1 Target'}
+              </span>
+            </div>
           </div>
-          <strong className="block my-2 text-center text-sm font-bold text-white truncate" title={targetRole}>
-            {targetRole}
-          </strong>
-          <span className="block text-center text-[11px] text-slate-500 group-hover:text-slate-400 truncate">
-            {companyTier ? companyTier.split('(')[0].trim() : 'View Configuration →'}
-          </span>
+
+          <div className="mt-4 pt-3 border-t border-[#232b3e]/60 flex items-center justify-between text-xs text-slate-400 group-hover:text-emerald-300 transition-colors">
+            <span>Configure Role & Goals</span>
+            <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </div>
         </NavLink>
       </div>
 
@@ -400,6 +454,9 @@ export const DashboardPage = () => {
             <TelemetryChart
               progressData={progressData}
               readinessHistory={readinessHistory}
+              readinessScore={readinessScore}
+              tasks={tasks}
+              roadmap={roadmap}
               loading={progressLoading}
             />
           </div>
@@ -492,10 +549,10 @@ export const DashboardPage = () => {
                     {/* Level Details */}
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
                       <span className="truncate">
-                        Current: <strong className="text-slate-300">{gap.current_level_text || gap.current_level || 'Untested'}</strong>
+                        Current: <strong className="text-slate-300">{gap.current_level_text || gap.currentLevelText || gap.current_level || 'Untested'}</strong>
                       </span>
                       <span className="text-slate-500 shrink-0">
-                        Target: <strong className="text-indigo-400">{gap.required_level_text || gap.required_level || 'Proficient'}</strong>
+                        Target: <strong className="text-indigo-400">{gap.required_level_text || gap.requiredLevelText || gap.required_level || 'Proficient'}</strong>
                       </span>
                     </div>
                   </NavLink>
@@ -553,7 +610,7 @@ export const DashboardPage = () => {
                     </NavLink>
                   </div>
                   <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                    {gap.suggested_action || gap.reason || 'Practice core interview questions and architecture patterns with AI Mentor.'}
+                    {gap.suggestedAction || gap.suggested_action || gap.reason || 'Practice core interview questions and architecture patterns with AI Mentor.'}
                   </p>
                 </div>
               ))
@@ -593,8 +650,8 @@ export const DashboardPage = () => {
         </Panel>
       </div>
 
-      {/* 5. Compact Links for Resume Audit, GitHub Sync, and LeetCode Analytics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* 5. Compact Links for Resume Audit and GitHub Sync */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Resume Audit Link */}
         <NavLink
           to="/resume"
@@ -639,23 +696,6 @@ export const DashboardPage = () => {
             </NavLink>
           )}
         </div>
-
-        {/* LeetCode Analytics Link */}
-        <NavLink
-          to="/leetcode"
-          className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-[#121624] border border-[#232b3e] text-xs text-slate-300 hover:border-purple-500/40 hover:bg-[#151b2e] transition-all group"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Sparkles size={16} className="text-purple-400 shrink-0" />
-            <div className="min-w-0">
-              <span className="font-semibold block truncate">LeetCode Analytics</span>
-              <span className="text-[10px] text-slate-500 block truncate">
-                {realLcHandle ? `@${realLcHandle} • ${realLcSolved} Solved` : 'Connect LeetCode Account'}
-              </span>
-            </div>
-          </div>
-          <ArrowRight size={14} className="text-slate-500 group-hover:text-white transition-colors shrink-0" />
-        </NavLink>
       </div>
     </div>
   );

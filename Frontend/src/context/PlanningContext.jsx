@@ -135,24 +135,36 @@ export const PlanningProvider = ({ children }) => {
   }, [authLoading, isAuthenticated, loadApiPlanning]);
 
   const toggleTaskCompletion = async (taskId) => {
-    const targetTask = planningState.tasks?.find((task) => task.id === taskId || task.taskId === taskId);
+    if (taskId == null) return;
+    const sId = String(taskId);
+    const targetTask = planningState.tasks?.find((task) =>
+      (task.id != null && String(task.id) === sId) ||
+      (task.taskId != null && String(task.taskId) === sId) ||
+      (task._id != null && String(task._id) === sId)
+    );
     if (!targetTask) return;
 
-    const nextStatus = targetTask.completed ? 'pending' : 'completed';
+    const nextStatus = (targetTask.completed || targetTask.status === 'completed') ? 'pending' : 'completed';
     const isCompleted = nextStatus === 'completed';
 
     // 1. Optimistic update of tasks AND overall progress metrics immediately
     setPlanningState((prevState) => {
-      const nextTasks = prevState.tasks.map((task) =>
-        (task.id === targetTask.id || (targetTask.taskId && task.taskId && task.taskId === targetTask.taskId))
-          ? {
-              ...task,
-              status: nextStatus,
-              completed: isCompleted,
-              completedAt: isCompleted ? (task.completedAt || new Date().toISOString()) : null,
-            }
-          : task
-      );
+      const nextTasks = (prevState.tasks || []).map((task) => {
+        const isMatch = (
+          (task.id != null && String(task.id) === sId) ||
+          (task.taskId != null && String(task.taskId) === sId) ||
+          (task._id != null && String(task._id) === sId) ||
+          (targetTask.id != null && task.id != null && String(task.id) === String(targetTask.id)) ||
+          (targetTask.taskId != null && task.taskId != null && String(task.taskId) === String(targetTask.taskId))
+        );
+        if (!isMatch) return task;
+        return {
+          ...task,
+          status: nextStatus,
+          completed: isCompleted,
+          completedAt: isCompleted ? (task.completedAt || new Date().toISOString()) : null,
+        };
+      });
 
       const totalCount = nextTasks.length;
       const completedCount = nextTasks.filter((t) => t.completed || t.status === 'completed').length;
@@ -180,7 +192,7 @@ export const PlanningProvider = ({ children }) => {
     showToast(isCompleted ? 'Task completed.' : 'Task reopened.');
 
     // PREFER unique MongoDB document _id (targetTask.id) so it never targets duplicate taskIds from older roadmaps
-    const backendId = targetTask.id || targetTask.taskId;
+    const backendId = targetTask.id || targetTask.taskId || targetTask._id;
     const isLocalTask = !backendId || String(backendId).startsWith('task-skill-');
     if (!isLocalTask) {
       try {

@@ -356,7 +356,7 @@ class TaskRepository:
             "roadmap_id": str(roadmap_id),
         }
 
-        cursor = self.collection.find(query)
+        cursor = self.collection.find(query).sort([("day_number", 1), ("created_at", 1)])
 
         documents = await cursor.to_list(
             length=1000
@@ -398,7 +398,7 @@ class TaskRepository:
         cursor = (
             self.collection
             .find(query)
-            .sort("created_at", -1)
+            .sort([("day_number", 1), ("created_at", 1)])
         )
 
         documents = await cursor.to_list(
@@ -577,15 +577,18 @@ class TaskRepository:
         if not target:
             return None
 
-        result = await self.collection.update_one(
-            {"_id": target["_id"]},
+        await self.collection.update_many(
+            query,
             {
                 "$set": update_data
             }
         )
 
-        if result.matched_count == 0:
-            return None
+        if target.get("title"):
+            await self.collection.update_many(
+                {"user_id": str(user_id), "title": target["title"]},
+                {"$set": update_data}
+            )
 
         return await self.get_by_id(
             str(target["_id"]),

@@ -162,6 +162,7 @@ class PersonalMentorEngine:
             "8. GREETINGS: For greetings ('hi', 'hello', 'hey'), return a warm, natural, concise greeting (1-2 sentences), addressing the student by name if provided, and ask how you can help with their coding, interview prep, or placement preparation today. Do NOT force a single narrow role unless requested.\n"
             "9. STUDENT CONTEXT: Use student context (roadmap, today's tasks, readiness score, resume, skill gaps) ONLY when the user's question asks about their personal placement plan, tasks, progress, or profile. If personal data is requested but missing, state clearly that it is not yet recorded. Never hallucinate fake tasks, scores, or achievements. Never force every general question into placement roadmap advice.\n"
             "10. TONE: Elite, direct, empowering, and respectful. Avoid repetitive disclaimers, robotic preambles, or unneeded filler.\n"
+            "11. TODAY'S TASKS COMPLETION: If `today_tasks` in student context shows `pending_count == 0` (or `pending_tasks` is empty and `completed_count > 0`), the student has ALREADY COMPLETED ALL tasks for today! Explicitly acknowledge and congratulate them for completing today's tasks. Do NOT tell them they have pending tasks for today. Suggest optional bonus activities such as practicing LeetCode / DSA problems, reviewing tomorrow's roadmap concepts, or doing a mock technical interview.\n"
         )
 
         context_str = json.dumps(filtered_context, indent=2)

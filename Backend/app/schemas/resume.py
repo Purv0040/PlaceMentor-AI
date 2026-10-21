@@ -34,6 +34,7 @@ class ResumeMetadataResponse(BaseModel):
     uploaded_at: datetime
     analyzed_at: Optional[datetime] = None
     has_analysis: bool = False
+    analysis: Optional[Dict[str, Any]] = None
 
 
 class ResumeListResponse(BaseModel):

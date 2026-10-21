@@ -49,6 +49,7 @@ class PriorityGapSchema(BaseModel):
     id: str
     skill: str
     category: str = "Backend"
+    scope: Optional[str] = "role"
     gap_type: str = "missing"
     priority: str = "High"
     importance: str = "high"
@@ -74,6 +75,11 @@ class CategoryCoverageSchema(BaseModel):
     category: str
     coverage: int
     color: str = "#8083ff"
+    scope: Optional[str] = "role"
+    benchmark_target: Optional[int] = 80
+    total_skills: Optional[int] = None
+    aligned_skills: Optional[int] = None
+    status: Optional[str] = None
 
 
 class Matrix2x2ItemSchema(BaseModel):

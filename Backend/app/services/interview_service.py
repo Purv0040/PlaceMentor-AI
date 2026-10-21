@@ -56,6 +56,7 @@ class InterviewService:
         difficulty: str = "medium",
         question_count: int = 5,
         target_role_override: Optional[str] = None,
+        modality: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Start a new mock interview session and generate the first adaptive question."""
         # 1. Load profile & student context
@@ -71,6 +72,7 @@ class InterviewService:
             "user_id": user_id,
             "target_role": target_role,
             "interview_type": interview_type,
+            "modality": modality or interview_type,
             "difficulty": difficulty,
             "status": "active",
             "total_questions": question_count,
@@ -87,6 +89,7 @@ class InterviewService:
         q_payload = {
             "target_role": target_role,
             "interview_type": interview_type,
+            "modality": modality or interview_type,
             "difficulty": difficulty,
             "question_number": 1,
             "total_questions": question_count,
@@ -216,6 +219,7 @@ class InterviewService:
             q_payload = {
                 "target_role": session.get("target_role", "Backend Developer"),
                 "interview_type": session.get("interview_type", "technical"),
+                "modality": session.get("modality") or session.get("interview_type", "technical"),
                 "difficulty": session.get("difficulty", "medium"),
                 "question_number": next_num,
                 "total_questions": total_q_count,
@@ -337,4 +341,127 @@ class InterviewService:
 
     async def delete_interview(self, interview_id: str, user_id: str) -> bool:
         return await self.interview_repo.delete_session(interview_id, user_id=user_id)
+
+    async def generate_dynamic_question(
+        self,
+        user_id: str,
+        target_role: Optional[str] = None,
+        modality: Optional[str] = None,
+        difficulty: str = "medium",
+        question_number: int = 1,
+        previous_qa: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Dynamically generate a question tailored strictly to target_role, modality/category, and difficulty."""
+        profile = await self.profile_repo.get_by_user_id(user_id) or {}
+        role = target_role or profile.get("target_role") or "Backend Developer"
+        student_context = await self._build_student_context(user_id)
+
+        # Normalize interview_type from modality
+        raw_mod = str(modality or "system_design").lower()
+        if any(w in raw_mod for w in ["dsa", "drill", "algo", "coding", "technical"]):
+            itype = "dsa"
+        elif any(w in raw_mod for w in ["star", "behavioral", "hr"]):
+            itype = "behavioral"
+        elif any(w in raw_mod for w in ["full", "combined", "tier"]):
+            itype = "combined"
+        else:
+            itype = "system_design"
+
+        q_payload = {
+            "target_role": role,
+            "interview_type": itype,
+            "modality": modality or "System Architecture & Design",
+            "difficulty": difficulty,
+            "question_number": question_number,
+            "total_questions": 5,
+            "previous_qa": previous_qa or [],
+            "student_context": student_context,
+        }
+
+        try:
+            q_res = await self.ai_client.generate_interview_question(q_payload)
+        except AIClientError as e:
+            logger.warning("AI Service unavailable for dynamic question (%s), using local engine.", e)
+            from app.engines.interview_engine import AIInterviewEngine
+            q_res = AIInterviewEngine().generate_question(q_payload)
+
+        return q_res
+
+    async def regenerate_question(
+        self,
+        interview_id: str,
+        user_id: str,
+        modality_override: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Regenerate the current active question of an interview session dynamically."""
+        session = await self.interview_repo.get_session_by_id(interview_id, user_id=user_id)
+        if not session:
+            raise ValueError("Interview session not found.")
+
+        current_num = session.get("current_question", 1)
+        role = session.get("target_role", "Backend Developer")
+        modality = modality_override or session.get("modality") or "System Architecture & Design"
+        difficulty = session.get("difficulty", "medium")
+
+        questions = await self.interview_repo.get_questions_for_interview(interview_id, user_id=user_id)
+        previous_qa = [
+            {"question": q.get("question"), "answer": q.get("answer")}
+            for q in questions if q.get("question")
+        ]
+
+        # If modality changed, update session's modality as well
+        if modality_override and modality_override != session.get("modality"):
+            await self.interview_repo.update_session(interview_id, user_id, {"modality": modality_override})
+
+        new_q_res = await self.generate_dynamic_question(
+            user_id=user_id,
+            target_role=role,
+            modality=modality,
+            difficulty=difficulty,
+            question_number=current_num,
+            previous_qa=previous_qa,
+        )
+
+        # Update or replace the current question record in DB
+        current_q = next((q for q in questions if q.get("question_number") == current_num), None)
+        if current_q:
+            new_q_data = {
+                "question": new_q_res.get("question"),
+                "category": new_q_res.get("category", "Technical"),
+                "skill": new_q_res.get("skill", "Core"),
+                "difficulty": new_q_res.get("difficulty", difficulty),
+                "expected_focus": new_q_res.get("expected_focus", "Core concepts"),
+                "hint": new_q_res.get("hint"),
+                "answer": None,
+                "evaluation": None,
+            }
+            updated = await self.interview_repo.update_question_answer(
+                question_id=current_q["question_id"],
+                user_id=user_id,
+                answer="",
+                evaluation=None,
+            )
+            # Apply content update
+            await self.interview_repo.collection_questions.update_one(
+                {"question_id": current_q["question_id"], "user_id": user_id},
+                {"$set": new_q_data}
+            )
+            current_q.update(new_q_data)
+            return current_q
+        else:
+            q_data = {
+                "question_id": new_q_res.get("question_id") or f"q_{interview_id}_{current_num}",
+                "interview_id": interview_id,
+                "user_id": user_id,
+                "question_number": current_num,
+                "question": new_q_res.get("question"),
+                "category": new_q_res.get("category", "Technical"),
+                "skill": new_q_res.get("skill", "Core"),
+                "difficulty": new_q_res.get("difficulty", difficulty),
+                "expected_focus": new_q_res.get("expected_focus", "Core concepts"),
+                "hint": new_q_res.get("hint"),
+                "answer": None,
+                "evaluation": None,
+            }
+            return await self.interview_repo.create_question(q_data)
 

@@ -41,6 +41,7 @@ async def analyze_skill_gaps(
 
 @router.get("", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)
 async def get_latest_skill_gaps(
+    target_role: Optional[str] = Query(None),
     db: AsyncIOMotorDatabase = Depends(get_db),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
@@ -49,7 +50,7 @@ async def get_latest_skill_gaps(
     """
     user_id = str(current_user["id"])
     service = SkillGapService(db)
-    analysis = await service.get_latest_skill_gaps(user_id)
+    analysis = await service.get_latest_skill_gaps(user_id, target_role_override=target_role)
     return {
         "status": "success",
         "data": analysis

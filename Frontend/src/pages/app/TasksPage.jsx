@@ -61,10 +61,31 @@ export const TasksPage = () => {
     : null;
   const phaseName = currentPhase?.title || roadmap?.currentPhaseName || 'Foundation';
 
-  // 1. All valid tasks belonging to active roadmap
+  // 1. All valid tasks belonging to active roadmap, strictly deduplicated by dayNumber and title
   const allTasks = useMemo(() => {
     if (!Array.isArray(tasks)) return [];
-    return tasks.filter((t) => (t.id || t.taskId) && t.dayNumber != null);
+    const valid = tasks.filter((t) => (t.id || t.taskId) && t.dayNumber != null);
+
+    // Deduplicate by dayNumber + title (case-insensitive)
+    const dedupMap = new Map();
+    for (const t of valid) {
+      const key = `${t.dayNumber}_${(t.title || '').trim().toLowerCase()}`;
+      if (!dedupMap.has(key)) {
+        dedupMap.set(key, t);
+      } else {
+        const existing = dedupMap.get(key);
+        const currCompleted = t.completed || t.status === 'completed';
+        const existCompleted = existing.completed || existing.status === 'completed';
+        if (currCompleted && !existCompleted) {
+          dedupMap.set(key, t);
+        } else if (currCompleted && existCompleted) {
+          const tTime = new Date(t.completedAt || 0).getTime();
+          const exTime = new Date(existing.completedAt || 0).getTime();
+          if (tTime > exTime) dedupMap.set(key, t);
+        }
+      }
+    }
+    return Array.from(dedupMap.values());
   }, [tasks]);
 
   // 2. Today's Tasks: Strictly matching currentDay

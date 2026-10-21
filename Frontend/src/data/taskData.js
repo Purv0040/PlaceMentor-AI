@@ -48,7 +48,7 @@ const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, expli
         completed: false,
         dayNumber: day,
         phaseId: "phase-1",
-        route: "/projects"
+        route: "/github"
       },
       {
         id: "task-3",
@@ -99,7 +99,7 @@ const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, expli
         completed: false,
         dayNumber: day,
         phaseId: "phase-1",
-        route: "/projects"
+        route: "/github"
       },
       {
         id: "task-3",
@@ -138,7 +138,7 @@ const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, expli
         completed: false,
         dayNumber: day,
         phaseId: "phase-1",
-        route: "/projects"
+        route: "/github"
       },
       {
         id: "task-2",
@@ -189,7 +189,7 @@ const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, expli
         completed: false,
         dayNumber: day,
         phaseId: "phase-1",
-        route: "/leetcode"
+        route: "/tasks"
       },
       {
         id: "task-2",
@@ -201,7 +201,7 @@ const _generateDynamicTasks = (explicitRole = null, explicitSkills = null, expli
         completed: false,
         dayNumber: day,
         phaseId: "phase-1",
-        route: "/projects"
+        route: "/github"
       },
       {
         id: "task-3",

@@ -191,7 +191,11 @@ class AsyncMockCollection:
                 self.data = data
 
             def sort(self, key, direction=1):
-                self.data.sort(key=lambda x: x.get(key, ""), reverse=(direction < 0))
+                if isinstance(key, list):
+                    for k, d in reversed(key):
+                        self.data.sort(key=lambda x: str(x.get(k, "")), reverse=(d < 0))
+                else:
+                    self.data.sort(key=lambda x: str(x.get(key, "")), reverse=(direction < 0))
                 return self
 
             def skip(self, n):

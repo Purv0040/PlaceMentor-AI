@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 class AIInterviewQuestionRequest(BaseModel):
     target_role: str = Field(..., description="Target role e.g. Backend Developer")
     interview_type: str = Field(..., description="hr, technical, behavioral, project, dsa, system_design")
+    modality: Optional[str] = Field(None, description="Interview Modality / Category (e.g. System Architecture & Design, Technical / DSA Drill, Behavioral & HR STAR Drill)")
+    category: Optional[str] = Field(None, description="Optional category alias")
     difficulty: str = Field("medium", description="easy, medium, hard")
     question_number: int = Field(1, ge=1)
     total_questions: int = Field(5, ge=1, le=20)

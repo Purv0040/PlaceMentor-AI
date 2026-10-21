@@ -27,9 +27,18 @@ import {
 
 export const ResumePage = () => {
   const navigate = useNavigate();
-  const { user, updateUserProfile } = useUser();
-  const { generateCustomRoadmap, roadmap } = usePlanning();
+  // Instant SWR Cache for 0ms page load
+  const [cachedResume] = useState(() => {
+    try {
+      const stored = localStorage.getItem('placementor_cached_resume_page_data');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [resumeData, setResumeData] = useState(() => {
+    if (cachedResume?.resumeData) return cachedResume.resumeData;
     const userResume = user?.resumeFileName || localStorage.getItem('placementCopilotResumeName');
     return {
       ...initialResumeData,
@@ -42,8 +51,8 @@ export const ResumePage = () => {
   const [copiedBulletId, setCopiedBulletId] = useState(null);
   const [fixingBulletId, setFixingBulletId] = useState(null);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
-  const [userResumes, setUserResumes] = useState([]);
-  const [currentResumeId, setCurrentResumeId] = useState(null);
+  const [userResumes, setUserResumes] = useState(() => cachedResume?.userResumes || []);
+  const [currentResumeId, setCurrentResumeId] = useState(() => cachedResume?.currentResumeId || null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEditingRole, setIsEditingRole] = useState(false);
   const [customRoleInput, setCustomRoleInput] = useState('');
@@ -308,7 +317,10 @@ export const ResumePage = () => {
               ? 'Analysis Pending'
               : (active.status || 'ATS Verified')
           }));
-          if (active.has_analysis) {
+          // Instant path: if backend already included analysis in the list response, apply it with 0 extra network calls!
+          if (active.analysis) {
+            applyAnalysisData(active.analysis, active.analyzed_at);
+          } else if (active.has_analysis) {
             loadAnalysis(active.id);
           } else {
             // Trigger automatic AI analysis if not analyzed yet
@@ -464,23 +476,37 @@ export const ResumePage = () => {
         }))
       : [];
 
-    setResumeData((prev) => ({
-      ...prev,
-      overallScore: overall,
-      lastAnalyzed: analyzedAt ? formatRelativeTime(analyzedAt) : prev.lastAnalyzed || 'Just now',
-      status: 'ATS Verified',
-      sections: dynamicSections,
-      detectedSkills: finalDetected,
-      missingSkills: missing.length > 0 ? missing : prev.missingSkills,
-      bulletAudits: finalAudits,
-      metrics: {
-        atsScore: atsScoreVal,
-        sectionCompleteness: formattingScoreVal,
-        bulletActionability: experienceScoreVal,
-        keywordMatch: skillsScoreVal,
-      },
-      aiInsights: dynamicInsights.length > 0 ? dynamicInsights : prev.aiInsights
-    }));
+    setResumeData((prev) => {
+      const nextData = {
+        ...prev,
+        overallScore: overall,
+        lastAnalyzed: analyzedAt ? formatRelativeTime(analyzedAt) : prev.lastAnalyzed || 'Just now',
+        status: 'ATS Verified',
+        sections: dynamicSections,
+        detectedSkills: finalDetected,
+        missingSkills: missing.length > 0 ? missing : prev.missingSkills,
+        bulletAudits: finalAudits,
+        metrics: {
+          atsScore: atsScoreVal,
+          sectionCompleteness: formattingScoreVal,
+          bulletActionability: experienceScoreVal,
+          keywordMatch: skillsScoreVal,
+        },
+        aiInsights: dynamicInsights.length > 0 ? dynamicInsights : prev.aiInsights
+      };
+
+      try {
+        localStorage.setItem('placementor_cached_resume_page_data', JSON.stringify({
+          resumeData: nextData,
+          currentResumeId: currentResumeId,
+          userResumes: userResumes
+        }));
+      } catch (cErr) {
+        console.warn('Failed to cache resume data:', cErr);
+      }
+
+      return nextData;
+    });
   };
 
   const handleUploadSuccess = async (uploadedDoc) => {

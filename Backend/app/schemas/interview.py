@@ -8,6 +8,8 @@ class InterviewCreateSchema(BaseModel):
     difficulty: str = Field(default="medium", description="easy, medium, hard")
     question_count: int = Field(default=5, ge=1, le=10)
     target_role: Optional[str] = Field(default=None, description="Optional target role override")
+    modality: Optional[str] = Field(default=None, description="Interview Modality / Category (e.g. System Architecture & Design, Technical / DSA Drill, Behavioral & HR STAR Drill, Full Tier-1 SDE Mock)")
+    category: Optional[str] = Field(default=None, description="Optional category alias")
 
 
 class InterviewAnswerSchema(BaseModel):
@@ -37,6 +39,7 @@ class InterviewSessionResponseSchema(BaseModel):
     user_id: str
     target_role: str
     interview_type: str
+    modality: Optional[str] = None
     difficulty: str
     status: str  # created, active, completed, abandoned
     total_questions: int

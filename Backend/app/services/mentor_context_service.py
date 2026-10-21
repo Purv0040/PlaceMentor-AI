@@ -71,7 +71,19 @@ class MentorContextService:
         projects = await self.project_repo.find_by_user_id(user_id) or []
         readiness = await self.readiness_repo.get_latest_by_user(user_id) or {}
         skill_gaps = await self.skill_gap_repo.get_latest_by_user(user_id) or {}
-        roadmap = await self.roadmap_repo.get_active_by_user_id(user_id) or {}
+        
+        # Resolve active or target-role roadmap
+        roadmap = None
+        if target_role:
+            rms = await self.roadmap_repo.get_all_by_user_id(user_id)
+            matching_rm = next((r for r in rms if r.get("status") == "active" and (r.get("target_role") or "").strip().lower() == target_role.strip().lower()), None)
+            if not matching_rm:
+                matching_rm = next((r for r in rms if (r.get("target_role") or "").strip().lower() == target_role.strip().lower()), None)
+            if matching_rm:
+                roadmap = matching_rm
+        if not roadmap:
+            roadmap = await self.roadmap_repo.get_active_by_user_id(user_id) or {}
+
         all_tasks = await self.task_repo.get_all_by_user(user_id) or []
         progress = await self.progress_repo.get_by_user_id(user_id) or {}
         interviews = await self.interview_repo.get_history_by_user_id(user_id, limit=5) or []
@@ -108,18 +120,45 @@ class MentorContextService:
             for p in roadmap["phases"]:
                 roadmap_tasks.extend(p.get("tasks", []))
 
-        db_tasks_by_id = {str(t.get("task_id") or t.get("id")): t for t in all_tasks if t.get("task_id") or t.get("id")}
-        db_tasks_by_title = {t.get("title"): t for t in all_tasks if t.get("title")}
+        active_roadmap_id = str(roadmap.get("roadmap_id") or roadmap.get("_id") or "")
+        if active_roadmap_id:
+            active_db_tasks = [
+                t for t in all_tasks
+                if str(t.get("roadmap_id")) == active_roadmap_id and not t.get("is_leetcode")
+            ]
+        else:
+            active_db_tasks = [t for t in all_tasks if not t.get("is_leetcode")]
+
+        db_tasks_by_id = {}
+        db_tasks_by_title = {}
+        for t in active_db_tasks:
+            tid = str(t.get("task_id") or t.get("id") or "")
+            title = t.get("title")
+            is_completed = t.get("status") in ("completed", "done")
+            if tid:
+                if tid not in db_tasks_by_id or (is_completed and db_tasks_by_id[tid].get("status") not in ("completed", "done")):
+                    db_tasks_by_id[tid] = t
+            if title:
+                if title not in db_tasks_by_title or (is_completed and db_tasks_by_title[title].get("status") not in ("completed", "done")):
+                    db_tasks_by_title[title] = t
 
         unified_tasks = []
-        seen_titles = set()
+        seen_task_keys = set()
 
         if roadmap_tasks:
             for idx, rt in enumerate(roadmap_tasks):
                 task_id = str(rt.get("id") or rt.get("task_id") or "")
                 title = rt.get("title", f"Task {idx+1}")
                 day = rt.get("day") or rt.get("day_number") or 1
-                seen_titles.add(title)
+                try:
+                    day = int(day)
+                except (ValueError, TypeError):
+                    day = 1
+
+                task_key = (day, title.strip().lower())
+                if task_key in seen_task_keys:
+                    continue
+                seen_task_keys.add(task_key)
 
                 matching_db = db_tasks_by_id.get(task_id) or db_tasks_by_title.get(title)
                 if matching_db:
@@ -146,31 +185,33 @@ class MentorContextService:
                     "completed_at": completed_at,
                     "date": date_val,
                 })
-
-            # Add any DB tasks not in roadmap_tasks
-            for t in all_tasks:
-                if t.get("title") and t.get("title") not in seen_titles:
-                    unified_tasks.append(t)
         else:
-            unified_tasks = all_tasks
+            unified_tasks = active_db_tasks
 
         # Group tasks by day
         tasks_by_day: Dict[int, List[Dict[str, Any]]] = {}
         for t in unified_tasks:
-            d = t.get("day_number") or t.get("day") or 1
+            d = t.get("day_number") or t.get("day")
+            if d is None:
+                continue
             try:
                 d = int(d)
             except (ValueError, TypeError):
-                d = 1
+                continue
             if d not in tasks_by_day:
                 tasks_by_day[d] = []
             tasks_by_day[d].append(t)
 
-        # 1. Today's tasks (strictly matching current day or today's date)
+        # 1. Today's tasks (strictly matching current day from the active roadmap)
         today_tasks_list = [
             t for t in unified_tasks
-            if t.get("date") == today_str or t.get("day_number") == current_day or t.get("day") == current_day
+            if t.get("day_number") == current_day or t.get("day") == current_day
         ]
+        if not today_tasks_list:
+            today_tasks_list = [
+                t for t in unified_tasks
+                if t.get("date") == today_str
+            ]
         today_incomplete = [t for t in today_tasks_list if t.get("status") not in ("completed", "done")]
         today_completed = [t for t in today_tasks_list if t.get("status") in ("completed", "done")]
 

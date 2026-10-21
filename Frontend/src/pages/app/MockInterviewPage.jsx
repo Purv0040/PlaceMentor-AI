@@ -29,7 +29,8 @@ import {
   ChevronUp,
   X,
   BookOpen,
-  Info
+  Info,
+  Target
 } from 'lucide-react';
 
 export const MockInterviewPage = () => {
@@ -49,6 +50,7 @@ export const MockInterviewPage = () => {
   const [answersMap, setAnswersMap] = useState({});
   const [showHint, setShowHint] = useState(false);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Synchronize answerText for the currently active question
   const answerText = answersMap[questionNumber] || '';
@@ -173,6 +175,7 @@ export const MockInterviewPage = () => {
       const res = await interviewService.startInterview({
         ...config,
         role: targetDomain,
+        modality: modality,
         question_count: qCount,
       });
       if (res && res.interview_id) {
@@ -182,6 +185,9 @@ export const MockInterviewPage = () => {
             ...generatedList[0],
             ...res.current_question_data,
             question: res.current_question_data.question || generatedList[0].question,
+            target_role: res.current_question_data.target_role || generatedList[0].target_role,
+            modality: res.current_question_data.modality || generatedList[0].modality,
+            stage_round: generatedList[0].stage_round,
           };
           setQuestionsList([...generatedList]);
           setCurrentQuestion(generatedList[0]);
@@ -191,6 +197,92 @@ export const MockInterviewPage = () => {
       console.warn("Backend startInterview error, using dynamic generated questions:", e);
     }
     setSessionState('active');
+  };
+
+  // Handle switching category/modality dynamically in active session
+  const handleSwitchCategory = async (newModality) => {
+    if (!newModality || newModality === sessionConfig?.modality) return;
+    setIsRegenerating(true);
+    const updatedConfig = { ...sessionConfig, modality: newModality };
+    setSessionConfig(updatedConfig);
+    const targetDomain = updatedConfig?.role || user?.targetRole || 'Full Stack Engineer';
+    const difficulty = updatedConfig?.difficulty || 'Medium';
+
+    // Pre-generate new questions for this category
+    const generatedList = [];
+    for (let i = 1; i <= totalQuestions; i++) {
+      const q = getDynamicQuestion(targetDomain, i, generatedList, newModality, difficulty);
+      generatedList.push(q);
+    }
+
+    // Attempt backend update if session is active
+    if (activeSession && activeSession.interview_id) {
+      try {
+        const res = await interviewService.regenerateQuestion(activeSession.interview_id, newModality);
+        if (res && res.question) {
+          generatedList[0] = {
+            ...generatedList[0],
+            ...res,
+            question: res.question,
+            modality: newModality,
+          };
+        }
+      } catch (err) {
+        console.warn("Backend regenerateQuestion fallback:", err);
+      }
+    }
+
+    setQuestionsList(generatedList);
+    setCurrentQuestion(generatedList[questionNumber - 1] || generatedList[0]);
+    setIsRegenerating(false);
+    if (toastNotification) {
+      toastNotification(`Category switched to "${newModality}". Dynamic questions generated!`);
+    }
+  };
+
+  // Handle regenerating a single dynamic question on demand via AI
+  const handleRegenerateCurrentQuestion = async () => {
+    setIsRegenerating(true);
+    const targetDomain = sessionConfig?.role || user?.targetRole || 'Full Stack Engineer';
+    const modality = sessionConfig?.modality || 'System Architecture & Design';
+    const difficulty = sessionConfig?.difficulty || 'Medium';
+
+    try {
+      let newQ = null;
+      if (activeSession && activeSession.interview_id) {
+        try {
+          const res = await interviewService.regenerateQuestion(activeSession.interview_id, modality);
+          if (res && res.question) {
+            newQ = {
+              ...currentQuestion,
+              ...res,
+              question: res.question,
+              modality: modality,
+            };
+          }
+        } catch (e) {
+          console.warn("Regenerate question error, using dynamic client generator:", e);
+        }
+      }
+
+      if (!newQ) {
+        newQ = getDynamicQuestion(targetDomain, questionNumber, questionsList, modality, difficulty);
+      }
+
+      const updatedList = [...questionsList];
+      updatedList[questionNumber - 1] = newQ;
+      setQuestionsList(updatedList);
+      setCurrentQuestion(newQ);
+
+      // Clear the answer for this question so candidate can answer newly generated question
+      setAnswersMap((prev) => ({ ...prev, [questionNumber]: '' }));
+
+      if (toastNotification) {
+        toastNotification(`Generated dynamic question for "${modality}"!`);
+      }
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   // Select question from stepper pill or navigation button
@@ -618,9 +710,9 @@ export const MockInterviewPage = () => {
           {/* Targeted Modalities */}
           <div className="space-y-4">
             <h3 className="font-semibold text-white text-lg">Targeted Interview Modalities</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div
-                onClick={() => handleStartInterview({ modality: 'system_design', difficulty: 'hard', questionCount: 3 })}
+                onClick={() => handleStartInterview({ role: user?.targetRole || 'AI/ML Engineer', modality: 'System Architecture & Design', difficulty: 'hard', questionCount: 3 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-indigo-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 w-fit">
@@ -628,7 +720,7 @@ export const MockInterviewPage = () => {
                 </div>
                 <h4 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">System Architecture & Design</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Scalability, Caching (Redis), Pub-Sub Messaging, CAP theorem, and Database Sharding trade-offs.
+                  Scalability, Distributed Caching, High Availability, CAP trade-offs, and microservices design.
                 </p>
                 <span className="text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 inline-flex items-center gap-1">
                   Launch Architecture Session <ArrowUpRight className="w-3.5 h-3.5" />
@@ -636,7 +728,7 @@ export const MockInterviewPage = () => {
               </div>
 
               <div
-                onClick={() => handleStartInterview({ modality: 'dsa', difficulty: 'medium', questionCount: 3 })}
+                onClick={() => handleStartInterview({ role: user?.targetRole || 'AI/ML Engineer', modality: 'Technical / DSA Drill', difficulty: 'medium', questionCount: 3 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-emerald-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit">
@@ -644,7 +736,7 @@ export const MockInterviewPage = () => {
                 </div>
                 <h4 className="font-bold text-white text-base group-hover:text-emerald-300 transition-colors">Technical / DSA Drill</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Topological Sort, 2D Dynamic Programming, Tree Traversals, and time/space complexity analysis.
+                  Data structures, algorithms, mathematical proofs, time/space complexity, and core code logic.
                 </p>
                 <span className="text-xs font-semibold text-emerald-400 group-hover:text-emerald-300 inline-flex items-center gap-1">
                   Launch DSA Session <ArrowUpRight className="w-3.5 h-3.5" />
@@ -652,18 +744,34 @@ export const MockInterviewPage = () => {
               </div>
 
               <div
-                onClick={() => handleStartInterview({ modality: 'behavioral', difficulty: 'medium', questionCount: 3 })}
+                onClick={() => handleStartInterview({ role: user?.targetRole || 'AI/ML Engineer', modality: 'Behavioral & HR STAR Drill', difficulty: 'medium', questionCount: 3 })}
                 className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-purple-500/50 transition-all cursor-pointer shadow-lg group"
               >
                 <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 w-fit">
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <h4 className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">Behavioral STAR Drill</h4>
+                <h4 className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">Behavioral & HR STAR Drill</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Leadership principles, conflict resolution, technical disagreement, and project evidence.
+                  Leadership scenarios, production incident triage, technical debt, and cross-functional negotiation.
                 </p>
                 <span className="text-xs font-semibold text-purple-400 group-hover:text-purple-300 inline-flex items-center gap-1">
                   Launch Behavioral Session <ArrowUpRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+
+              <div
+                onClick={() => handleStartInterview({ role: user?.targetRole || 'AI/ML Engineer', modality: 'Full Tier-1 SDE Mock', difficulty: 'hard', questionCount: 3 })}
+                className="p-5 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-3 hover:border-cyan-500/50 transition-all cursor-pointer shadow-lg group"
+              >
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 w-fit">
+                  <Award className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-white text-base group-hover:text-cyan-300 transition-colors">Full Tier-1 SDE Mock</h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Complete loop rotating DSA Drill, System Architecture, and Behavioral STAR questions.
+                </p>
+                <span className="text-xs font-semibold text-cyan-400 group-hover:text-cyan-300 inline-flex items-center gap-1">
+                  Launch Combined Mock <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
               </div>
             </div>
@@ -730,9 +838,20 @@ export const MockInterviewPage = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-bold text-indigo-400">SESSION PROGRESS:</span>
                 <span className="text-white">Question {questionNumber} of {totalQuestions}</span>
-                <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[11px] font-sans font-medium">
-                  {sessionConfig?.modality || 'System Architecture & Design'}
-                </span>
+                <div className="relative inline-flex items-center ml-1">
+                  <select
+                    value={sessionConfig?.modality || 'System Architecture & Design'}
+                    onChange={(e) => handleSwitchCategory(e.target.value)}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-sans font-semibold cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400 hover:bg-indigo-500/30 transition-colors appearance-none pr-6 shadow-sm"
+                    title="Switch category to dynamically regenerate questions"
+                  >
+                    <option value="System Architecture & Design" className="bg-[#121624] text-white">System Architecture & Design</option>
+                    <option value="Technical / DSA Drill" className="bg-[#121624] text-white">Technical / DSA Drill</option>
+                    <option value="Behavioral & HR STAR Drill" className="bg-[#121624] text-white">Behavioral & HR STAR Drill</option>
+                    <option value="Full Tier-1 SDE Mock" className="bg-[#121624] text-white">Full Tier-1 SDE Mock (Combined)</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-indigo-300 absolute right-1.5 pointer-events-none" />
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 text-amber-400 font-bold">
@@ -784,20 +903,34 @@ export const MockInterviewPage = () => {
           {/* Question Prompt Card */}
           <div className="p-6 rounded-2xl bg-[#121624] border border-[#232b3e] space-y-4 shadow-lg">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#232b3e]">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] font-mono uppercase tracking-wider">
-                  {currentQ.modality || sessionConfig?.modality || 'System Architecture'}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-bold flex items-center gap-1">
+                  <Target className="w-3 h-3 text-indigo-400" />
+                  {currentQ.target_role || sessionConfig?.role || user?.targetRole || 'Engineering'}
                 </span>
-                <span className="text-xs font-mono font-semibold text-indigo-400 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10px] font-mono font-semibold">
+                  {currentQ.stage_round || currentQ.modality || sessionConfig?.modality || 'Interview Drill'}
+                </span>
+                <span className="text-xs font-mono font-semibold text-cyan-400 uppercase tracking-wider">
                   Focus: {currentQ.skill || currentQ.category || currentQ.topic || 'Core Technical'}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRegenerateCurrentQuestion}
+                  disabled={isRegenerating}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-xs font-semibold text-indigo-300 border border-indigo-500/30 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  title="Generate a fresh dynamic AI question for this category"
+                >
+                  <Sparkles className={`w-3.5 h-3.5 text-indigo-400 ${isRegenerating ? 'animate-spin' : ''}`} />
+                  <span>{isRegenerating ? 'Generating...' : '⚡ Regenerate AI Question'}</span>
+                </button>
                 <span className="text-xs font-mono text-slate-400">Difficulty: {currentQ.difficulty || 'Medium'}</span>
                 {currentQ.hint && (
                   <button
                     onClick={() => setShowHint(!showHint)}
-                    className="px-2.5 py-1 rounded-lg bg-[#1a2133] text-xs font-medium text-amber-400 hover:bg-[#232b3e] border border-amber-500/30 transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg bg-[#1a2133] text-xs font-medium text-amber-400 hover:bg-[#232b3e] border border-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <HelpCircle className="w-3.5 h-3.5" />
                     <span>{showHint ? 'Hide Hint' : 'Show Copilot Hint'}</span>

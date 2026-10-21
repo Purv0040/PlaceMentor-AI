@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlanning } from '../../context/PlanningContext';
 import { useUser } from '../../context/UserContext';
+import { getRoleRoadmapPhases } from '../../data/roadmapData';
 import { ChevronDown, Clock3, RefreshCw, Calendar } from 'lucide-react';
 
 
@@ -118,12 +119,34 @@ export const RoadmapPage = () => {
   const targetTaskId = searchParams.get('taskId') || location.state?.taskId;
   const targetDay = Number(searchParams.get('day') || location.state?.day);
 
-  const registeredRole = user?.targetRole || roadmap?.targetRole || 'Full Stack Engineer';
+  const totalDays = Number(roadmap?.totalDays) || 90;
+
+  const registeredRole = location.state?.targetRole ||
+    user?.targetRole ||
+    user?.career?.targetRole ||
+    roadmap?.targetRole ||
+    (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem('placementor_user_data') || '{}');
+        return u.targetRole;
+      } catch (e) { return null; }
+    })() ||
+    'AI/ML Engineer';
 
   const [activePhaseId, setActivePhaseId] = useState(null);
   const [isAdapting, setIsAdapting] = useState(false);
 
-  const phases = Array.isArray(roadmap?.phases) ? roadmap.phases : [];
+  const phases = useMemo(() => {
+    if (Array.isArray(roadmap?.phases) && roadmap.phases.length > 0) {
+      const rRole = (roadmap.targetRole || '').trim().toLowerCase();
+      const currRole = (registeredRole || '').trim().toLowerCase();
+      if (!currRole || rRole === currRole || rRole.includes(currRole) || currRole.includes(rRole)) {
+        return roadmap.phases;
+      }
+    }
+    return getRoleRoadmapPhases(registeredRole, totalDays);
+  }, [roadmap, registeredRole, totalDays]);
+
   const activePhase = phases.find((phase) => phase.id === activePhaseId)
     || phases.find((phase) => phase.id === roadmap?.currentPhaseId)
     || phases[0];
@@ -163,7 +186,6 @@ export const RoadmapPage = () => {
   }, [targetTaskId, activePhaseId]);
 
   const currentDay = Number(roadmap?.currentDay) || 0;
-  const totalDays = Number(roadmap?.totalDays) || 90;
   const progressPercent = Math.min(100, Math.max(0, Number(roadmap?.overallProgressPercent) || 0));
   const currentPhase = phases.find((phase) => currentDay >= phase.startDay && currentDay <= phase.endDay);
   const phaseTasks = useMemo(() => {

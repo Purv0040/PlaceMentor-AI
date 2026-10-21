@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any
@@ -253,14 +254,8 @@ class LeetCodeService:
                 detail="LeetCode profile not connected for this user."
             )
 
-        # Self-healing: if statistics, topic_statistics, recent_activity, or streak is missing, auto-sync from LeetCode
-        if (
-            not profile.get("topic_statistics")
-            or not profile.get("statistics")
-            or not profile.get("recent_activity")
-            or not profile.get("submission_calendar")
-            or "current_streak" not in profile.get("statistics", {})
-        ):
+        # Self-healing: only sync if essential profile statistics or topic stats are missing
+        if not profile.get("topic_statistics") or not profile.get("statistics"):
             try:
                 profile = await self.sync_leetcode(user_id)
             except Exception as e:
@@ -291,30 +286,45 @@ class LeetCodeService:
             except Exception as e:
                 logger.warning("Error evaluating dynamic streak: %s", e)
 
-        # Enrich profile with dynamic components safely
-        try:
-            profile["daily_plan"] = await self.get_daily_practice_plan(user_id)
-        except Exception as e:
-            logger.warning("Failed to populate daily plan for user %s: %s", user_id, e)
-            profile["daily_plan"] = None
+        # Enrich profile with dynamic components safely and CONCURRENTLY for ultra-fast response
+        async def _safe_daily_plan():
+            try:
+                return await self.get_daily_practice_plan(user_id)
+            except Exception as e:
+                logger.warning("Failed to populate daily plan for user %s: %s", user_id, e)
+                return None
 
-        try:
-            profile["focus_areas"] = await self.get_focus_areas(user_id)
-        except Exception as e:
-            logger.warning("Failed to populate focus areas for user %s: %s", user_id, e)
-            profile["focus_areas"] = []
+        async def _safe_focus_areas():
+            try:
+                return await self.get_focus_areas(user_id)
+            except Exception as e:
+                logger.warning("Failed to populate focus areas for user %s: %s", user_id, e)
+                return []
 
-        try:
-            profile["readiness_breakdown"] = await self.get_readiness_breakdown(user_id)
-        except Exception as e:
-            logger.warning("Failed to populate readiness breakdown for user %s: %s", user_id, e)
-            profile["readiness_breakdown"] = None
+        async def _safe_readiness():
+            try:
+                return await self.get_readiness_breakdown(user_id)
+            except Exception as e:
+                logger.warning("Failed to populate readiness breakdown for user %s: %s", user_id, e)
+                return None
 
-        try:
-            profile["activity_history"] = await self.get_activity_history(user_id, days=30)
-        except Exception as e:
-            logger.warning("Failed to populate activity history for user %s: %s", user_id, e)
-            profile["activity_history"] = None
+        async def _safe_activity():
+            try:
+                return await self.get_activity_history(user_id, days=30)
+            except Exception as e:
+                logger.warning("Failed to populate activity history for user %s: %s", user_id, e)
+                return None
+
+        daily_plan_res, focus_areas_res, readiness_res, activity_res = await asyncio.gather(
+            _safe_daily_plan(),
+            _safe_focus_areas(),
+            _safe_readiness(),
+            _safe_activity()
+        )
+        profile["daily_plan"] = daily_plan_res
+        profile["focus_areas"] = focus_areas_res
+        profile["readiness_breakdown"] = readiness_res
+        profile["activity_history"] = activity_res
 
         return profile
 
@@ -508,6 +518,28 @@ class LeetCodeService:
             recent = (profile or {}).get("recent_activity", [])
             solved_titles = {s.get("title", "").strip().lower() for s in recent if s.get("title")}
 
+            # Also exclude any problems already assigned in daily_tasks (even on prior days) to prevent duplicate tasks
+            existing_user_tasks = await self.task_repo.get_all_by_user(user_id) or []
+            for et in existing_user_tasks:
+                t_title = (et.get("title") or "").strip().lower()
+                if t_title:
+                    solved_titles.add(t_title)
+
+            # Resolve user's current roadmap day number
+            current_day_num = 1
+            try:
+                from app.repositories.roadmap_repository import RoadmapRepository
+                roadmap_repo = RoadmapRepository(self.db)
+                active_rm = await roadmap_repo.get_active_by_user_id(user_id)
+                if active_rm:
+                    start_date = active_rm.get("start_date")
+                    if isinstance(start_date, datetime):
+                        current_day_num = max(1, min(active_rm.get("duration_days", 90), (datetime.now(timezone.utc).date() - start_date.date()).days + 1))
+                    elif active_rm.get("current_day"):
+                        current_day_num = int(active_rm["current_day"])
+            except Exception as e:
+                logger.warning("Could not resolve roadmap day for user %s: %s", user_id, e)
+
             # Prioritize weak topics with low mastery & high interview weight
             weak_topics = [f for f in focus_areas if f.get("priority") in ["High", "Medium"]]
             if not weak_topics:
@@ -559,6 +591,7 @@ class LeetCodeService:
                     "task_id": task_id,
                     "id": task_id,
                     "user_id": str(user_id),
+                    "day_number": current_day_num,
                     "date": today_str,
                     "category": "DSA",
                     "title": prob["title"],
