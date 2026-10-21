@@ -272,7 +272,7 @@ export const aiService = {
 
           actions = [
             { label: "Review Resume", route: "/resume" },
-            { label: "View 90-Day Roadmap", route: "/roadmap" }
+            { label: "Review Projects", route: "/projects" }
           ];
         }
         // 6. GitHub & Technical Projects
@@ -281,7 +281,7 @@ export const aiService = {
 
           actions = [
             { label: "GitHub Intelligence", route: "/github" },
-            { label: "View 90-Day Roadmap", route: "/roadmap" }
+            { label: "Review Projects", route: "/projects" }
           ];
         }
         // 7. DSA Learning & Coding Help / Help Me Learn DSA

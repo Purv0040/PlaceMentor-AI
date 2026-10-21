@@ -73,8 +73,8 @@ export const defaultAchievements = [
     currentCount: 4,
     unlocked: true,
     unlockedAt: "5 days ago",
-    route: "/github",
-    actionLabel: "GitHub Projects"
+    route: "/projects",
+    actionLabel: "Projects Audit"
   },
   {
     id: "ach-6",

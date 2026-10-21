@@ -262,18 +262,6 @@ def _is_role_name(skill: str, canonical_role: str) -> bool:
     return False
 
 
-COMMON_CATEGORIES = {
-    "Programming",
-    "DSA",
-    "Data Structures & Algorithms",
-    "Databases",
-    "CS Fundamentals",
-    "DevOps",
-    "Testing",
-    "Networking",
-}
-
-
 class DeterministicSkillGapEngine:
     """Pure, deterministic engine that evaluates candidate skill evidence against target role benchmarks."""
 
@@ -293,14 +281,15 @@ class DeterministicSkillGapEngine:
         """Retrieve requirement list for a given role dynamically from RoleRequirementService."""
         return self.role_service.get_requirements(target_role)
 
+
+
     def build_skill_inventory(
         self,
         profile_data: Optional[Dict[str, Any]] = None,
         resume_data: Optional[Dict[str, Any]] = None,
         github_data: Optional[Dict[str, Any]] = None,
         leetcode_data: Optional[Dict[str, Any]] = None,
-        projects_list: Optional[List[Dict[str, Any]]] = None,
-        tasks_list: Optional[List[Dict[str, Any]]] = None,
+        projects_list: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Aggregate verified factual telemetry from all 5 modules into a comprehensive skill evidence map.
@@ -325,80 +314,52 @@ class DeterministicSkillGapEngine:
             inventory[key]["evidence_weight"] += weight
 
         # 1. Student Profile Data
-        if profile_data and isinstance(profile_data, dict):
-            technical_skills = profile_data.get("technical_skills") or []
-            if isinstance(technical_skills, list):
-                for s in technical_skills:
-                    if isinstance(s, str):
-                        _add_evidence(s, "profile", f"Declared '{s}' in technical profile.", weight=1)
+        if profile_data:
+            technical_skills = profile_data.get("technical_skills", [])
+            for s in technical_skills:
+                _add_evidence(s, "profile", f"Declared '{s}' in technical profile.", weight=1)
             
             # Categories in profile
-            profile_categories = profile_data.get("categories") or {}
+            profile_categories = profile_data.get("categories", {})
             if isinstance(profile_categories, dict):
                 for cat_name, cat_obj in profile_categories.items():
                     if isinstance(cat_obj, dict) and cat_obj.get("skills"):
                         for sk in cat_obj["skills"]:
-                            if isinstance(sk, str):
-                                _add_evidence(sk, "profile", f"Listed in {cat_name} category.", weight=1)
+                            _add_evidence(sk, "profile", f"Listed in {cat_name} category.", weight=1)
 
         # 2. Resume Data
-        if resume_data and isinstance(resume_data, dict):
-            resume_analysis = resume_data.get("analysis") or {}
+        if resume_data:
+            resume_analysis = resume_data.get("analysis", {})
             if isinstance(resume_analysis, dict):
-                raw_extracted = (
-                    resume_analysis.get("skills_extracted")
-                    or resume_analysis.get("extracted_skills")
-                    or resume_data.get("skills_extracted")
-                    or resume_data.get("extracted_skills")
-                    or []
-                )
-                if isinstance(raw_extracted, dict):
-                    extracted_skills = []
-                    for cat_items in raw_extracted.values():
-                        if isinstance(cat_items, list):
-                            extracted_skills.extend(cat_items)
-                elif isinstance(raw_extracted, list):
-                    extracted_skills = raw_extracted
-                else:
-                    extracted_skills = []
-
+                extracted_skills = resume_analysis.get("skills_extracted", [])
                 for s in extracted_skills:
-                    if isinstance(s, str):
-                        _add_evidence(s, "resume", f"Extracted from resume technical audit.", weight=2)
+                    _add_evidence(s, "resume", f"Extracted from resume technical audit.", weight=2)
                 
                 # Check experience or projects in resume
-                for exp in (resume_analysis.get("experience") or []):
+                for exp in resume_analysis.get("experience", []):
                     if isinstance(exp, dict) and exp.get("technologies"):
                         for t in exp["technologies"]:
-                            if isinstance(t, str):
-                                _add_evidence(t, "resume", f"Applied in work experience: {exp.get('role', 'Role')}", weight=2)
-
-                for proj in (resume_analysis.get("projects") or []):
-                    if isinstance(proj, dict) and proj.get("technologies"):
-                        for t in proj["technologies"]:
-                            if isinstance(t, str):
-                                _add_evidence(t, "resume", f"Applied in resume project: {proj.get('name', 'Project')}", weight=2)
+                            _add_evidence(t, "resume", f"Applied in work experience: {exp.get('role', 'Role')}", weight=2)
 
         # 3. GitHub Data
-        if github_data and isinstance(github_data, dict):
+        if github_data:
             # Languages in GitHub profile
-            stats = github_data.get("statistics") or {}
-            languages = stats.get("languages") or {} if isinstance(stats, dict) else {}
+            stats = github_data.get("statistics", {})
+            languages = stats.get("languages", {}) if isinstance(stats, dict) else {}
             if isinstance(languages, dict):
                 for lang, bytes_count in languages.items():
-                    _add_evidence(str(lang), "github", f"Verified {bytes_count} bytes in public GitHub repositories.", weight=3)
+                    _add_evidence(lang, "github", f"Verified {bytes_count} bytes in public GitHub repositories.", weight=3)
 
             # GitHub AI analysis top languages/topics
-            gh_analysis = github_data.get("analysis") or {}
+            gh_analysis = github_data.get("analysis", {})
             if isinstance(gh_analysis, dict):
-                for lang in (gh_analysis.get("top_languages") or []):
-                    if isinstance(lang, str):
-                        _add_evidence(lang, "github", f"Demonstrated in active GitHub repositories.", weight=2)
+                for lang in gh_analysis.get("top_languages", []):
+                    _add_evidence(lang, "github", f"Demonstrated in active GitHub repositories.", weight=2)
 
         # 4. LeetCode Data
-        if leetcode_data and isinstance(leetcode_data, dict):
+        if leetcode_data:
             # Topic statistics
-            topics = leetcode_data.get("topic_statistics") or []
+            topics = leetcode_data.get("topic_statistics", [])
             if isinstance(topics, list):
                 for top in topics:
                     if isinstance(top, dict) and top.get("topic_name"):
@@ -412,14 +373,12 @@ class DeterministicSkillGapEngine:
                             )
             
             # DSA General
-            stats = leetcode_data.get("statistics") or {}
+            stats = leetcode_data.get("statistics", {})
             if isinstance(stats, dict) and stats.get("total_solved", 0) > 0:
-                contest = leetcode_data.get("contest") or {}
-                rating_str = contest.get("rating", "N/A") if isinstance(contest, dict) else "N/A"
                 _add_evidence(
                     "Data Structures & Algorithms",
                     "leetcode",
-                    f"Solved {stats.get('total_solved')} total LeetCode problems (Rating: {rating_str}).",
+                    f"Solved {stats.get('total_solved')} total LeetCode problems (Rating: {leetcode_data.get('contest', {}).get('rating', 'N/A')}).",
                     weight=4
                 )
 
@@ -438,24 +397,6 @@ class DeterministicSkillGapEngine:
                 for arch in proj.get("architectureTags", []):
                     _add_evidence(arch, "projects", f"Architected in '{p_title}'.", weight=2)
 
-        # 6. Tasks Data (Daily / Roadmap Practice Completed)
-        if tasks_list:
-            for t in tasks_list:
-                if not isinstance(t, dict):
-                    continue
-                if t.get("status") in ("completed", "done"):
-                    t_title = t.get("title", "")
-                    t_skill = t.get("skill") or ""
-                    t_cat = t.get("category", "")
-                    if t_skill:
-                        _add_evidence(t_skill, "tasks", f"Completed placement task: '{t_title}'", weight=3)
-                    if "python" in t_title.lower():
-                        _add_evidence("Python", "tasks", f"Completed Python practice: '{t_title}'", weight=3)
-                    if any(w in t_title.lower() for w in ["binary tree", "histogram", "island", "dsa", "leetcode", "search", "sort"]):
-                        _add_evidence("Data Structures & Algorithms", "tasks", f"Completed algorithmic drill: '{t_title}'", weight=3)
-                    if "machine learning" in t_title.lower():
-                        _add_evidence("Machine Learning", "tasks", f"Completed ML practice: '{t_title}'", weight=3)
-
         # Calculate assessed level and evidence level for each inventory item
         for key, item in inventory.items():
             sources = item["evidence_sources"]
@@ -465,7 +406,7 @@ class DeterministicSkillGapEngine:
             # Evidence level
             if len(sources) >= 2 or weight >= 5:
                 item["evidence_level"] = "strong_evidence"
-            elif "projects" in sources or "github" in sources or "leetcode" in sources or "tasks" in sources:
+            elif "projects" in sources or "github" in sources or "leetcode" in sources:
                 item["evidence_level"] = "demonstrated"
             elif "resume" in sources or "profile" in sources:
                 item["evidence_level"] = "mentioned"
@@ -496,7 +437,6 @@ class DeterministicSkillGapEngine:
         github_data: Optional[Dict[str, Any]] = None,
         leetcode_data: Optional[Dict[str, Any]] = None,
         projects_list: Optional[List[Dict[str, Any]]] = None,
-        tasks_list: Optional[List[Dict[str, Any]]] = None,
         role_requirements: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
@@ -516,8 +456,7 @@ class DeterministicSkillGapEngine:
             resume_data=resume_data,
             github_data=github_data,
             leetcode_data=leetcode_data,
-            projects_list=projects_list,
-            tasks_list=tasks_list,
+            projects_list=projects_list
         )
 
         evaluated_skills: List[Dict[str, Any]] = []
@@ -612,7 +551,6 @@ class DeterministicSkillGapEngine:
                     "id": f"gap-{len(priority_gaps) + 1}",
                     "skill": can_skill,
                     "category": category,
-                    "scope": "common" if category in COMMON_CATEGORIES else "role",
                     "gap_type": gap_type,
                     "priority": priority,
                     "importance": importance,
@@ -648,34 +586,18 @@ class DeterministicSkillGapEngine:
             req_l = req.get("required_level_num", 2)
             cur_l = item["current_level_num"]
             if cat not in category_groups:
-                category_groups[cat] = {
-                    "total": 0.0,
-                    "achieved": 0.0,
-                    "total_skills": 0,
-                    "aligned_skills": 0
-                }
+                category_groups[cat] = {"total": 0.0, "achieved": 0.0}
             category_groups[cat]["total"] += w * req_l
             category_groups[cat]["achieved"] += w * min(req_l, cur_l)
-            category_groups[cat]["total_skills"] += 1
-            if cur_l >= req_l:
-                category_groups[cat]["aligned_skills"] += 1
 
         color_palette = ["#4edea3", "#8083ff", "#ddb7ff", "#ffb4ab", "#fcd34d", "#60a5fa", "#f472b6", "#38bdf8"]
         category_coverage = []
         for idx, (c_name, c_data) in enumerate(category_groups.items()):
             cov = round((c_data["achieved"] / max(0.1, c_data["total"])) * 100) if c_data["total"] > 0 else 0
-            is_common = c_name in COMMON_CATEGORIES
-            benchmark_target = 80 if is_common else 85
-            status_text = "Benchmark Met" if cov >= benchmark_target else ("In Progress" if cov >= 40 else ("Foundational" if cov > 0 else "Remediation Needed"))
             category_coverage.append({
                 "category": c_name,
                 "coverage": min(100, max(0, cov)),
-                "benchmark_target": benchmark_target,
-                "color": color_palette[idx % len(color_palette)],
-                "scope": "common" if is_common else "role",
-                "total_skills": c_data.get("total_skills", 1),
-                "aligned_skills": c_data.get("aligned_skills", 0),
-                "status": status_text
+                "color": color_palette[idx % len(color_palette)]
             })
 
         # Strengths dynamically derived from actual aligned or highest-scoring skills
@@ -766,7 +688,7 @@ class DeterministicSkillGapEngine:
             "target_role": canonical_role,
             "overall_coverage": overall_coverage,
             "confidence_index": confidence_index,
-            "total_audited": total_required_skills,
+            "total_audited": len(inventory) + total_required_skills,
             "summary": {
                 "total_required_skills": total_required_skills,
                 "skills_aligned": aligned_count,
@@ -786,29 +708,10 @@ class DeterministicSkillGapEngine:
                 "hard_long_term": hard_long_term[:4],
             },
             "data_quality": {
-                "profile": bool(profile_data and isinstance(profile_data, dict) and (profile_data.get("technical_skills") or profile_data.get("categories"))),
-                "resume": bool(
-                    resume_data and isinstance(resume_data, dict) and (
-                        ((resume_data.get("analysis") or {}).get("skills_extracted") if isinstance(resume_data.get("analysis"), dict) else None)
-                        or ((resume_data.get("analysis") or {}).get("extracted_skills") if isinstance(resume_data.get("analysis"), dict) else None)
-                        or resume_data.get("skills_extracted")
-                        or resume_data.get("extracted_skills")
-                    )
-                ),
-                "github": bool(
-                    github_data and isinstance(github_data, dict) and (
-                        ((github_data.get("statistics") or {}).get("languages") if isinstance(github_data.get("statistics"), dict) else None)
-                        or ((github_data.get("analysis") or {}).get("top_languages") if isinstance(github_data.get("analysis"), dict) else None)
-                        or github_data.get("github_username")
-                    )
-                ),
-                "leetcode": bool(
-                    leetcode_data and isinstance(leetcode_data, dict) and (
-                        leetcode_data.get("topic_statistics")
-                        or ((leetcode_data.get("statistics") or {}).get("total_solved", 0) > 0 if isinstance(leetcode_data.get("statistics"), dict) else False)
-                        or leetcode_data.get("leetcode_username")
-                    )
-                ),
+                "profile": bool(profile_data and (profile_data.get("technical_skills") or profile_data.get("categories"))),
+                "resume": bool(resume_data and (resume_data.get("analysis", {}).get("skills_extracted") or resume_data.get("skills_extracted"))),
+                "github": bool(github_data and (github_data.get("statistics", {}).get("languages") or github_data.get("analysis", {}).get("top_languages"))),
+                "leetcode": bool(leetcode_data and (leetcode_data.get("topic_statistics") or leetcode_data.get("statistics", {}).get("total_solved", 0) > 0)),
                 "projects": bool(projects_list and len(projects_list) > 0),
             }
         }

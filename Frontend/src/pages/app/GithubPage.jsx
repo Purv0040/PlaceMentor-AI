@@ -101,20 +101,9 @@ const computeLanguageDistribution = (rawLangs) => {
 export const GithubPage = () => {
   const navigate = useNavigate();
   const { user, updateUserProfile } = useUser();
-
-  // Instant SWR Cache: load previously synced profile in 0ms
-  const [cachedGithub] = useState(() => {
-    try {
-      const stored = localStorage.getItem('placementor_cached_github_page_data');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [data, setData] = useState(() => cachedGithub || initialGithubData);
+  const [data, setData] = useState(initialGithubData);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isConnected, setIsConnected] = useState(() => Boolean(cachedGithub?.isConnected));
+  const [isConnected, setIsConnected] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isScoreInfoOpen, setIsScoreInfoOpen] = useState(false);
   const [inputUsername, setInputUsername] = useState('');
@@ -125,14 +114,8 @@ export const GithubPage = () => {
 
   const fetchGithubData = async () => {
     try {
-      // Parallelize profile, repositories, and analysis fetching for ultra-fast response
-      const [profileResult, reposResult, analysisResult] = await Promise.allSettled([
-        githubService.getProfile(),
-        githubService.getRepositories(1, 50),
-        githubService.getAnalysis()
-      ]);
-
-      let pData = profileResult.status === 'fulfilled' && profileResult.value ? profileResult.value.data : null;
+      const profileRes = await githubService.getProfile();
+      let pData = profileRes && profileRes.data;
 
       // If backend has no profile, check if user context has a github handle from onboarding
       const userGithub = user?.integrations?.githubUsername || user?.githubUsername || localStorage.getItem('placementor_github_handle');
@@ -154,8 +137,26 @@ export const GithubPage = () => {
         const stats = pData.statistics || {};
         const profile = pData.profile || {};
 
-        let repos = (reposResult.status === 'fulfilled' && reposResult.value?.data?.items) || [];
-        let analysisData = (analysisResult.status === 'fulfilled' && analysisResult.value?.data?.analysis) || null;
+        let repos = [];
+        try {
+          const reposRes = await githubService.getRepositories(1, 50);
+          repos = (reposRes && reposRes.data && reposRes.data.items) || [];
+        } catch (e) {
+          console.warn("Repo fetch warning:", e);
+        }
+
+        // Fetch AI analysis if available
+        let analysisData = null;
+        if (pData.has_analysis) {
+          try {
+            const analysisRes = await githubService.getAnalysis();
+            if (analysisRes && analysisRes.data) {
+              analysisData = analysisRes.data.analysis;
+            }
+          } catch (e) {
+            // Analysis not yet run
+          }
+        }
 
         // Calculate dynamic language distribution from actual backend data
         const rawLangs = stats.languages || {};
@@ -231,7 +232,7 @@ export const GithubPage = () => {
           lastSyncedText = syncDate.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
         }
 
-        const mappedGithub = {
+        setData({
           isConnected: true,
           handle: handle,
           profileUrl: profile.html_url || `https://github.com/${handle}`,
@@ -257,18 +258,10 @@ export const GithubPage = () => {
             reposAnalyzedCount: repos.length || stats.total_repositories || 0,
             starsEarned: totalStarsVal
           }
-        };
-
-        setData(mappedGithub);
-        try {
-          localStorage.setItem('placementor_cached_github_page_data', JSON.stringify(mappedGithub));
-        } catch (cErr) {
-          console.warn('Failed to cache github page data:', cErr);
-        }
+        });
       } else {
         setIsConnected(false);
         setData(initialGithubData);
-        localStorage.removeItem('placementor_cached_github_page_data');
       }
     } catch (err) {
       console.warn('Failed to load live GitHub profile:', err);

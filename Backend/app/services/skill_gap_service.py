@@ -11,8 +11,7 @@ from app.repositories.github_repository import GitHubRepository
 from app.repositories.leetcode_repository import LeetCodeRepository
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.readiness_repository import ReadinessRepository
-from app.repositories.task_repository import TaskRepository
-from app.engines.skill_gap_engine import DeterministicSkillGapEngine, COMMON_CATEGORIES
+from app.engines.skill_gap_engine import DeterministicSkillGapEngine
 from app.services.role_requirement_service import RoleRequirementService
 from app.integrations.ai_client import AIClient, AIClientError
 
@@ -35,7 +34,6 @@ class SkillGapService:
         self.leetcode_repo = LeetCodeRepository(db)
         self.project_repo = ProjectRepository(db)
         self.readiness_repo = ReadinessRepository(db)
-        self.task_repo = TaskRepository(db)
         self.ai_client = ai_client or AIClient()
         self.role_service = RoleRequirementService(self.ai_client)
         self.engine = DeterministicSkillGapEngine(role_service=self.role_service)
@@ -96,10 +94,7 @@ class SkillGapService:
         # 7. Dynamically resolve role requirements via centralized RoleRequirementService
         role_reqs = await self.role_service.get_requirements_async(target_role)
 
-        # 8. Fetch user tasks (daily & roadmap tasks)
-        tasks_list = await self.task_repo.get_all_by_user(user_id) or []
-
-        # 9. Compute deterministic skill gaps using resolved requirements
+        # 8. Compute deterministic skill gaps using resolved requirements
         computed_result = self.engine.analyze(
             target_role=target_role,
             profile_data=student_profile,
@@ -107,7 +102,6 @@ class SkillGapService:
             github_data=github_doc,
             leetcode_data=leetcode_doc,
             projects_list=projects_list,
-            tasks_list=tasks_list,
             role_requirements=role_reqs
         )
         computed_result["stale_data"] = stale_warnings
@@ -141,8 +135,6 @@ class SkillGapService:
                     if "ai/ml engineer" in ai_sum.lower() and canonical_role_in_result != "AI/ML Engineer":
                         logger.warning("Rejected AI summary referencing AI/ML Engineer for canonical role '%s'", canonical_role_in_result)
                     else:
-                        if canonical_role_in_result not in ai_sum:
-                            ai_sum += f" Calibrated specifically for {canonical_role_in_result} placement benchmarks."
                         computed_result["ai_summary"] = ai_sum
                 # Update item explanations if available from AI
                 if ai_interpretation.get("skills"):
@@ -172,7 +164,6 @@ class SkillGapService:
                     "id": f"gap-{len(refreshed_priority_gaps) + 1}",
                     "skill": item["skill"],
                     "category": item["category"],
-                    "scope": "common" if item["category"] in COMMON_CATEGORIES else "role",
                     "gap_type": item["gap_type"],
                     "priority": item["priority"],
                     "importance": item["importance"],
@@ -195,57 +186,11 @@ class SkillGapService:
         return created
 
 
-    async def get_latest_skill_gaps(self, user_id: str, target_role_override: Optional[str] = None) -> Dict[str, Any]:
-        """Fetch latest skill gap analysis or trigger recalculation if none exists or if role/tasks changed."""
+    async def get_latest_skill_gaps(self, user_id: str) -> Dict[str, Any]:
+        """Fetch latest skill gap analysis or trigger recalculation if none exists."""
         latest = await self.repo.get_latest_by_user(user_id)
         if not latest:
-            return await self.analyze_skill_gaps(user_id, target_role_override=target_role_override)
-
-        # If a specific target_role was requested and doesn't match the cached analysis, recalculate
-        if target_role_override and latest.get("target_role") != target_role_override:
-            logger.info("Recalculating skill gaps for user %s: role switched to %s", user_id, target_role_override)
-            return await self.analyze_skill_gaps(user_id, target_role_override=target_role_override)
-
-        # Check if cached analysis is from legacy schema (e.g. total_audited > 25 or missing benchmark_target/scope)
-        cats = latest.get("category_coverage") or []
-        is_legacy = (
-            latest.get("total_audited", 0) > 25
-            or any("benchmark_target" not in c for c in cats)
-            or any("scope" not in c for c in cats)
-        )
-        if is_legacy:
-            logger.info("Recalculating skill gaps for user %s: detected legacy analysis record", user_id)
-            return await self.analyze_skill_gaps(user_id, target_role_override=target_role_override)
-
-        # Check if user has newer completed tasks that aren't reflected in this analysis
-        tasks = await self.task_repo.get_all_by_user(user_id) or []
-        latest_up = latest.get("updated_at")
-        if isinstance(latest_up, str):
-            try:
-                latest_up = datetime.fromisoformat(latest_up.replace("Z", "+00:00"))
-            except Exception:
-                latest_up = None
-
-        if isinstance(latest_up, datetime) and tasks:
-            def _get_task_date(t):
-                d = t.get("updated_at") or t.get("completed_at")
-                if isinstance(d, datetime):
-                    return d
-                if isinstance(d, str):
-                    try:
-                        return datetime.fromisoformat(d.replace("Z", "+00:00"))
-                    except Exception:
-                        return None
-                return None
-
-            has_newer_tasks = any(
-                _get_task_date(t) and _get_task_date(t) > latest_up
-                for t in tasks if t.get("status") in ("completed", "done")
-            )
-            if has_newer_tasks:
-                logger.info("Recalculating skill gaps for user %s due to new completed tasks", user_id)
-                return await self.analyze_skill_gaps(user_id, target_role_override=target_role_override)
-
+            return await self.analyze_skill_gaps(user_id)
         return latest
 
     async def get_skill_gap_summary(self, user_id: str) -> Dict[str, Any]:

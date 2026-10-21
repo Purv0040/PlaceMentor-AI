@@ -110,7 +110,6 @@ async def list_resumes(
             uploaded_at=resume["uploaded_at"],
             analyzed_at=resume.get("analyzed_at"),
             has_analysis=bool(resume.get("analysis")),
-            analysis=resume.get("analysis"),
         )
         for resume in resumes
     ]

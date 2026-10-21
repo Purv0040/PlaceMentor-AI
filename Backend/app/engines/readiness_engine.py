@@ -254,9 +254,7 @@ class DeterministicReadinessEngine:
                 "recommendations": ["Connect your LeetCode handle to analyze DSA problem-solving readiness."]
             }
 
-        stats = (leetcode_data.get("statistics") if isinstance(leetcode_data, dict) else None) or {}
-        if not isinstance(stats, dict):
-            stats = {}
+        stats = leetcode_data.get("statistics", {})
         total_solved = stats.get("total_solved", 0)
         easy_solved = stats.get("easy_solved", 0)
         medium_solved = stats.get("medium_solved", 0)
@@ -488,9 +486,7 @@ class DeterministicReadinessEngine:
                 "recommendations": ["Connect your GitHub account to sync repositories and commit history."]
             }
 
-        stats = (github_data.get("statistics") if isinstance(github_data, dict) else None) or {}
-        if not isinstance(stats, dict):
-            stats = {}
+        stats = github_data.get("statistics", {})
         repos = stats.get("total_repositories", 0)
         stars = stats.get("total_stars", 0)
         lang = stats.get("primary_language", "General")

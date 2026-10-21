@@ -27,7 +27,7 @@ class TaskService:
         have not been generated, syncs them seamlessly.
         """
         today_str = get_today_date_str()
-        raw_today = await self.task_repo.get_by_user_and_date(user_id, today_str)
+        existing_today = await self.task_repo.get_by_user_and_date(user_id, today_str)
 
         active_roadmap = await self.roadmap_repo.get_active_by_user_id(user_id)
         if active_roadmap:
@@ -43,20 +43,14 @@ class TaskService:
             today_date = datetime.now(APP_TIMEZONE).date()
             day_number = max(1, min(90, (today_date - start_date).days + 1))
 
-            # Filter today's tasks strictly belonging to the active roadmap
-            existing_today = [
-                t for t in raw_today
-                if str(t.get("roadmap_id")) == roadmap_id and not t.get("is_leetcode") and (t.get("day_number") == day_number or t.get("day") == day_number or not t.get("day_number"))
-            ]
-
             all_tasks = active_roadmap.get("all_tasks") or []
             if not all_tasks and active_roadmap.get("phases"):
                 for p in active_roadmap["phases"]:
                     all_tasks.extend(p.get("tasks", []))
 
-            day_tasks = [t for t in all_tasks if t.get("day") == day_number or t.get("day_number") == day_number]
+            day_tasks = [t for t in all_tasks if t.get("day") == day_number]
             if not day_tasks and all_tasks:
-                day_tasks = all_tasks[:2]
+                day_tasks = all_tasks[:3]
 
             existing_titles = {t.get("title") for t in existing_today}
             existing_task_ids = {t.get("task_id") for t in existing_today}
@@ -91,32 +85,20 @@ class TaskService:
                 created_tasks = await self.task_repo.create_many(new_db_tasks)
                 existing_today.extend(created_tasks)
                 await self.progress_service.recalculate_progress(user_id)
-        else:
-            existing_today = [t for t in raw_today if not t.get("is_leetcode")]
-            day_number = existing_today[0].get("day_number", 1) if existing_today else 1
 
-        # Deduplicate existing_today by title preserving completed status
-        dedup_map = {}
-        for t in existing_today:
-            t_key = t.get("title", "").strip().lower()
-            if not t_key:
-                t_key = str(t.get("task_id") or t.get("_id"))
-            if t_key not in dedup_map or (t.get("status") == "completed" and dedup_map[t_key].get("status") != "completed"):
-                dedup_map[t_key] = t
-        deduped_today = list(dedup_map.values())
-
-        completed_tasks = [t for t in deduped_today if t.get("status") == "completed"]
-        pending_tasks = [t for t in deduped_today if t.get("status") in ("pending", "in_progress")]
-        total_est = sum(t.get("estimated_minutes", 60) for t in deduped_today)
+        completed_tasks = [t for t in existing_today if t.get("status") == "completed"]
+        pending_tasks = [t for t in existing_today if t.get("status") in ("pending", "in_progress")]
+        total_est = sum(t.get("estimated_minutes", 60) for t in existing_today)
+        current_day_number = existing_today[0].get("day_number", 1) if existing_today else 1
 
         return {
             "date": today_str,
-            "day_number": day_number,
-            "total_tasks": len(deduped_today),
+            "day_number": current_day_number,
+            "total_tasks": len(existing_today),
             "completed_tasks": len(completed_tasks),
             "pending_tasks": len(pending_tasks),
             "estimated_total_minutes": total_est,
-            "tasks": deduped_today,
+            "tasks": existing_today,
         }
 
     async def generate_today_tasks(self, user_id: str) -> Dict[str, Any]:

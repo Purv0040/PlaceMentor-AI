@@ -21,33 +21,10 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useUser } from '../../context/UserContext';
-import { usePlanning } from '../../context/PlanningContext';
 
 export const Sidebar = () => {
   const { sidebarOpen, closeSidebar } = useApp();
   const { user } = useUser();
-  const { roadmap } = usePlanning();
-
-  const totalDays = Number(
-    roadmap?.totalDays ||
-    roadmap?.total_days ||
-    roadmap?.durationDays ||
-    roadmap?.duration_days ||
-    user?.studyDurationDays ||
-    user?.goals?.studyDurationDays ||
-    user?.timelineDays ||
-    (() => {
-      try {
-        const p = JSON.parse(localStorage.getItem('placementor_planning_state') || '{}');
-        if (p?.roadmap?.totalDays) return p.roadmap.totalDays;
-        const u = JSON.parse(localStorage.getItem('placementor_user_data') || '{}');
-        return u?.studyDurationDays || u?.goals?.timelineDays;
-      } catch (e) { return null; }
-    })() ||
-    90
-  );
-
-  const roadmapLabel = `${totalDays}-Day Roadmap`;
 
   const navGroups = [
     {
@@ -74,7 +51,7 @@ export const Sidebar = () => {
     {
       title: 'Planning',
       items: [
-        { label: roadmapLabel, path: '/roadmap', icon: Map },
+        { label: '90-Day Roadmap', path: '/roadmap', icon: Map },
         { label: "Today's Tasks", path: '/tasks', icon: CheckSquare }
         // Temporarily removed: Progress Telemetry
         // { label: 'Progress Telemetry', path: '/progress', icon: TrendingUp }

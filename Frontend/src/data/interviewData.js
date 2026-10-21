@@ -673,290 +673,16 @@ export const domainModalityQuestionsPool = {
         difficulty: "Medium"
       }
     ]
-  },
-
-  // ==========================================
-  // 6. Frontend Developer
-  // ==========================================
-  "Frontend Developer": {
-    "System Architecture & Design": [
-      {
-        question: "Design a Micro-Frontends architecture for an enterprise web application with independent teams (e.g. checkout, search, account). Compare Module Federation (Webpack 5/Vite), iframe isolation, and single-spa router. How do you handle shared state, cross-app routing, and CSS style collisions?",
-        category: "Micro-Frontends & Modular Architecture",
-        skill: "Micro-Frontends & Module Federation",
-        hint: "Discuss Webpack Module Federation host/remote containers, shared React dependencies, shared design system tokens, and scoped CSS / CSS Modules.",
-        expected_focus: "Independent deployments, shared singleton dependencies, inter-app communication (EventBus/custom events), and fallback shells.",
-        difficulty: "Hard"
-      },
-      {
-        question: "How do you systematically diagnose and optimize Core Web Vitals (Largest Contentful Paint - LCP, Interaction to Next Paint - INP, and Cumulative Layout Shift - CLS) on a high-traffic responsive web application?",
-        category: "Web Performance & Core Web Vitals",
-        skill: "Core Web Vitals & Runtime Optimization",
-        hint: "Explain priority hints (fetchpriority='high'), server-side streaming HTML, decomposing long tasks with scheduler.yield() or requestIdleCallback, and reserving layout dimensions for media.",
-        expected_focus: "LCP resource discovery, INP main-thread blocking time, CLS aspect-ratio containers, and PerformanceObserver API.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Design an offline-first client architecture for a collaborative task management web app. How do you integrate Service Workers (Workbox), IndexedDB local persistence, background synchronization, and handle optimistic update rollbacks?",
-        category: "Client Architecture & Offline Systems",
-        skill: "Service Workers & Local Persistence",
-        hint: "Discuss Service Worker caching strategies (Stale-While-Revalidate, Cache-First), IndexedDB schema versioning, transaction rollback on API failure, and conflict resolution.",
-        expected_focus: "Optimistic UI mutations, Background Sync API, cache invalidation, and data consistency.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Architect an accessible, scalable multi-brand Design System in React and TypeScript. How do you structure design tokens (CSS custom properties), compound component composition, keyboard accessibility (WCAG 2.1 AA), and automated visual regression testing?",
-        category: "Design Systems & Component Architecture",
-        skill: "Design Tokens & Accessible Component Libraries",
-        hint: "Discuss headless UI primitives (Radix/Aria), semantic HTML, focus trapping in modals, token aliasing (global vs semantic tokens), and Storybook/Chromatic testing.",
-        expected_focus: "Component composition patterns, polymorphic 'as' props, ARIA live regions, and token transformation pipelines.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Design a Real-User Monitoring (RUM) and client-side error telemetry system (similar to Sentry). How do you capture unhandled promise rejections, React Error Boundaries, web vitals, and send batch telemetry with navigator.sendBeacon without degrading UI framerates?",
-        category: "Client Observability & Telemetry",
-        skill: "Client Monitoring & Error Boundaries",
-        hint: "Explain window.onerror, window.onunhandledrejection, React ErrorBoundary fallback components, sampling rates, and navigator.sendBeacon reliability on page unload.",
-        expected_focus: "Low main-thread overhead, session replay breadcrumbs, PII masking, and beacon batching.",
-        difficulty: "Medium"
-      }
-    ],
-
-    "Technical / DSA Drill": [
-      {
-        question: "Explain the React Fiber reconciler architecture and concurrent scheduling. Walk through the interruptible Render phase vs synchronous Commit phase, Fiber node tree structure (child, sibling, return pointers), and how keys reduce list diffing complexity from O(N^3) to O(N).",
-        category: "React Internals & Reconciler",
-        skill: "Fiber Architecture & Virtual DOM Diffing",
-        hint: "Explain time slicing using lane bitmasks, work-in-progress alternate trees, Fiber linked list traversal, and key-based map lookups.",
-        expected_focus: "Fiber data structure, cooperative multitasking, diffing heuristics, and avoiding layout thrashing.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Implement a robust deep clone function in JavaScript that handles nested objects, arrays, Date, RegExp, Map, Set, and circular references without stack overflow. What is its time and space complexity?",
-        category: "JavaScript Algorithms & Data Structures",
-        skill: "Deep Clone & Circular Reference Resolution",
-        hint: "Use a WeakMap to track visited objects to detect cycles. Recursively reconstruct prototype and constructor types.",
-        expected_focus: "WeakMap cycle detection, prototype preservation, handling primitive wrappers, and O(N) space.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Design and implement an asynchronous Task Queue / Promise Pool that executes a maximum of K concurrent async operations (e.g. image fetches or API queries) and returns results in the original request order.",
-        category: "Async Concurrency & Queues",
-        skill: "Promise Concurrency Pool & Task Scheduling",
-        hint: "Manage an active worker counter, a pending task queue, and map completed results to original input indices.",
-        expected_focus: "Concurrency limit enforcement, Promise resolution ordering, error isolation, and queue draining.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Implement custom debounce and throttle utility functions supporting leading and trailing execution flags, as well as an explicit cancel() method. Explain how JavaScript timers and the event loop coordinate callback scheduling.",
-        category: "Event Loop & Timing Algorithms",
-        skill: "Debounce, Throttle & Event Loop",
-        hint: "Track lastCallTime, timeoutId, and execute immediately if leading is true and no timer is running. Clear timers on cancel.",
-        expected_focus: "Closure variable management, timer clearance, 'this' context binding, and memory leak prevention.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Given two DOM node references inside a document, write an algorithm to find their Lowest Common Ancestor (LCA) without using node.closest(). Compare traversing parent pointers using a Set with a two-pointer intersection approach.",
-        category: "Tree Algorithms & DOM Traversal",
-        skill: "DOM Tree Traversal & Lowest Common Ancestor",
-        hint: "Similar to finding the intersection of two linked lists: calculate depths or traverse parentNode pointers using a visited Set.",
-        expected_focus: "Time complexity O(depth), space complexity trade-offs (O(D) vs O(1)), and detached node edge cases.",
-        difficulty: "Medium"
-      }
-    ],
-
-    "Behavioral & HR STAR Drill": [
-      {
-        question: "Tell me about a high-severity frontend production incident you faced (e.g., infinite re-render loop crashing browser tabs, broken checkout button, or memory leak). Walk me through your STAR response: initial detection, rollback/hotfix, and preventative regression tests.",
-        category: "Production Incident Response",
-        skill: "Frontend Triage & Emergency Response",
-        hint: "Highlight rapid rollback, reproducing the bug with browser DevTools memory/performance profiler, and writing automated Cypress/Playwright regression tests.",
-        expected_focus: "Composure under pressure, root cause isolation, automated testing safeguards, and blameless post-mortem.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Describe a situation where UI/UX designers proposed complex, heavy animations or 3D interactions that would severely degrade mobile performance or accessibility. How did you negotiate technical trade-offs to reach a shared solution?",
-        category: "Cross-Functional Collaboration",
-        skill: "Designer Collaboration & Technical Trade-offs",
-        hint: "Explain demonstrating quantifiable performance impacts (FPS drop, LCP degradation), presenting lightweight CSS/SVG alternatives, and respecting design intent.",
-        expected_focus: "Diplomacy, data-driven reasoning, user-centric advocacy, and creative compromise.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Walk through a scenario where you led or advocated for a major frontend refactor or tooling upgrade (e.g., migrating Webpack to Vite, moving to TypeScript, or adopting Zustand/React Query). How did you gain team alignment and minimize disruption?",
-        category: "Technical Leadership & Modernization",
-        skill: "Frontend Tooling Migration & ROI",
-        hint: "Discuss creating an incremental migration plan (dual-running or codemods), demonstrating measurable developer velocity gains, and holding workshops.",
-        expected_focus: "Vision, incremental execution, stakeholder communication, and developer experience metrics.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Describe a project where a critical feature worked seamlessly on Chrome on desktop but broke completely on Safari iOS or low-end mobile devices right before launch. How did you diagnose and resolve the issue?",
-        category: "Cross-Browser Compatibility & Debugging",
-        skill: "Cross-Browser Debugging & Polyfills",
-        hint: "Explain using remote web inspection, identifying rendering engine differences (WebKit vs Chromium), and applying progressive enhancement.",
-        expected_focus: "Analytical troubleshooting, device testing methodology, and resilient fallback code.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Tell me about a time you noticed accessibility (a11y) barriers in your web application and took the initiative to audit and remediate them even though it was not explicitly requested on the sprint backlog.",
-        category: "Accessibility & Engineering Ownership",
-        skill: "Accessibility Advocacy & WCAG Compliance",
-        hint: "Detail conducting audits with screen readers (VoiceOver/NVDA) and axe-core, fixing keyboard navigation traps, and integrating automated CI a11y checks.",
-        expected_focus: "Empathy, proactive ownership, WCAG standards, and business/legal risk mitigation.",
-        difficulty: "Medium"
-      }
-    ]
-  },
-
-  // ==========================================
-  // 7. Data Scientist & AI Engineer
-  // ==========================================
-  "Data Scientist & AI Engineer": {
-    "System Architecture & Design": [
-      {
-        question: "Design an enterprise Data Lakehouse architecture (using Apache Iceberg/Delta Lake, Parquet, and Trino/Spark) supporting batch feature transformation and ad-hoc SQL analytics over 50TB of tabular user data. Detail partitioning, file compaction, and schema evolution.",
-        category: "Lakehouse Architecture & Big Data",
-        skill: "Data Lakehouse & Spark/Iceberg Architecture",
-        hint: "Discuss columnar Parquet format benefits, Iceberg metadata snapshots, partitioning strategies (identity vs hidden partitioning), and Z-order compaction.",
-        expected_focus: "ACID transactions on object storage, query pruning, file compaction jobs, and data governance.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Design a real-time streaming analytics pipeline using Apache Kafka, Apache Flink / Spark Streaming, and ClickHouse for financial fraud detection in under 1 second. How do you handle out-of-order events using watermarks and sliding tumbling windows?",
-        category: "Streaming Analytics & Real-Time Data",
-        skill: "Kafka/Flink Streaming & Windowing",
-        hint: "Distinguish event-time from processing-time, explain watermark generation for bounded out-of-orderness, and state management in Flink RocksDB backend.",
-        expected_focus: "Window aggregations, watermark lag trade-offs, state checkpointing, and sub-second query latency.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Architect an enterprise A/B testing and experimentation platform evaluating ML model variants across millions of users. How do you design user randomization (MurmurHash salting), Sample Ratio Mismatch (SRM) checks, CUPED variance reduction, and sequential testing?",
-        category: "Experimentation & Statistical Platforms",
-        skill: "A/B Testing Infrastructure & CUPED",
-        hint: "Discuss hash-based bucket assignment to prevent carryover bias, chi-square SRM validation, and using pre-experiment covariates to shrink confidence intervals with CUPED.",
-        expected_focus: "Randomization consistency, statistical power calculation, variance reduction, and automated guardrail metric checks.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Design a distributed model training and automated hyperparameter optimization pipeline using Ray Tune or Optuna with MLflow tracking. How do you implement Bayesian Optimization (TPE), early stopping (ASHA/Hyperband), and artifact lineage?",
-        category: "ML Platforms & Distributed Training",
-        skill: "Hyperparameter Search & Ray/Optuna",
-        hint: "Contrast grid/random search with Tree-structured Parzen Estimators (TPE). Explain bracket-based pruning in ASHA and logging model weights/metrics to MLflow.",
-        expected_focus: "Resource allocation, asynchronous trial scheduling, early termination of unpromising trials, and reproducible model registries.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Design an automated model monitoring and drift detection system tracking classification models in production. Walk through calculating Population Stability Index (PSI) and Kolmogorov-Smirnov (KS) tests on input distributions, detecting concept drift, and automating retraining.",
-        category: "Model Monitoring & Drift Detection",
-        skill: "Model Drift Observability & Retraining",
-        hint: "Explain data drift P(X) vs concept drift P(Y|X). Discuss baseline reference windows vs inference sliding windows, PSI threshold benchmarks (<0.1 stable, >0.25 severe), and shadow canary deployments.",
-        expected_focus: "Statistical drift metrics, delayed ground truth attribution, automated alerting, and CI/CD retraining triggers.",
-        difficulty: "Medium"
-      }
-    ],
-
-    "Technical / DSA Drill": [
-      {
-        question: "Derive the mathematical formulation of Logistic Regression loss (Binary Cross-Entropy) and gradient descent weight updates. Why is Mean Squared Error (MSE) non-convex when used with a sigmoid activation, and how do L1 (Lasso) and L2 (Ridge) regularization differ mathematically?",
-        category: "Machine Learning Math & Optimization",
-        skill: "Logistic Regression Derivation & Regularization",
-        hint: "Formulate log-likelihood for Bernoulli distribution. Explain sigmoid derivative sigma*(1 - sigma) and why L1 constraint geometry induces parameter sparsity.",
-        expected_focus: "Loss function convexity, gradient vector derivation, L1 vs L2 geometric contours, and feature selection.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Explain the K-Means clustering algorithm (Lloyd's algorithm) and its computational complexity O(I * K * N * D). Why is naive random centroid initialization prone to sub-optimal local minima, and how does K-Means++ probabilistic distance-weighted seeding solve this?",
-        category: "Clustering Algorithms & Math",
-        skill: "K-Means & K-Means++ Seeding Algorithm",
-        hint: "Explain alternating Voronoi partition assignment and mean recalculation. In K-Means++, select next centroid with probability proportional to D(x)^2.",
-        expected_focus: "Convergence properties, distance metrics, K-Means++ initialization algorithm, and choosing K via Elbow / Silhouette methods.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Given a continuous data stream of unknown and potentially infinite length N, write an algorithm to sample K items uniformly at random such that every item seen so far has an exact equal probability (K/N) of being selected in O(1) auxiliary space.",
-        category: "Streaming Algorithms & Probability",
-        skill: "Reservoir Sampling Algorithm",
-        hint: "Initialize reservoir with first K elements. For each subsequent element i (from K+1 to N), generate random integer j in [1, i]. If j <= K, replace reservoir[j] with current item.",
-        expected_focus: "Inductive proof of uniform probability K/N, O(1) extra space, and handling streaming data.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Explain how Decision Trees select optimal feature split thresholds for classification. Compare Gini Impurity: 1 - sum(p_i^2) with Shannon Entropy / Information Gain: -sum(p_i * log2(p_i)). What is the time complexity of evaluating continuous split thresholds for N samples and D features?",
-        category: "Decision Trees & Information Theory",
-        skill: "Information Gain, Gini Impurity & Splitting",
-        hint: "Discuss sorting continuous features O(D * N log N), computing running prefix impurity across candidate thresholds, and post-pruning to prevent overfitting.",
-        expected_focus: "Gini vs Entropy formulas, Information Gain maximization, computational cost, and tree depth constraints.",
-        difficulty: "Medium"
-      },
-      {
-        question: "In an extreme class imbalance scenario (e.g. 99.9% negative, 0.1% positive in fraud detection), why is ROC-AUC dangerously deceptive compared to PR-AUC (Precision-Recall Area Under Curve)? Walk through the mathematical calculation of False Positive Rate vs Precision.",
-        category: "Evaluation Metrics & Statistics",
-        skill: "ROC-AUC vs PR-AUC & Class Imbalance",
-        hint: "Explain False Positive Rate = FP / (FP + TN). A massive TN denominator hides millions of false positives in ROC-AUC. Precision = TP / (TP + FP) directly penalizes false alarms.",
-        expected_focus: "Metric formulas, baseline chance rate (PR-AUC baseline = positive prevalence), cost-sensitive decision thresholds, and F1/F-beta calibration.",
-        difficulty: "Medium"
-      }
-    ],
-
-    "Behavioral & HR STAR Drill": [
-      {
-        question: "Tell me about a time when a statistical or machine learning model achieved stellar cross-validation metrics in notebook experimentation but failed drastically when evaluated on live out-of-sample data. How did you diagnose data leakage or distribution shift?",
-        category: "Model Failure & Forensic Validation",
-        skill: "Data Leakage Diagnosis & STAR",
-        hint: "Discuss auditing feature engineering for target leakage, implementing strict temporal train/validation splits, and adding invariant sanity tests.",
-        expected_focus: "Systematic investigation, root cause discovery, validation discipline, and long-term safeguard protocols.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Describe a situation where product or executive stakeholders were celebrating an apparent conversion win that was actually driven by an algorithmic glitch, bot activity, or metric cannibalization. How did you challenge the prevailing narrative with data evidence?",
-        category: "Data Integrity & Stakeholder Influence",
-        skill: "Scientific Rigor & Executive Communication",
-        hint: "Highlight decomposing metrics into sub-segments, verifying causal attribution, presenting findings objectively with confidence intervals, and safeguarding product truth.",
-        expected_focus: "Integrity, courage, analytical rigor, and diplomatic executive storytelling.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Describe a project where you had to decide between continuing to explore complex advanced modeling techniques (e.g. deep neural architectures, complex ensembling) versus shipping a simpler heuristic or linear baseline. How did you justify the trade-off?",
-        category: "Engineering Pragmatism & ROI",
-        skill: "Model Complexity vs Business Velocity",
-        hint: "Explain benchmarking incremental accuracy gains against latency, maintenance overhead, and interpretability requirements to make an engineering decision.",
-        expected_focus: "Occam's razor, business alignment, total cost of ownership, and measurable delivery.",
-        difficulty: "Medium"
-      },
-      {
-        question: "Tell me about a time you audited a predictive model or training dataset and uncovered systemic algorithmic bias or disparate impact against a specific demographic or user subgroup. What concrete steps did you take to mitigate the bias?",
-        category: "Ethical AI & Fairness",
-        skill: "Algorithmic Bias Auditing & Fairness",
-        hint: "Discuss calculating demographic parity and equalized odds, re-sampling or re-weighting unbalanced groups, evaluating fairness-accuracy frontiers, and establishing review checklists.",
-        expected_focus: "Ethical responsibility, quantitative fairness metrics, collaborative remediation, and governance.",
-        difficulty: "Hard"
-      },
-      {
-        question: "Describe a scenario where you had to explain statistical confidence intervals, p-values, or experiment sample size requirements to non-technical stakeholders who wanted to call an A/B test early. How did you guide them?",
-        category: "Statistical Communication & Leadership",
-        skill: "Translating Statistics & Risk",
-        hint: "Explain Type I (false positive) risk and p-hacking in terms of financial cost or lost engineering time, and offer adaptive sequential testing as a compromise.",
-        expected_focus: "Empathy, intuitive analogies, protecting statistical validity, and stakeholder trust.",
-        difficulty: "Medium"
-      }
-    ]
   }
 };
 
-// Aliases mapping user-selected roles from Onboarding/Setup to canonical question pools
+// Aliases mapping user-selected roles from Onboarding to canonical question pools
 export const resolveDomainKey = (role = "") => {
   const norm = String(role || "").toLowerCase().trim();
-  if (norm.includes("frontend")) {
-    return "Frontend Developer";
-  }
-  if (norm.includes("data scientist") || norm.includes("data science")) {
-    return "Data Scientist & AI Engineer";
-  }
-  if (norm.includes("full stack") || norm.includes("mern") || norm.includes("fullstack")) {
+  if (norm.includes("full stack") || norm.includes("mern") || norm.includes("react") || norm.includes("frontend")) {
     return "Full Stack Engineer";
   }
-  if (norm.includes("ai") || norm.includes("ml") || norm.includes("machine learning")) {
+  if (norm.includes("ai") || norm.includes("ml") || norm.includes("machine learning") || norm.includes("data scientist")) {
     return "AI/ML Engineer";
   }
   if (norm.includes("cloud") || norm.includes("devops") || norm.includes("aws") || norm.includes("infrastructure") || norm.includes("sre")) {
@@ -974,7 +700,7 @@ export const resolveModalityKey = (modality = "") => {
   if (norm.includes("star") || norm.includes("behavioral") || norm.includes("hr")) {
     return "Behavioral & HR STAR Drill";
   }
-  if (norm.includes("dsa") || norm.includes("drill") || norm.includes("algo") || norm.includes("coding") || norm.includes("tech")) {
+  if (norm.includes("dsa") || norm.includes("drill") || norm.includes("algo") || norm.includes("coding")) {
     return "Technical / DSA Drill";
   }
   if (norm.includes("full") || norm.includes("combined") || norm.includes("tier")) {
@@ -1012,25 +738,22 @@ export const getDynamicQuestion = (
   const modalityKey = resolveModalityKey(modality);
 
   let pool = [];
-  let stageLabel = null;
-
   if (modalityKey === "Full Tier-1 SDE Mock") {
     const stagePattern = [
-      { name: "Technical / DSA Drill", round: "Stage 1: Technical / DSA Drill" },
-      { name: "System Architecture & Design", round: "Stage 2: Architecture & Scalability" },
-      { name: "Behavioral & HR STAR Drill", round: "Stage 3: Behavioral STAR Drill" },
-      { name: "Technical / DSA Drill", round: "Stage 4: Advanced Algorithmic Drill" },
-      { name: "System Architecture & Design", round: "Stage 5: High-Level System Architecture" }
+      "Technical / DSA Drill",
+      "System Architecture & Design",
+      "Behavioral & HR STAR Drill",
+      "Technical / DSA Drill",
+      "System Architecture & Design"
     ];
-    const stageItem = stagePattern[(questionNumber - 1) % stagePattern.length];
-    stageLabel = stageItem.round;
-    pool = domainModalityQuestionsPool[domainKey]?.[stageItem.name] || [];
+    const stageModality = stagePattern[(questionNumber - 1) % stagePattern.length];
+    pool = domainModalityQuestionsPool[domainKey]?.[stageModality] || [];
   } else {
     pool = domainModalityQuestionsPool[domainKey]?.[modalityKey] || [];
   }
 
   if (!pool || pool.length === 0) {
-    pool = domainModalityQuestionsPool[domainKey]?.["System Architecture & Design"] || domainModalityQuestionsPool["Backend Developer"]["System Architecture & Design"];
+    pool = domainModalityQuestionsPool["Backend Developer"]["System Architecture & Design"];
   }
 
   // Filter out questions already asked in this session
@@ -1049,7 +772,6 @@ export const getDynamicQuestion = (
     question_number: questionNumber,
     target_role: domainKey,
     modality: modalityKey,
-    stage_round: stageLabel,
     difficulty: difficulty || selected.difficulty || "Medium",
   };
 };

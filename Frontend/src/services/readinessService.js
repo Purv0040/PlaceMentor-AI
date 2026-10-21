@@ -306,8 +306,8 @@ export function transformBackendReadiness(backendData, userContext = null) {
       actionLabel = "Audit Resume →";
     } else if (lower.includes("leetcode") || lower.includes("dsa") || lower.includes("problem")) {
       recCategory = "DSA & Screening";
-      actionRoute = "/tasks";
-      actionLabel = "Practice Tasks →";
+      actionRoute = "/leetcode";
+      actionLabel = "Practice LeetCode →";
     } else if (lower.includes("github") || lower.includes("commit") || lower.includes("repo") || lower.includes("project")) {
       recCategory = "GitHub Portfolio";
       actionRoute = "/github";
